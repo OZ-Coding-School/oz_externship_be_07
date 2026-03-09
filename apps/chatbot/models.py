@@ -14,7 +14,6 @@ class ChatbotSessions(TimeStampModel):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="chatbot_sessions",
-        db_column="user_id",
         help_text="채팅을 시작한 유저 ID",
     )
 
@@ -24,7 +23,6 @@ class ChatbotSessions(TimeStampModel):
         null=True,
         blank=True,
         related_name="chatbot_sessions",
-        db_column="question_id",
         help_text="파생된 Q&A 질문 ID",
     )
 

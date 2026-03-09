@@ -35,9 +35,6 @@ class ChatbotSessions(TimeStampModel):
         verbose_name = "챗봇 세션"
         unique_together = (("user", "questions"),)  # user_id와 question_id 조합으로 유니크 설정
 
-    # def __str__(self):
-    #     return self.title
-
 
 class ChatbotCompletions(TimeStampModel):
     class RoleChoices(models.TextChoices):
@@ -48,7 +45,6 @@ class ChatbotCompletions(TimeStampModel):
         ChatbotSessions,
         on_delete=models.CASCADE,
         related_name="completions",
-        db_column="session_id",
         help_text="소속된 대화 세션 ID",
     )
 
@@ -61,6 +57,3 @@ class ChatbotCompletions(TimeStampModel):
     class Meta:
         db_table = "chatbot_completions"
         verbose_name = "챗봇 메시지"
-
-    # def __str__(self):
-    #     return f"{self.role} 메시지: {self.message[:20]}..."  # 메시지의 첫 20자를 출력

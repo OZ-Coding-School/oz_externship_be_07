@@ -21,6 +21,8 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "apps.chatbot",
+    "apps.questions",
 ]
 
 THIRD_PARTY_APPS = [

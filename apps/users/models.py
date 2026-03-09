@@ -35,7 +35,7 @@ class SocialUser(TimeStampModel):
 
 # 탈퇴 정보 테이블
 class Withdrawal(TimeStampModel):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="withdrawals")
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, related_name="withdrawals")
     reason = models.CharField(max_length=50, choices=WithdrawalReason)
     reason_detail = models.TextField()
     due_date = models.DateField()

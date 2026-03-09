@@ -2,45 +2,21 @@ from django.db import models
 
 
 class UserRole(models.TextChoices):
-    USER = (
-        "USER",
-        "일반 회원",
-    )
-    STUDENT = (
-        "STUDENT",
-        "수강생",
-    )
-    TA = (
-        "TA",
-        "강사님",
-    )
-    OM = (
-        "OM",
-        "운영 매니저",
-    )
-    ADMIN = (
-        "ADMIN",
-        "관리자",
-    )
+    USER = ("USER",)
+    STUDENT = ("STUDENT",)
+    TA = ("TA",)
+    OM = ("OM",)
+    ADMIN = ("ADMIN",)
 
 
 class UserGender(models.TextChoices):
-    MALE = (
-        "MALE",
-        "남자",
-    )
-    FEMALE = ("FEMALE", "여자")
+    MALE = ("MALE",)
+    FEMALE = "FEMALE"
 
 
 class SocialProvider(models.TextChoices):
-    KAKAO = (
-        "kakao",
-        "KAKAO",
-    )
-    NAVER = (
-        "naver",
-        "NAVER",
-    )
+    KAKAO = "kakao"
+    NAVER = "naver"
 
 
 class WithdrawalReason(models.TextChoices):

@@ -1,23 +1,23 @@
-.PHONY: run migrations migrate test format lint check superuser shell
+.PHONY: run migrations migrate test format superuser shell
 
 run:
-	python manage.py runserver
+	docker-compose -f docker-compose.local.yml exec django python manage.py runserver
 
 migrations:
-	python manage.py makemigrations
+	docker-compose -f docker-compose.local.yml exec django python manage.py makemigrations
 
 migrate:
-	python manage.py migrate
+	docker-compose -f docker-compose.local.yml exec django python manage.py migrate
 
 test:
 	docker-compose -f docker-compose.local.yml exec django sh resources/scripts/test.sh
 
 format:
-	bash resources/scripts/code_formatting.sh
+	docker-compose -f docker-compose.local.yml exec django bash resources/scripts/code_formatting.sh
 
 
 superuser:
-	python manage.py createsuperuser
+	docker-compose -f docker-compose.local.yml exec django python manage.py createsuperuser
 
 shell:
-	python manage.py shell
+	docker-compose -f docker-compose.local.yml exec django python manage.py shell

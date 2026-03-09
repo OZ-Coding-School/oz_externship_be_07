@@ -7,7 +7,6 @@ from apps.users.models import User
 class Post(TimeStampModel):
     """게시글"""
 
-    id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=50, null=False, verbose_name="게시글 제목")
     content = models.TextField(null=False, verbose_name="게시글 내용")
     view_count = models.PositiveIntegerField(default=0, null=False, verbose_name="게시글 조회수")
@@ -19,7 +18,7 @@ class Post(TimeStampModel):
     )
 
     class Meta:
-        db_table = "post"
+        db_table = "posts"
         indexes = [
             models.Index(fields=["id"]),
             models.Index(fields=["author"]),
@@ -28,15 +27,15 @@ class Post(TimeStampModel):
         ]
 
 
-class PostAttachments(TimeStampModel):
+class PostAttachment(models.Model):
     """첨부파일"""
 
-    id = models.BigAutoField(primary_key=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=False, verbose_name="게시판id")
     file_url = models.CharField(max_length=255, null=False, verbose_name="첨부파일 URL")
     file_name = models.CharField(max_length=50, null=False, verbose_name="첨부파일 이름")
 
     class Meta:
+        db_table = "post_attachments"
         verbose_name = "첨부파일"
         verbose_name_plural = "첨부파일 목록"
         indexes = [models.Index(fields=["post"], name="idx_post_attachments_post_id")]
@@ -45,11 +44,11 @@ class PostAttachments(TimeStampModel):
 class PostImage(TimeStampModel):
     """이미지"""
 
-    id = models.BigAutoField(primary_key=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=False, verbose_name="게시판id")
     img_url = models.TextField(null=False, verbose_name="이미지 URL")
 
     class Meta:
+        db_table = "post_images"
         verbose_name = "이미지"
         verbose_name_plural = "이미지 목록"
         indexes = [models.Index(fields=["post"], name="idx_post_images_post_id")]
@@ -58,9 +57,8 @@ class PostImage(TimeStampModel):
 class PostLike(TimeStampModel):
     """게시글 좋아요"""
 
-    id = models.BigAutoField(primary_key=True)
     is_liked = models.BooleanField(
-        default=False,
+        default=True,
         null=False,
         verbose_name="좋아요 여부",
         help_text="T: 좋아요 활성화, F: 좋아요 비활성화",
@@ -70,7 +68,6 @@ class PostLike(TimeStampModel):
         "users.User",
         on_delete=models.CASCADE,
         null=False,
-        db_column="user",
         related_name="post_likes",
         verbose_name="유저",
     )
@@ -78,13 +75,12 @@ class PostLike(TimeStampModel):
         Post,
         on_delete=models.CASCADE,
         null=False,
-        db_column="post",
         related_name="likes",
         verbose_name="게시글",
     )
 
     class Meta:
-        db_table = "post_like"
+        db_table = "post_likes"
         verbose_name = "게시글 좋아요"
         indexes = [
             models.Index(fields=["post_id"], name="idx_post_like_id"),

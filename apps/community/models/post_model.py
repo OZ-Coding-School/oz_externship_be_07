@@ -10,9 +10,9 @@ class Post(models.Model):
     view_count = models.PositiveIntegerField(default=0, null=False, verbose_name="게시글 조회수")
     is_visible = models.BooleanField(default=True, null=False, verbose_name="게시글 활성화 여부")
     is_notice = models.BooleanField(default=False, null=False, verbose_name="게시글 공지 활성화 여부")
-    author = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="posts", verbose_name="작성자")
-    # created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    # updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
+    # author = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="posts", verbose_name="작성자")
+    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
+    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
     category = models.ForeignKey(
         "community.PostCategory", on_delete=models.PROTECT, null=False, related_name="posts", verbose_name="카테고리"
     )
@@ -21,7 +21,7 @@ class Post(models.Model):
         db_table = "post"
         indexes = [
             models.Index(fields=["id"]),
-            models.Index(fields=["author"]),
+            # models.Index(fields=["author"]),
             models.Index(fields=["created_at"]),
             models.Index(fields=["category"]),
         ]
@@ -51,8 +51,8 @@ class PostImage(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=False, verbose_name="게시판id")
     img_url = models.TextField(null=False, verbose_name="이미지 URL")
 
-    # created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    # updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
+    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
+    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
 
     class Meta:
         verbose_name = "이미지"
@@ -74,14 +74,14 @@ class PostLike(models.Model):
         help_text="T: 좋아요 활성화, F: 좋아요 비활성화",
     )
 
-    user = models.ForeignKey(
-        "users.User",
-        on_delete=models.CASCADE,
-        null=False,
-        db_column="user",
-        related_name="post_likes",
-        verbose_name="유저",
-    )
+    # user = models.ForeignKey(
+    #     "users.User",
+    #     on_delete=models.CASCADE,
+    #     null=False,
+    #     db_column="user",
+    #     related_name="post_likes",
+    #     verbose_name="유저",
+    # )
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -90,8 +90,8 @@ class PostLike(models.Model):
         related_name="likes",
         verbose_name="게시글",
     )
-    # created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    # updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
+    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
+    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
 
     class Meta:
         db_table = "post_like"

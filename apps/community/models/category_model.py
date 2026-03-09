@@ -15,8 +15,8 @@ class PostCategory(models.Model):
         default=True, null=False, verbose_name="카테고리 사용 여부", help_text="T: 사용, F: 미사용"
     )
 
-    # created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    # updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
+    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
+    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
 
     class Meta:
         db_table = "post_category"

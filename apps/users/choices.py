@@ -23,15 +23,14 @@ class UserRole(models.TextChoices):
         "관리자",
     )
 
+
 class UserGender(models.TextChoices):
     MALE = (
-        'MALE',
-        '남자',
+        "MALE",
+        "남자",
     )
-    FEMALE = (
-        'FEMALE',
-        '여자'
-    )
+    FEMALE = ("FEMALE", "여자")
+
 
 class SocialProvider(models.TextChoices):
     KAKAO = (

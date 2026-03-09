@@ -2,7 +2,7 @@ from django.db import models
 
 from apps.core.models import TimeStampModel
 
-from .choices import SocialProvider, UserRole, WithdrawalReason, UserGender
+from .choices import SocialProvider, UserGender, UserRole, WithdrawalReason
 
 
 # 사용자 테이블

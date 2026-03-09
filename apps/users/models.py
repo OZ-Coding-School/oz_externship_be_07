@@ -2,7 +2,7 @@ from django.db import models
 
 from apps.core.models import TimeStampModel
 
-from .choices import SocialProvider, UserRole, WithdrawalReason
+from .choices import SocialProvider, UserRole, WithdrawalReason, UserGender
 
 
 # 사용자 테이블
@@ -12,7 +12,7 @@ class User(TimeStampModel):
     name = models.CharField(max_length=30, verbose_name="이름")
     nickname = models.CharField(max_length=10, unique=True, verbose_name="닉네임")
     phone_number = models.CharField(max_length=20, unique=True, verbose_name="휴대폰번호")
-    gender = models.CharField(max_length=6, verbose_name="성별")
+    gender = models.CharField(max_length=6, choices=UserGender, verbose_name="성별")
     birthday = models.DateField(verbose_name="생년월일")
     profile_img_url = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=False)

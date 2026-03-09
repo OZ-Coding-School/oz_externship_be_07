@@ -2,27 +2,36 @@ from django.db import models
 
 
 class UserRole(models.TextChoices):
-    User = (
-        "U",
-        "User",
-    )  # 일반회원
+    USER = (
+        "USER",
+        "일반 회원",
+    )
     STUDENT = (
-        "ST",
-        "Student",
-    )  # 수강생
+        "STUDENT",
+        "수강생",
+    )
     TA = (
         "TA",
-        "Teaching Assistant",
-    )  # 강사님
+        "강사님",
+    )
     OM = (
         "OM",
-        "Operation Manager",
-    )  # 운영 매니저
+        "운영 매니저",
+    )
     ADMIN = (
         "ADMIN",
-        "Administrator",
-    )  # 관리자
+        "관리자",
+    )
 
+class UserGender(models.TextChoices):
+    MALE = (
+        'MALE',
+        '남자',
+    )
+    FEMALE = (
+        'FEMALE',
+        '여자'
+    )
 
 class SocialProvider(models.TextChoices):
     KAKAO = (

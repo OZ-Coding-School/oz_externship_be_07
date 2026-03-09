@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.db import models
 
+from apps.core.models import TimeStampModel
 
-class ChatbotSessions(models.Model):
+
+class ChatbotSessions(TimeStampModel):
     class ModelChoices(models.TextChoices):
         GEMINI_1_5_FLASH = "gemini-1.5-flash", "Gemini 1.5 Flash"
         GEMINI_2_0 = "gemini-2.0", "Gemini 2.0"
         # 필요에 따라 추가 (예: gemini-2.5-flash)
-
-    id = models.BigAutoField(primary_key=True, help_text="챗봇 세션 고유 ID")
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -32,9 +32,6 @@ class ChatbotSessions(models.Model):
 
     using_model = models.CharField(max_length=50, choices=ModelChoices.choices, null=False, help_text="LLM 사용 모델")
 
-    created_at = models.DateTimeField(auto_now_add=True, help_text="생성 일시")
-    updated_at = models.DateTimeField(auto_now=True, help_text="수정 일시")
-
     class Meta:
         db_table = "chatbot_sessions"
         verbose_name = "챗봇 세션"
@@ -44,12 +41,10 @@ class ChatbotSessions(models.Model):
     #     return self.title
 
 
-class ChatbotCompletions(models.Model):
+class ChatbotCompletions(TimeStampModel):
     class RoleChoices(models.TextChoices):
         USER = "USER", "사용자"
         ASSISTANT = "ASSISTANT", "AI"
-
-    id = models.BigAutoField(primary_key=True, help_text="자동 증분 ID")
 
     session = models.ForeignKey(
         ChatbotSessions,
@@ -64,9 +59,6 @@ class ChatbotCompletions(models.Model):
     role = models.CharField(
         max_length=10, choices=RoleChoices.choices, null=False, help_text="USER(사용자) 또는 ASSISTANT(AI) 구분"
     )
-
-    created_at = models.DateTimeField(auto_now_add=True, help_text="메시지가 생성된 시간")
-    updated_at = models.DateTimeField(auto_now=True, help_text="메시지가 수정된 시간")
 
     class Meta:
         db_table = "chatbot_completions"

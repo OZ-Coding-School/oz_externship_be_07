@@ -1,7 +1,10 @@
 from django.db import models
 
+from apps.users.models import User
+from apps.core.models import TimeStampModel
 
-class Post(models.Model):
+
+class Post(TimeStampModel):
     """게시글"""
 
     id = models.BigAutoField(primary_key=True)
@@ -10,9 +13,7 @@ class Post(models.Model):
     view_count = models.PositiveIntegerField(default=0, null=False, verbose_name="게시글 조회수")
     is_visible = models.BooleanField(default=True, null=False, verbose_name="게시글 활성화 여부")
     is_notice = models.BooleanField(default=False, null=False, verbose_name="게시글 공지 활성화 여부")
-    # author = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="posts", verbose_name="작성자")
-    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
+    author = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="posts", verbose_name="작성자")
     category = models.ForeignKey(
         "community.PostCategory", on_delete=models.PROTECT, null=False, related_name="posts", verbose_name="카테고리"
     )
@@ -21,13 +22,13 @@ class Post(models.Model):
         db_table = "post"
         indexes = [
             models.Index(fields=["id"]),
-            # models.Index(fields=["author"]),
+            models.Index(fields=["author"]),
             models.Index(fields=["created_at"]),
             models.Index(fields=["category"]),
         ]
 
 
-class PostAttachments(models.Model):
+class PostAttachments(TimeStampModel):
     """첨부파일"""
 
     id = models.BigAutoField(primary_key=True)
@@ -40,30 +41,21 @@ class PostAttachments(models.Model):
         verbose_name_plural = "첨부파일 목록"
         indexes = [models.Index(fields=["post"], name="idx_post_attachments_post_id")]
 
-    # def __str__(self):
-    #     return f"{self.file_name} : {self.file_url}"
 
-
-class PostImage(models.Model):
+class PostImage(TimeStampModel):
     """이미지"""
 
     id = models.BigAutoField(primary_key=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=False, verbose_name="게시판id")
     img_url = models.TextField(null=False, verbose_name="이미지 URL")
 
-    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
-
     class Meta:
         verbose_name = "이미지"
         verbose_name_plural = "이미지 목록"
         indexes = [models.Index(fields=["post"], name="idx_post_images_post_id")]
 
-    # def __str__(self):
-    #     return f"{self.img_url}"
 
-
-class PostLike(models.Model):
+class PostLike(TimeStampModel):
     """게시글 좋아요"""
 
     id = models.BigAutoField(primary_key=True)
@@ -74,14 +66,14 @@ class PostLike(models.Model):
         help_text="T: 좋아요 활성화, F: 좋아요 비활성화",
     )
 
-    # user = models.ForeignKey(
-    #     "users.User",
-    #     on_delete=models.CASCADE,
-    #     null=False,
-    #     db_column="user",
-    #     related_name="post_likes",
-    #     verbose_name="유저",
-    # )
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        null=False,
+        db_column="user",
+        related_name="post_likes",
+        verbose_name="유저",
+    )
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -90,8 +82,6 @@ class PostLike(models.Model):
         related_name="likes",
         verbose_name="게시글",
     )
-    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
 
     class Meta:
         db_table = "post_like"
@@ -99,6 +89,3 @@ class PostLike(models.Model):
         indexes = [
             models.Index(fields=["post_id"], name="idx_post_like_id"),
         ]
-
-    # def __str__(self):
-    #     return f"Postlike(post_id={self.post_id}, user_id={self.user_id}, is_liked={self.is_liked})"

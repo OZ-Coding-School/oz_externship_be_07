@@ -10,7 +10,7 @@ migrate:
 	python manage.py migrate
 
 test:
-	bash resources/scripts/test.sh
+	docker-compose -f docker-compose.local.yml exec django sh resources/scripts/test.sh
 
 format:
 	bash resources/scripts/code_formatting.sh

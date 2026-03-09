@@ -1,7 +1,9 @@
 from django.db import models
 
+from apps.core.models import TimeStampModel
 
-class PostCategory(models.Model):
+
+class PostCategory(TimeStampModel):
     """게시글 카테고리"""
 
     id = models.BigAutoField(primary_key=True)
@@ -15,15 +17,9 @@ class PostCategory(models.Model):
         default=True, null=False, verbose_name="카테고리 사용 여부", help_text="T: 사용, F: 미사용"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True, null=False, verbose_name="생성 일시")
-    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name="수정 일시")
-
     class Meta:
         db_table = "post_category"
         verbose_name = "게시글 카테고리"
         indexes = [
             models.Index(fields=["id"], name="pk_post_category"),
         ]
-
-    # def __str__(self):
-    #     return self.name

@@ -1,7 +1,9 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from .choices import UserRole, SocialProvider, WithdrawalReason
+
+from .choices import SocialProvider, UserRole, WithdrawalReason
+
 
 # 사용자 테이블
 class User(TimeStampModel):
@@ -37,5 +39,6 @@ class Withdrawal(TimeStampModel):
     reason = models.CharField(max_length=50, choices=WithdrawalReason)
     reason_detail = models.TextField()
     due_date = models.DateField()
+
     class Meta:
         db_table = "withdrawals"

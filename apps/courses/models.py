@@ -1,22 +1,18 @@
 from django.db import models
 
+
 # Create your models here.
 class Course(models.Model):
     id = models.BigAutoField(primary_key=True)
 
-    name = models.CharField(
-        max_length=30,
-        unique=True  )
+    name = models.CharField(max_length=30, unique=True)
 
-    tag = models.CharField(
-        max_length=3,
-        unique=True   )
+    tag = models.CharField(max_length=3, unique=True)
 
     description = models.CharField(
         max_length=255,
         null=True,
         blank=True,
-
     )
 
     thumbnail_img_url = models.URLField(

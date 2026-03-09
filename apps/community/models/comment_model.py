@@ -1,7 +1,7 @@
 from django.db import models
 
-from apps.users.models import User
 from apps.core.models import TimeStampModel
+from apps.users.models import User
 
 
 class PostComment(TimeStampModel):

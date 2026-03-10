@@ -60,39 +60,4 @@ class ExamDetailAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = ExamDetailSerializer
 
-    @extend_schema(
-        summary="쪽지시험 상세 조회",
-        description="특정 ID의 쪽지시험 상세 정보와 질문 목록을 조회합니다.",
-        responses={200: ExamDetailSerializer},
-        tags=["쪽지시험 관리"],
-    )
-    def get(self, request, exam_id):
-        exam = self.get_object(exam_id)
-        serializer = ExamDetailSerializer(exam)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @extend_schema(
-        summary="쪽지시험 수정",
-        description="기존 쪽지시험의 정보를 수정합니다. 이미지 변경이 없을 경우 필드를 비워둘 수 있습니다.",
-        request=ExamUpdateSerializer,
-        responses={200: ExamUpdateSerializer},
-        tags=["쪽지시험 관리"],
-    )
-    def put(self, request, exam_id):
-        exam = self.get_object(exam_id)
-        serializer = ExamUpdateSerializer(exam, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @extend_schema(
-        summary="쪽지시험 삭제",
-        description="특정 쪽지시험을 삭제합니다. 성공 시 삭제된 시험의 ID를 반환합니다.",
-        responses={201: ExamDeleteRequestSerializer},
-        tags=["쪽지시험 관리"],
-    )
-    def delete(self, request, exam_id):
-        exam = self.get_object(exam_id)
-        exam.delete()
-        return Response({"id": exam_id}, status=status.HTTP_200_OK)
+# Create your views here.

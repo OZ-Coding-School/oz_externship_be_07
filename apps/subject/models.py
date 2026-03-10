@@ -47,6 +47,7 @@ class Cohort(TimeStampModel):
 
     class Meta:
         db_table = "cohorts"
+        unique_together = (("course_id", "number"),)
         indexes = [
             models.Index(fields=["course_id", "number"]),
         ]
@@ -84,7 +85,7 @@ class TrainingAssistant(TimeStampModel):
 # 8. 과목 (subjects)
 class Subject(TimeStampModel):
     course_id = models.ForeignKey(Course, on_delete=models.CASCADE)
-    title = models.CharField(max_length=30, unique=True)
+    title = models.CharField(max_length=30)
     number_of_days = models.SmallIntegerField()
     number_of_hours = models.SmallIntegerField()
     thumbnail_img_url = models.CharField(max_length=255, null=True, blank=True)
@@ -92,6 +93,7 @@ class Subject(TimeStampModel):
 
     class Meta:
         db_table = "subjects"
+        unique_together = (("course_id", "title"),)
         indexes = [
             models.Index(fields=["course_id", "title"]),
         ]

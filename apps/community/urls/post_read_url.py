@@ -1,7 +1,8 @@
 from django.urls import path
 
-from apps.community.views.post_list_view import PostListAPIView
 from apps.community.views.post_detail_view import PostDetailAPIView
+from apps.community.views.post_list_view import PostListAPIView
+
 
 urlpatterns = [
     path("posts/", PostListAPIView.as_view(), name="post-list"),

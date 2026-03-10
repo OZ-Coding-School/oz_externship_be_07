@@ -2,7 +2,7 @@ from django.db import models
 
 from apps.core.models import TimeStampModel
 
-from .choices import SocialProvider, UserGender, UserRole, WithdrawalReason
+from .choices import SocialProvider, UserGender, UserRole, UserStatus, WithdrawalReason
 
 
 # 사용자 테이블
@@ -15,9 +15,8 @@ class User(TimeStampModel):
     gender = models.CharField(max_length=6, choices=UserGender, verbose_name="성별")
     birthday = models.DateField(verbose_name="생년월일")
     profile_img_url = models.CharField(max_length=255, null=True, blank=True)
-    is_active = models.BooleanField(default=False)
-
-    role = models.CharField(max_length=10, choices=UserRole, default="User", verbose_name="역할")
+    status = models.CharField(choices=UserStatus, default="ACTIVE")
+    role = models.CharField(max_length=10, choices=UserRole, default=UserRole.USER, verbose_name="권한")
 
     class Meta:
         db_table = "user"
@@ -31,6 +30,9 @@ class SocialUser(TimeStampModel):
 
     class Meta:
         db_table = "social_users"
+        constraints = [
+            models.UniqueConstraint(fields=["user", "provider"], name="unique_social_account"),
+        ]
 
 
 # 탈퇴 정보 테이블

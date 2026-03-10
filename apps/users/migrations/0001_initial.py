@@ -42,6 +42,7 @@ class Migration(migrations.Migration):
                         ],
                         default="User",
                         max_length=10,
+                        verbose_name="권한"
                     ),
                 ),
             ],

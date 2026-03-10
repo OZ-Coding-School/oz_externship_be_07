@@ -16,8 +16,7 @@ class User(TimeStampModel):
     birthday = models.DateField(verbose_name="생년월일")
     profile_img_url = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=False)
-
-    role = models.CharField(max_length=10, choices=UserRole, default="User", verbose_name="역할")
+    role = models.CharField(max_length=10, choices=UserRole, default="User")
 
     class Meta:
         db_table = "user"

@@ -52,7 +52,7 @@ class QuestionDetailSerializer(serializers.ModelSerializer[Questions]):
         fields = ["id", "author", "category", "images", "title", "content", "view_count", "created_at", "updated_at"]
 
 
-# 등록용: 입력받을 필드만 입력
+# 등록용
 class QuestionCreateSerializer(serializers.ModelSerializer[Questions]):
     images = QuestionImagesSerializer(required=False, many=True)
 
@@ -72,6 +72,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer[Questions]):
         return value
 
 
+# 수정용
 class QuestionUpdateSerializer(serializers.ModelSerializer[Questions]):
     images = QuestionImagesSerializer(required=False, many=True)
 

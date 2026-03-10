@@ -1,2 +1,3 @@
 from .category_serializer import PostCategoryListSpecSerializer, PostCategorySerializer
 from .comment_serializers import PostCommentSerializer
+from .post_serializers_crd import *

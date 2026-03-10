@@ -1,7 +1,6 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.users.models import User
 
 
 class Post(TimeStampModel):
@@ -20,7 +19,6 @@ class Post(TimeStampModel):
     class Meta:
         db_table = "posts"
         indexes = [
-            models.Index(fields=["id"]),
             models.Index(fields=["author"]),
             models.Index(fields=["created_at"]),
             models.Index(fields=["category"]),

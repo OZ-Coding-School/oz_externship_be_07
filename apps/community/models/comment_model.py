@@ -1,7 +1,6 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.users.models import User
 
 
 class PostComment(TimeStampModel):
@@ -29,3 +28,4 @@ class CommentTag(TimeStampModel):
         indexes = [
             models.Index(fields=["tagged_user"], name="idx_tagged_user_id"),
         ]
+        constraints = [models.UniqueConstraint(fields=["comment", "tagged_user"], name="unique_comment_tagged_user")]

@@ -19,6 +19,3 @@ class PostCategory(TimeStampModel):
     class Meta:
         db_table = "post_categories"
         verbose_name = "게시글 카테고리"
-        indexes = [
-            models.Index(fields=["id"], name="pk_post_category"),
-        ]

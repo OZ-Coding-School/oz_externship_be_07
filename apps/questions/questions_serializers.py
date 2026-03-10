@@ -70,3 +70,22 @@ class QuestionCreateSerializer(serializers.ModelSerializer[Questions]):
         if len(value) < 5:
             raise serializers.ValidationError("내용을 조금 더 길게 작성해주시길 바랍니다.(최소5글자 이상)")
         return value
+
+
+class QuestionUpdateSerializer(serializers.ModelSerializer[Questions]):
+    images = QuestionImagesSerializer(required=False, many=True)
+
+    class Meta:
+        model = Questions
+        fields = ["category", "title", "content", "images"]
+
+    # 글자 수 유효성 검사
+    def validate_title(self, value: str) -> str:
+        if len(value) < 3:
+            raise serializers.ValidationError("제목은 최소 3글자 이상으로 입력해주세요.")
+        return value
+
+    def validate_content(self, value: str) -> str:
+        if len(value) < 5:
+            raise serializers.ValidationError("내용을 조금 더 길게 작성해주시길 바랍니다.(최소5글자 이상)")
+        return value

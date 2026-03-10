@@ -18,7 +18,7 @@ class ChatbotSessions(TimeStampModel):
     )
 
     question = models.ForeignKey(
-        "question.Questions",  # 'Questions' 모델이 정의되어 있어야 함
+        "questions.Questions",  # 'Questions' 모델이 정의되어 있어야 함
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

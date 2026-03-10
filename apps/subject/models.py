@@ -47,6 +47,9 @@ class Cohort(TimeStampModel):
 
     class Meta:
         db_table = "cohorts"
+        indexes = [
+            models.Index(fields=["course_id", "number"]),
+        ]
 
 
 # 5. 기수 학생 (cohort_students)
@@ -89,3 +92,6 @@ class Subject(TimeStampModel):
 
     class Meta:
         db_table = "subjects"
+        indexes = [
+            models.Index(fields=["course_id", "title"]),
+        ]

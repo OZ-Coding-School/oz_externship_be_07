@@ -15,7 +15,7 @@ class User(TimeStampModel):
     gender = models.CharField(max_length=6, choices=UserGender, verbose_name="성별")
     birthday = models.DateField(verbose_name="생년월일")
     profile_img_url = models.CharField(max_length=255, null=True, blank=True)
-    status = models.CharField(choices=UserStatus, default='ACTIVE')
+    status = models.CharField(choices=UserStatus, default="ACTIVE")
     role = models.CharField(max_length=10, choices=UserRole, default=UserRole.USER, verbose_name="권한")
 
     class Meta:

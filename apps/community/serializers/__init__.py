@@ -1,1 +1,2 @@
 from .comment_serializers import PostCommentSerializer
+from .category_serializer import PostCategoryListSpecSerializer, PostCategorySerializer

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.community.models import PostCategory
+from apps.community.models.category_model import PostCategory
 
 # SPEC 명세서와 전체모델이 차이가 있어 따로 분리
 

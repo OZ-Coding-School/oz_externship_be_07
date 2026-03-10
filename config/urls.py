@@ -8,6 +8,9 @@ from drf_spectacular.views import (
 )
 
 urlpatterns: list[URLPattern | URLResolver] = [
+    path("api/v1/posts", include("apps.community.urls")),
+]
+urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.exam.urls.urls")),
     path("api/v1/", include("apps.subject.urls.urls")),
     path("api/v1/posts/", include("apps.community.urls")),
@@ -16,12 +19,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
     if "debug_toolbar" in settings.INSTALLED_APPS:
-        urlpatterns += [
-            path("__debug__/", include("debug_toolbar.urls")),
-        ]
-
+        urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]
     if "drf_spectacular" in settings.INSTALLED_APPS:
         urlpatterns += [
             path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

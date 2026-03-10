@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.community.views.post_crud_views import PostCreate, PostDetailUpdateDelete
+from apps.community.views.post_cud_views import PostCreate, PostDetailUpdateDelete
 
 urlpatterns = [
     path("", PostCreate.as_view(), name="post"),

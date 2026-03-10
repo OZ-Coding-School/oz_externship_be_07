@@ -100,7 +100,7 @@ class Migration(migrations.Migration):
                     models.OneToOneField(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="withdrawal_info",
+                        related_name="withdrawals",
                         to="users.user",
                     ),
                 ),

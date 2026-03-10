@@ -17,8 +17,8 @@ class ChatbotSessions(TimeStampModel):
         help_text="채팅을 시작한 유저 ID",
     )
 
-    questions = models.ForeignKey(
-        "questions.Questions",  # 'Questions' 모델이 정의되어 있어야 함
+    question = models.ForeignKey(
+        "question.Questions",  # 'Questions' 모델이 정의되어 있어야 함
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -33,7 +33,7 @@ class ChatbotSessions(TimeStampModel):
     class Meta:
         db_table = "chatbot_sessions"
         verbose_name = "챗봇 세션"
-        unique_together = (("user", "questions"),)  # user_id와 question_id 조합으로 유니크 설정
+        unique_together = (("user", "question"),)  # user_id와 question_id 조합으로 유니크 설정
 
 
 class ChatbotCompletions(TimeStampModel):

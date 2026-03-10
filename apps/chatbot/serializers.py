@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from apps.questions.models import Questions
 
-from .models import ChatbotSessions, ChatbotCompletions
+from .models import ChatbotCompletions, ChatbotSessions
 
 User = get_user_model()
 
@@ -11,11 +11,7 @@ User = get_user_model()
 class ChatbotSessionSerializer(serializers.ModelSerializer):
     # """챗봇 세션 생성 및 조회용 시리얼라이저"""
     user = serializers.PrimaryKeyRelatedField(read_only=True)
-    question = serializers.PrimaryKeyRelatedField(
-        queryset=Questions.objects.all(),
-        required=False,
-        allow_null=True
-    )
+    question = serializers.PrimaryKeyRelatedField(queryset=Questions.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = ChatbotSessions
@@ -45,5 +41,5 @@ class ChatbotCompletionRequestSerializer(serializers.Serializer):
     message = serializers.CharField(
         required=True,
         allow_blank=False,
-        error_messages={"required": "이 필드는 필수 항목입니다.", "blank": "이 필드는 blank 일 수 없습니다."}
+        error_messages={"required": "이 필드는 필수 항목입니다.", "blank": "이 필드는 blank 일 수 없습니다."},
     )

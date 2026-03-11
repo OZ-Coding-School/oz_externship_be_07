@@ -40,7 +40,7 @@ class PostCreate(APIView):
     parser_classes = [MultiPartParser, JSONParser]
 
     @extend_schema(
-        tags=["Community - Post"],
+        tags=["posts"],
         summary="게시판 등록",
         description="커뮤니 게시글 작성 API",
         examples=[
@@ -74,7 +74,7 @@ class PostDetailUpdateDelete(APIView):
     parser_classes = [MultiPartParser, JSONParser]
 
     @extend_schema(
-        tags=["Community - Post"],
+        tags=["posts"],
         summary="게시판 수정",
         request=PostUpdateSerializer,
         description="커뮤니티 게시글 수정 API",
@@ -125,7 +125,7 @@ class PostDetailUpdateDelete(APIView):
         return Response(mock_data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["Community - Post"],
+        tags=["posts"],
         summary="게시판 삭제",
         description="커뮤니티 게시글 삭제 API",
         examples=[

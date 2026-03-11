@@ -16,9 +16,6 @@ from apps.subject.views.subject_views import (
 urlpatterns = [  ###################### EXAM ##################################
     path("admin/subjects", AdminSubjectCreateAPIView.as_view(), name="subject-create"),
     path("<int:course_id>/subjects", AdminSubjectListAPIView.as_view(), name="subject-list"),
-urlpatterns = [
-    path("admin/subjects", AdminSubjectCreateAPIView.as_view(), name="subject-create"),
-    path("<int:course_id>/subjects", AdminSubjectListAPIView.as_view(), name="subject-list"),
     path("admin/subjects/{subject_id}/scatter", AdminSubjectScatterAPIView.as_view(), name="subject-scatter"),
     path("admin/cohorts", AdminCohortCreateAPIView.as_view(), name="admin-cohort-create"),
     path("<int:course_id>/cohorts", CohortListAPIView.as_view(), name="cohort-list"),

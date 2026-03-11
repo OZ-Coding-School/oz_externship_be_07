@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.subject.views.subject_views import AdminSubjectCreateAPIView, AdminSubjectListAPIView
 from apps.subject.views.cohort_views import (
     AdminCohortCreateAPIView,
     AdminCohortStudentListAPIView,
@@ -12,6 +13,9 @@ from apps.subject.views.subject_views import (
     AdminSubjectScatterAPIView,
 )
 
+urlpatterns = [  ###################### EXAM ##################################
+    path("admin/subjects", AdminSubjectCreateAPIView.as_view(), name="subject-create"),
+    path("<int:course_id>/subjects", AdminSubjectListAPIView.as_view(), name="subject-list"),
 urlpatterns = [
     path("admin/subjects", AdminSubjectCreateAPIView.as_view(), name="subject-create"),
     path("<int:course_id>/subjects", AdminSubjectListAPIView.as_view(), name="subject-list"),

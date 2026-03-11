@@ -1,12 +1,11 @@
 from django.core.paginator import EmptyPage, Paginator
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 
 from apps.exam.models.exam_submission_models import ExamSubmission
-
 from apps.exam.serializers.exam_deployment_serializers import (
     ErrorDetailSerializer,
     ExamDeploymentCreateResponseSerializer,
@@ -20,7 +19,6 @@ from apps.exam.serializers.exam_deployment_serializers import (
     ExamDeploymentUpdateResponseSerializer,
     ExamDeploymentUpdateSerializer,
 )
-
 from apps.exam.servieces.exam_deployment_services import ExamDeploymentService
 
 

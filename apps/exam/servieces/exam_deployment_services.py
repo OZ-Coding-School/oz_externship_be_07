@@ -1,7 +1,9 @@
-import string
 import secrets
+import string
+
 from django.db import transaction
 from django.db.models import Avg, Count
+
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_question_models import ExamQuestion
 

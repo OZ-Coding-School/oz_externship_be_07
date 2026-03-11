@@ -1,8 +1,8 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.users.models import User
 from apps.exam.models.exam_deployment_models import ExamDeployment
+from apps.users.models import User
 
 
 class ExamSubmission(TimeStampModel):

@@ -3,8 +3,6 @@ from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
-from drf_spectacular.utils import extend_schema
 
 from apps.exam.serializers.exam_serializers import (
     ExamCreateSerializer,
@@ -12,7 +10,6 @@ from apps.exam.serializers.exam_serializers import (
     ExamDetailSerializer,
     ExamListSerializer,
     ExamUpdateSerializer,
-    ExamDeleteRequestSerializer,
 )
 from apps.exam.servieces.exam_services import ExamService
 

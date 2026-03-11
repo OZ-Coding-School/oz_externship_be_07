@@ -3,11 +3,9 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.exam.serializers.exam_submission_serializers import (
-    ExamSubmissionListSerializer,
     ExamSubmissionDetailSerializer,
     ExamSubmissionListSerializer,
 )

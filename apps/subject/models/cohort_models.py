@@ -1,7 +1,6 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.subject.models.choices import CohortStatus, StudentEnrollmentRequestsStatus
 from apps.subject.models.choices import CohortStatus
 from apps.subject.models.course_models import Course
 

@@ -35,20 +35,20 @@ class SignupTest(TestCase):
     def test_signup_success(self) -> None:
         """회원가입 성공 테스트(201)"""
         data = self.user_data.copy()
-        data["email"] = "success@example.com"
-        data["nickname"] = "success"
-        data["phone_number"] = "010-9999-0000"
+        data["email_token"] = "valid_email_token_123"
+        data["name"] = "홍길동"
+        data["sms_token"] = "valid_sms_token_123"
 
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(email=data["email"]).exists())
+        self.assertTrue(User.objects.filter(name=data["name"]).exists())
 
     def test_signup_missing_email_fail(self) -> None:
         """필수필드 누락 시 실패 (400)"""
 
         data = self.user_data.copy()
-        data.pop("email")
+        data.pop("name")
 
         response = self.client.post(self.url, data, format="json")
 

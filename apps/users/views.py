@@ -44,9 +44,21 @@ class SignUpView(APIView):
     def post(self, request: Request) -> Response:
         serializer = SignUpSerializer(data=request.data)
 
-        # 유효성 검사 실패
+        # 이메일,핸드폰,닉네임 중복 검사
         if not serializer.is_valid():
-            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            status_code: int = status.HTTP_400_BAD_REQUEST
+
+            for field_errors in serializer.errors.values():
+                for error in field_errors:
+                    if error.code == "unique":
+                        status_code = status.HTTP_409_CONFLICT
+                        break
+
+                if status_code == status.HTTP_409_CONFLICT:
+                    break
+
+            return Response({"error_detail": serializer.errors}, status=status_code)
 
         # 통과 후 생성
         try:

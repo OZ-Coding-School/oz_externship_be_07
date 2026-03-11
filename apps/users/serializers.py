@@ -18,13 +18,9 @@ class SignUpSerializer(serializers.ModelSerializer["User"]):
             "name",
             "birthday",
             "gender",
-            "email",
             "email_token",
-            "phone_number",
             "sms_token",
         ]
-        extra_kwargs: Dict[str, Dict[str, Any]] = {
-            "email": {"validators": []},
-            "nickname": {"validators": []},
-            "phone_number": {"validators": []},
+        extra_kwargs: Dict[str, Any] = {
+            "password": {"write_only": True},
         }

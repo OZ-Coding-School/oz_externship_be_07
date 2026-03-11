@@ -1,14 +1,25 @@
+from typing import Any
+
 from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.community.serializers.post_list_serializer import PostListSerializer
 
 
 class PostListAPIView(APIView):
     """게시글 목록 조회 API"""
 
-    def get(self, request):
-        # spec API 단계에서는 mock pagination 응답 반환
-        mock_response = {
+    def get(self: "PostListAPIView", request: Request) -> Response:
+        search = request.query_params.get("search")
+        search_filter = request.query_params.get("search_filter")
+        category_id = request.query_params.get("category_id")
+        sort = request.query_params.get("sort")
+        page = request.query_params.get("page")
+        page_size = request.query_params.get("page_size")
+
+        mock_response: dict[str, Any] = {
             "count": 100,
             "next": "http://api.ozcoding.site/api/v1/posts?page=2&page_size=10",
             "previous": None,
@@ -28,8 +39,22 @@ class PostListAPIView(APIView):
                     "like_count": 100,
                     "created_at": "2025-10-30T14:01:57.505250+09:00",
                     "updated_at": "2025-10-30T14:01:57.505250+09:00",
-                    "category_id": 1,
+                    "category": {
+                        "id": 1,
+                        "name": "자유",
+                    },
                 }
             ],
         }
-        return Response(mock_response, status=status.HTTP_200_OK)
+
+        serializer = PostListSerializer(mock_response["results"], many=True)
+
+        return Response(
+            {
+                "count": mock_response["count"],
+                "next": mock_response["next"],
+                "previous": mock_response["previous"],
+                "results": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )

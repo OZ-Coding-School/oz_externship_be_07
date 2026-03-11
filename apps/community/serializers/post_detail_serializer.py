@@ -1,20 +1,17 @@
 from rest_framework import serializers
 
-from apps.community.models.post_model import Post
 
-
-class PostDetailSerializer(serializers.ModelSerializer):
+class PostDetailSerializer(serializers.Serializer[dict]):
     """게시글 상세 조회용 Serializer"""
 
-    class Meta:
-        model = Post
-        fields = [
-            "id",
-            "title",
-            "content",
-            "author",
-            "created_at",
-            "updated_at",
-            "view_count",
-            "category",
-        ]
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    author = serializers.DictField()
+    category = serializers.DictField()
+    content = serializers.CharField()
+    image_urls = serializers.ListField(child=serializers.CharField(), allow_empty=True)
+    comments = serializers.ListField(child=serializers.DictField(), allow_empty=True)
+    view_count = serializers.IntegerField()
+    like_count = serializers.IntegerField()
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()

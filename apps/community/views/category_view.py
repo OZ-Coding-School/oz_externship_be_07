@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.models.category_model import PostCategory
-from apps.community.serializers import PostCategoryListSpecSerializer
+from apps.community.serializers.category_serializer import PostCategoryListSpecSerializer
 
 
 class PostCategoryListSpecAPIView(APIView):

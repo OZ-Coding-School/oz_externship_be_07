@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.exam.views import exam_deployment_views, exam_submission_views, exam_views
+from apps.exam.views import exam_views, exam_deployment_views, exam_submission_views, exam_question_views
 
 urlpatterns = [  ###################### EXAM ##################################
     path("admin/exams", exam_views.ExamListCreateAPIView.as_view(), name="exam-list-create"),
@@ -28,4 +28,15 @@ urlpatterns = [  ###################### EXAM ##################################
         exam_submission_views.ExamSubmissionDetailAPIView.as_view(),
         name="exam-detail",
     ),
+    path(
+        "admin/exams/<int:exam_id>/questions",
+        exam_question_views.ExamQuestionListCreateAPIView.as_view(),
+        name="exam-question-list-create",
+    ),
+    path(
+        "admin/exams/questions/<int:question_id>",
+        exam_question_views.ExamQuestionDetailAPIView.as_view(),
+        name="exam-question-detail",
+
+    )
 ]

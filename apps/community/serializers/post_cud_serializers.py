@@ -45,5 +45,5 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
             "id": instance.pk,
             "title": instance.title,
             "content": instance.content,
-            "category_id": instance.category,
+            "category_id": instance.category.id,
         }

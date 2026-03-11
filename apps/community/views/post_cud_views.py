@@ -96,7 +96,12 @@ class PostDetailUpdateDelete(APIView):
                 response_only=True,
                 status_codes=["403"],
             ),
-            OpenApiExample("Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}),
+            OpenApiExample(
+                "Not Found",
+                value={"error_detail": "해당 게시글을 찾을 수 없습니다."},
+                response_only=True,
+                status_codes=["404"],
+            ),
         ]
         + common_error,
         responses={
@@ -104,6 +109,7 @@ class PostDetailUpdateDelete(APIView):
             400: OpenApiTypes.OBJECT,
             401: OpenApiTypes.OBJECT,
             403: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
         },
     )
     def put(self, request: Request, post_id: int) -> Response:
@@ -113,7 +119,7 @@ class PostDetailUpdateDelete(APIView):
             "id": post_id,
             "title": request.data.get("title", "기본 제목"),
             "content": request.data.get("content", "기본 내용"),
-            "category": request.data.get("title", "기본 카테고리"),
+            "category_id": request.data.get("category", 1),
         }
 
         return Response(mock_data, status=status.HTTP_200_OK)

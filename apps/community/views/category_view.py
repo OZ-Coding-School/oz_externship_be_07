@@ -10,24 +10,11 @@ from apps.community.serializers import PostCategoryListSpecSerializer
 
 
 class PostCategoryListSpecAPIView(APIView):
-    """
-    커뮤니티 게시글 카테고리 목록 조회 (SPEC 전용)
-
-    - DB 데이터와 무관하게 항상 같은 응답 구조 제공
-    - 응답스키마(id, name)를 기준으로 화면/API연동 진행바람.
-
-    HTTP Method:
-        GET /api/v1/posts/categories
-    """
 
     serializer_class = PostCategoryListSpecSerializer
     permission_classes = [AllowAny]  # SPEC단계 인증없이 문서/연동 확인
 
     def _build_mock_categories(self) -> list[PostCategory]:
-        """
-        DB 조회없이 모델 인스턴스 직접 생성
-        -> 프론트는 아래 응답 형태만 기준으로 연동하면 됨.
-        """
         return [
             PostCategory(id=1, name="공지사항"),
             PostCategory(id=2, name="자유 게시판"),
@@ -64,7 +51,6 @@ class PostCategoryListSpecAPIView(APIView):
         ],
     )
     def get(self, request: Request) -> Response:
-        # mock 데이터 -> serializer -> 실제 API와 동일한 JSON 구조 반환
         categories = self._build_mock_categories()
         serializer = self.serializer_class(categories, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

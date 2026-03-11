@@ -33,7 +33,7 @@ class SignupTest(TestCase):
         self.client = APIClient()
 
     def test_signup_success(self) -> None:
-        """ 회원가입 성공 테스트(201) """
+        """회원가입 성공 테스트(201)"""
         data = self.user_data.copy()
         data["email"] = "success@example.com"
         data["nickname"] = "success"
@@ -45,7 +45,7 @@ class SignupTest(TestCase):
         self.assertTrue(User.objects.filter(email=data["email"]).exists())
 
     def test_signup_missing_email_fail(self) -> None:
-        """ 필수필드 누락 시 실패 (400) """
+        """필수필드 누락 시 실패 (400)"""
 
         data = self.user_data.copy()
         data.pop("email")
@@ -55,7 +55,7 @@ class SignupTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_signup_duplicate_fail(self) -> None:
-        """ 닉네임,이메일,휴대폰 중복 시 (409) """
+        """닉네임,이메일,휴대폰 중복 시 (409)"""
 
         User.objects.create(
             email="example@example.com",

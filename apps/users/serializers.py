@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from rest_framework import serializers
 
 from .models import User
@@ -21,3 +23,8 @@ class SignUpSerializer(serializers.ModelSerializer["User"]):
             "phone_number",
             "sms_token",
         ]
+        extra_kwargs: Dict[str, Dict[str, Any]] = {
+            "email": {"validators": []},
+            "nickname": {"validators": []},
+            "phone_number": {"validators": []},
+        }

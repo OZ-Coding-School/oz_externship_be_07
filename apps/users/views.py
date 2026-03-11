@@ -1,49 +1,61 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import User
 from .serializers import SignUpSerializer
+from .services import UserService
 
 
 class SignUpView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = SignUpSerializer
 
     @extend_schema(
-        tags=["accounts"],
-        summary="회원가입 API",
-        description="사용자 정보를 모든 필드를 필수로 입력받고 중복체크후 새로운 회원을 생성합니다.",
-        request=SignUpSerializer,
+        summary="회원가입",
+        description="사용자 정보를 입력받아 계정을 생성하고 가입 정보를 반환하는 API",
+        tags=["Accounts"],
+        examples=[
+            OpenApiExample(
+                name="회원가입 성공 예시",
+                value={
+                    "detail": "회원가입이 완료되었습니다.",
+                    "user_info": {
+                        "email": "test@example.com",
+                        "nickname": "테스트유저",
+                        "name": "홍길동",
+                        "birthday": "1995-01-01",
+                        "gender": "M",
+                        "phone_number": "01012345678",
+                    },
+                },
+                response_only=True,
+                status_codes=["201"],
+            )
+        ],
         responses={
-            201: {"description": "회원가입 성공", "example": {"detail": "회원가입이 완료되었습니다."}},
-            400: {
-                "description": "필수값 누락 또는 형식 오류",
-                "example": {"error_detail": "모든 필드는 필수 항목입니다."},
-            },
-            409: {
-                "description": "이메일 중복 오류",
-                "example": {"error_detail": "이미 가입된 정보(이메일/핸드폰/닉네임)가 존재합니다."},
-            },
+            201: SignUpSerializer,
+            400: OpenApiResponse(description="요청 데이터 오류 (필수필드 누락)"),
+            409: OpenApiResponse(description="이미 중복된 회원가입 내역이 존재합니다."),
         },
     )
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         serializer = SignUpSerializer(data=request.data)
 
+        # 유효성 검사 실패
         if not serializer.is_valid():
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        email = request.data.get("email")
-        if User.objects.filter(email=email).exists():
-            return Response({"error_detail": "이미 가입된 이메일이 존재합니다."}, status=status.HTTP_409_CONFLICT)
 
-        phone_number = request.data.get("phone_number")
-        if User.objects.filter(phone_number=phone_number).exists():
-            return Response({"error_detail": "이미 가입된 핸드폰번호가 존재합니다."}, status=status.HTTP_409_CONFLICT)
+        # 통과 후 생성
+        try:
+            user_service = UserService()
+            user_service.create_user(serializer.validated_data)
+            return Response({"detail": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
 
-        nickname = request.data.get("nickname")
-        if User.objects.filter(nickname=nickname).exists():
-            return Response({"error_detail": "이미 사용 중인 닉네임입니다."}, status=status.HTTP_409_CONFLICT)
-
-        serializer.save()
-        return Response({"detail": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
+        # 중복 가입 에러 처리
+        except Exception:
+            return Response(
+                {"error_detail": "이미 중복된 회원가입 내역이 존재합니다."}, status=status.HTTP_409_CONFLICT
+            )

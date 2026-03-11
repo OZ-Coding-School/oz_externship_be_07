@@ -46,7 +46,8 @@ class PostCreate(APIView):
                 value={"detail": "게시글이 성공적으로 등록되었습니다.", "pk": 1},
                 status_codes=["201"],
             ),
-        ] + common_error,
+        ]
+        + common_error,
         responses={
             201: OpenApiTypes.OBJECT,
             400: OpenApiTypes.OBJECT,
@@ -93,7 +94,8 @@ class PostDetailUpdateDelete(APIView):
                 status_codes=["403"],
             ),
             OpenApiExample("Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}),
-        ] + common_error,
+        ]
+        + common_error,
         responses={
             200: OpenApiTypes.OBJECT,
             400: OpenApiTypes.OBJECT,

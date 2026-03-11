@@ -24,7 +24,7 @@ class SignUpView(APIView):
             },
             409: {
                 "description": "이메일 중복 오류",
-                "example": {"error_detail": "이미 중복된 회원가입 내역이 존재합니다."},
+                "example": {"error_detail": "이미 가입된 정보(이메일/핸드폰/닉네임)가 존재합니다."},
             },
         },
     )
@@ -36,9 +36,14 @@ class SignUpView(APIView):
         email = request.data.get("email")
         if User.objects.filter(email=email).exists():
             return Response({"error_detail": "이미 가입된 이메일이 존재합니다."}, status=status.HTTP_409_CONFLICT)
+
         phone_number = request.data.get("phone_number")
         if User.objects.filter(phone_number=phone_number).exists():
             return Response({"error_detail": "이미 가입된 핸드폰번호가 존재합니다."}, status=status.HTTP_409_CONFLICT)
+
+        nickname = request.data.get("nickname")
+        if User.objects.filter(nickname=nickname).exists():
+            return Response({"error_detail": "이미 사용 중인 닉네임입니다."}, status=status.HTTP_409_CONFLICT)
 
         serializer.save()
         return Response({"detail": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)

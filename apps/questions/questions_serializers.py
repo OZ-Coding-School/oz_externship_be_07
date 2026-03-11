@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from apps.users.models import User
@@ -6,15 +8,17 @@ from .models import QuestionCategories, QuestionImages, Questions
 
 
 class AuthorSerializer(serializers.ModelSerializer[User]):
+    profile_image_url = serializers.ImageField(source="profile_img_url", read_only=True)
+
     class Meta:
         model = User
-        fields = ["id", "nickname", "profile_img_url"]
+        fields = ["id", "nickname", "profile_image_url"]
 
 
 # 카테고리 시리얼라이저 (질문 등록시 선택)
 class CategorySerializer(serializers.ModelSerializer[QuestionCategories]):
     depth = serializers.SerializerMethodField()
-    names = serializers.ReadOnlyField(source="name")
+    names = serializers.ReadOnlyField()
 
     class Meta:
         model = QuestionCategories
@@ -22,6 +26,14 @@ class CategorySerializer(serializers.ModelSerializer[QuestionCategories]):
 
     def get_depth(self, obj: QuestionCategories) -> int:
         return 1 if obj.parent is None else 2
+
+    def get_names(self, obj: QuestionCategories) -> list[str]:
+        result: list[str] = []
+        current: QuestionCategories | None = obj
+        while current:
+            result.insert(0, current.name)
+            current = current.parent
+        return result
 
 
 # 질문 이미지 시리얼라이저
@@ -35,10 +47,32 @@ class QuestionImagesSerializer(serializers.ModelSerializer[QuestionImages]):
 class QuestionListSerializer(serializers.ModelSerializer[Questions]):
     author = AuthorSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
+    content_preview = serializers.SerializerMethodField()
+    answer_count = serializers.IntegerField(read_only=True)
+    thumbnail_img_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Questions
-        fields = ["id", "author", "category", "title", "content", "view_count", "created_at"]
+        fields = [
+            "id",
+            "category",
+            "author",
+            "title",
+            "content_preview",
+            "answer_count",
+            "view_count",
+            "created_at",
+            "thumbnail_img_url",
+        ]
+
+    def get_content_preview(self, obj: Questions) -> str:
+        if obj.content:
+            return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
+        return ""
+
+    def get_thumbnail_img_url(self, obj: Questions) -> str | None:
+        first_image = obj.images.first()
+        return first_image.img_url if first_image else None
 
 
 # 목록 조회용: 모든 정보가 나오게
@@ -46,47 +80,62 @@ class QuestionDetailSerializer(serializers.ModelSerializer[Questions]):
     author = AuthorSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
     images = QuestionImagesSerializer(read_only=True, many=True)
+    # answer_serializers.py 작성되면 여기에 연결!
+    # answers = AnswerSerializers(many=True, read_only=True) <- answer_serializers.py 작성되면 주석 해제 serializer 이름 확인하기
 
     class Meta:
         model = Questions
-        fields = ["id", "author", "category", "images", "title", "content", "view_count", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "title",
+            "content",
+            "category",
+            "images",
+            "view_count",
+            "author",
+            "created_at",  # "answers"
+        ]
+
+    # def get_answers(self, obj: Questions) -> list:
+    #     answer_serializers와 합쳐질 예정
+    #     return []
 
 
 # 등록용
 class QuestionCreateSerializer(serializers.ModelSerializer[Questions]):
-    images = QuestionImagesSerializer(required=False, many=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=QuestionCategories.objects.all())
+    image_url = serializers.ListField(child=serializers.URLField(), write_only=True, required=False)
 
     class Meta:
         model = Questions
-        fields = ["category", "title", "content", "images"]
+        fields = ["category", "title", "content", "image_url"]
 
-    # 글자 수 유효성 검사
-    def validate_title(self, value: str) -> str:
-        if len(value) < 3:
-            raise serializers.ValidationError("제목은 최소 3글자 이상으로 입력해주세요.")
-        return value
+    def create(self, validated_data: dict[str, Any]) -> Questions:
+        image_urls = validated_data.pop("image_url", [])
+        questions = Questions.objects.create(**validated_data)
 
-    def validate_content(self, value: str) -> str:
-        if len(value) < 5:
-            raise serializers.ValidationError("내용을 조금 더 길게 작성해주시길 바랍니다.(최소5글자 이상)")
-        return value
+        for url in image_urls:
+            QuestionImages.objects.create(questions=questions, img_url=url)
+
+        return questions
 
 
 # 수정용
 class QuestionUpdateSerializer(serializers.ModelSerializer[Questions]):
-    images = QuestionImagesSerializer(required=False, many=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=QuestionCategories.objects.all())
+    image_url = serializers.ListField(child=serializers.URLField(), write_only=True, required=False)
 
     class Meta:
         model = Questions
-        fields = ["category", "title", "content", "images"]
+        fields = ["category", "title", "content", "image_url"]
 
-    # 글자 수 유효성 검사
-    def validate_title(self, value: str) -> str:
-        if len(value) < 3:
-            raise serializers.ValidationError("제목은 최소 3글자 이상으로 입력해주세요.")
-        return value
+    def update(self, instance: Questions, validated_data: dict[str, Any]) -> Questions:
+        image_urls = validated_data.pop("image_url", None)
+        instance = super().update(instance, validated_data)
 
-    def validate_content(self, value: str) -> str:
-        if len(value) < 5:
-            raise serializers.ValidationError("내용을 조금 더 길게 작성해주시길 바랍니다.(최소5글자 이상)")
-        return value
+        if image_urls is not None:
+            instance.images.all().delete()
+            for url in image_urls:
+                QuestionImages.objects.create(questions=instance, img_url=url)
+
+        return instance

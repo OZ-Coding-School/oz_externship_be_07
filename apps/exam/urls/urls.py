@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.exam.views import exam_views, exam_deployment_views, exam_submission_views
 from apps.exam.views import exam_deployment_views, exam_submission_views, exam_views
 
 urlpatterns = [  ###################### EXAM ##################################

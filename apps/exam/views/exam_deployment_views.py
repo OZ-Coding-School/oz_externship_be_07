@@ -4,8 +4,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from apps.exam.models.exam_submission_models import ExamSubmission
+
 from apps.exam.serializers.exam_deployment_serializers import (
     ErrorDetailSerializer,
     ExamDeploymentCreateResponseSerializer,
@@ -19,6 +21,7 @@ from apps.exam.serializers.exam_deployment_serializers import (
     ExamDeploymentUpdateResponseSerializer,
     ExamDeploymentUpdateSerializer,
 )
+
 from apps.exam.servieces.exam_deployment_services import ExamDeploymentService
 
 
@@ -61,7 +64,6 @@ class ExamDeploymentBaseAPIView(APIView):
 
 class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
     @extend_schema(
-        tags=["쪽지시험 배포 관리"],
         summary="쪽지시험 배포 생성 API",
         request=ExamDeploymentCreateSerializer,
         responses={201: ExamDeploymentCreateResponseSerializer, 400: ErrorDetailSerializer},
@@ -78,7 +80,6 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
-        tags=["쪽지시험 배포 관리"],
         summary="쪽지시험 배포 목록 조회 API",
         responses={200: ExamDeploymentListResponseSerializer},
     )
@@ -125,7 +126,6 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
 
 class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
     @extend_schema(
-        tags=["쪽지시험 배포 관리"],
         summary="쪽지시험 배포 상세 조회 API",
         responses={200: ExamDeploymentDetailSerializer},
     )
@@ -172,7 +172,6 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
         return Response(ExamDeploymentDetailSerializer(response_data).data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["쪽지시험 배포 관리"],
         summary="쪽지시험 배포 정보 수정 API",
         request=ExamDeploymentUpdateSerializer,
         responses={200: ExamDeploymentUpdateResponseSerializer},
@@ -198,7 +197,6 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
         )
 
     @extend_schema(
-        tags=["쪽지시험 배포 관리"],
         summary="쪽지시험 배포 삭제 API",
         responses={200: ExamDeploymentDeleteResponseSerializer},
     )
@@ -212,7 +210,6 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
 
 class ExamDeploymentStatusUpdateAPIView(ExamDeploymentBaseAPIView):
     @extend_schema(
-        tags=["쪽지시험 배포 관리"],
         summary="쪽지시험 배포 on/off API",
         request=ExamDeploymentStatusUpdateSerializer,
         responses={200: ExamDeploymentStatusUpdateResponseSerializer},

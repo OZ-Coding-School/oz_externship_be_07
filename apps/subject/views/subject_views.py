@@ -1,4 +1,10 @@
 from django.shortcuts import render
+from django.http import Http404
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Exam
 from .serializers import (
@@ -6,11 +12,38 @@ from .serializers import (
     ExamDetailSerializer, ExamUpdateSerializer,
     ExamDeleteRequestSerializer
 )
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.subject.serializers.subject_serializers import (
+    ErrorResponseSerializer,
+    SubjectCreateRequestSerializer,
+    SubjectCreateResponseSerializer,
+    SubjectDetailResponseSerializer,
+    SubjectListItemSerializer,
+    SubjectScatterPointSerializer,
+    SubjectUpdateRequestSerializer,
+)
+from apps.subject.services.subject_services import SubjectService
 
 
+class IsAdminUserLike:
+    """
+    프로젝트에 맞는 실제 권한 클래스로 교체하세요.
+    예:
+    - DRF IsAdminUser
+    - 커스텀 관리자 권한
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.is_staff)
+
+
+class AdminSubjectCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUserLike]
 class ExamListCreateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
@@ -49,51 +82,17 @@ class ExamListCreateAPIView(APIView):
         tags=['쪽지시험 관리']
     )
     def post(self, request):
-        serializer = ExamCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ExamDetailAPIView(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-    serializer_class = ExamDetailSerializer
 
     @extend_schema(
-        summary="쪽지시험 상세 조회",
-        description="특정 ID의 쪽지시험 상세 정보와 질문 목록을 조회합니다.",
-        responses={200: ExamDetailSerializer},
-        tags=['쪽지시험 관리']
     )
-    def get(self, request, exam_id):
-        exam = self.get_object(exam_id)
-        serializer = ExamDetailSerializer(exam)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        summary="쪽지시험 수정",
-        description="기존 쪽지시험의 정보를 수정합니다. 이미지 변경이 없을 경우 필드를 비워둘 수 있습니다.",
-        request=ExamUpdateSerializer,
-        responses={200: ExamUpdateSerializer},
-        tags=['쪽지시험 관리']
     )
-    def put(self, request, exam_id):
-        exam = self.get_object(exam_id)
-        serializer = ExamUpdateSerializer(exam, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        summary="쪽지시험 삭제",
-        description="특정 쪽지시험을 삭제합니다. 성공 시 삭제된 시험의 ID를 반환합니다.",
-        responses={201: ExamDeleteRequestSerializer},
-        tags=['쪽지시험 관리']
-    )
-    def delete(self, request, exam_id):
-        exam = self.get_object(exam_id)
-        exam.delete()
-        return Response({"id": exam_id}, status=status.HTTP_200_OK)
+            )
 

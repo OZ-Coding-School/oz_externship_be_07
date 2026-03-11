@@ -1,7 +1,9 @@
+from typing import Any
+
 from rest_framework import serializers
 
 
-class PostListSerializer(serializers.Serializer[dict]):
+class PostListSerializer(serializers.Serializer[dict[str, Any]]):
     """게시글 목록 조회용 Serializer"""
 
     id = serializers.IntegerField()

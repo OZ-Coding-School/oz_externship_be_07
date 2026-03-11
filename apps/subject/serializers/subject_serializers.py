@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.subject.models.subject_models import Subject
 
 
@@ -76,9 +77,22 @@ class SubjectDetailResponseSerializer(serializers.ModelSerializer):
         )
 
 
-class SubjectScatterPointSerializer(serializers.Serializer):
-    time = serializers.FloatField()
-    score = serializers.IntegerField()
+class SubjectScatterPointSerializer(serializers.ModelSerializer):
+    time = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ExamSubmission
+        fields = [
+            "time",
+            "score",
+        ]
+
+    def get_time(self, obj):
+        if obj.created_at and obj.started_at:
+            duration = obj.created_at - obj.started_at
+            hours = duration.total_seconds() / 3600
+            return round(hours, 1)
+        return 0.0
 
 
 class ErrorResponseSerializer(serializers.Serializer):

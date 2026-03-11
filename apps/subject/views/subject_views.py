@@ -332,13 +332,12 @@ class AdminSubjectScatterAPIView(APIView):
     )
     def get(self, request, subject_id: int):
         try:
-            scatter_data = SubjectService.get_subject_scatter(subject_id=subject_id)
+            submissions = SubjectService.get_subject_scatter_queryset(subject_id=subject_id)
         except Http404:
             return Response(
                 {"error_detail": "과목을 찾을 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = SubjectScatterPointSerializer(data=scatter_data, many=True)
-        serializer.is_valid(raise_exception=True)
+        serializer = SubjectScatterPointSerializer(submissions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

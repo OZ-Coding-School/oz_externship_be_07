@@ -2,6 +2,7 @@ from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound, ValidationError
 
+from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.subject.models.course_models import Course
 from apps.subject.models.subject_models import Subject
 
@@ -89,27 +90,12 @@ class SubjectService:
         subject.delete()
 
     @staticmethod
-    def get_subject_scatter(*, subject_id: int) -> list[dict]:
-        """
-        명세서의 산점도 응답 형식:
-        [
-            {"time": 1.5, "score": 95},
-            ...
-        ]
+    def get_subject_scatter_queryset(subject_id: int):
+        subject = SubjectService.get_subject(subject_id)
 
-        주의:
-        현재 제공된 Subject 모델만으로는 학습시간/점수 원본 데이터가 없습니다.
-        따라서 아래 부분은 실제 프로젝트의 학습 기록 모델에 맞게 교체해야 합니다.
-        """
-        subject = SubjectService.get_subject(subject_id=subject_id)
-
-        # TODO:
-        # 예시:
-        # records = SubjectLearningRecord.objects.filter(subject=subject).values("time", "score")
-        # return list(records)
-
-        related_manager = getattr(subject, "learning_records", None)
-        if related_manager is None:
-            return []
-
-        return list(related_manager.values("time", "score"))
+        return (
+            ExamSubmission.objects.filter(exam__subject=subject)
+            .exclude(started_at__isnull=True)
+            .exclude(created_at__isnull=True)
+            .order_by("id")
+        )

@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -15,10 +17,33 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
         fields = ["id", "file_name", "file_url"]
 
 
-class PostSerializer(serializers.ModelSerializer[Post]):
+class PostCreateSerializer(serializers.ModelSerializer[Post]):
     images = PostImageSerializer(many=True, read_only=True)
     attachments = PostAttachmentsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["id", "title", "content", "category", "images", "attachments"]
+        fields = ["title", "content", "category", "images", "attachments"]
+
+    def to_representation(self, instance: Post) -> dict[str, Any]:
+        return {
+            "detail": "게시글이 성공적으로 생성되었습니다.",
+            "pk": instance.pk,
+        }
+
+
+class PostUpdateSerializer(serializers.ModelSerializer[Post]):
+    images = PostImageSerializer(many=True, read_only=True)
+    attachments = PostAttachmentsSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ["title", "content", "category", "images", "attachments"]
+
+    def to_representation(self, instance: Post) -> dict[str, Any]:
+        return {
+            "id": instance.pk,
+            "title": instance.title,
+            "content": instance.content,
+            "category_id": instance.category,
+        }

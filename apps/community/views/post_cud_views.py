@@ -7,7 +7,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.community.serializers.post_cud_serializers import PostSerializer
+from apps.community.serializers.post_cud_serializers import (
+    PostCreateSerializer,
+    PostUpdateSerializer,
+)
 
 common_error = [
     OpenApiExample(
@@ -33,7 +36,7 @@ common_error = [
 
 class PostCreate(APIView):
     permission_classes = [AllowAny]
-    serializer_class = PostSerializer
+    serializer_class = PostCreateSerializer
     parser_classes = [MultiPartParser, JSONParser]
 
     @extend_schema(
@@ -67,13 +70,13 @@ class PostCreate(APIView):
 
 class PostDetailUpdateDelete(APIView):
     permission_classes = [AllowAny]
-    serializer_class = PostSerializer
+    serializer_class = PostUpdateSerializer
     parser_classes = [MultiPartParser, JSONParser]
 
     @extend_schema(
         tags=["PostUpdate"],
         summary="게시판 수정 API",
-        request=PostSerializer,
+        request=PostUpdateSerializer,
         description="커뮤니티 게시글 수정 API",
         examples=[
             OpenApiExample(
@@ -143,4 +146,5 @@ class PostDetailUpdateDelete(APIView):
         },
     )
     def delete(self, request: Request, post_id: int) -> Response:
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        mock_data = {"detail": "게시글이 삭제되었습니다."}
+        return Response(mock_data, status=status.HTTP_200_OK)

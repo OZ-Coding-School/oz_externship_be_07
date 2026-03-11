@@ -2,7 +2,6 @@ from django.db import models
 
 from apps.core.models import TimeStampModel
 from apps.exam.models.choices import DeploymentStatus
-from apps.subject.models.cohort_models import Cohort
 from apps.exam.models.exam_models import Exam
 from apps.subject.models.cohort_models import Cohort
 

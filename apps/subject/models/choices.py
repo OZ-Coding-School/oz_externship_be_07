@@ -13,6 +13,7 @@ class StudentEnrollmentRequestsStatus(models.TextChoices):
     REJECTED = "REJECTED"
     CANCELED = "CANCELED"
 
+
 class SubjectStatus(models.TextChoices):
     ACTIVATED = "ACTIVATED"
     DEACTIVATED = "DEACTIVATED"

@@ -51,10 +51,14 @@ class SubjectService:
 
         new_title = data.get("title")
         if new_title and new_title != subject.title:
-            duplicated = Subject.objects.filter(
-                course=subject.course,
-                title=new_title,
-            ).exclude(id=subject.id).exists()
+            duplicated = (
+                Subject.objects.filter(
+                    course=subject.course,
+                    title=new_title,
+                )
+                .exclude(id=subject.id)
+                .exists()
+            )
             if duplicated:
                 raise ValidationError(detail="동일한 이름의 과목이 이미 존재합니다.")
             subject.title = new_title
@@ -108,6 +112,4 @@ class SubjectService:
         if related_manager is None:
             return []
 
-        return list(
-            related_manager.values("time", "score")
-        )
+        return list(related_manager.values("time", "score"))

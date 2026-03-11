@@ -1,72 +1,10 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.subject.models import Cohort, Subject
+from apps.subject.models.cohort_models import Cohort
 
-from .models import Exam, ExamDeployment, ExamSubmission
-
-
-# 1. 생성용 (POST)
-class ExamCreateSerializer(serializers.ModelSerializer):
-    thumbnail_img = serializers.ImageField(write_only=True)
-
-    class Meta:
-        model = Exam
-        fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
-        read_only_fields = ["id", "thumbnail_img_url"]
-
-    def create(self, validated_data):
-        thumbnail_img = validated_data.pop("thumbnail_img")
-        # S3 업로드 경로 예시 (요구사항 반영)
-        validated_data["thumbnail_img_url"] = (
-            f"https://oz-externship.s3.ap-northeast-2.amazonaws.com/exams/{thumbnail_img.name}"
-        )
-        return super().create(validated_data)
-
-
-# 2. 목록 조회용 (GET List)
-class ExamListSerializer(serializers.ModelSerializer):
-    subject_name = serializers.CharField(source="subject_id.title", read_only=True)
-
-    class Meta:
-        model = Exam
-        fields = ["id", "title", "subject_name", "created_at", "updated_at"]
-
-
-# 3. 상세 조회용 (GET Detail)
-class ExamDetailSerializer(serializers.ModelSerializer):
-    subject = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Exam
-        fields = ["id", "title", "subject", "thumbnail_img_url", "created_at", "updated_at"]
-
-    def get_subject(self, obj):
-        return {"id": obj.subject_id.id, "title": obj.subject_id.title}
-
-
-# 4. 수정용 (PUT)
-class ExamUpdateSerializer(serializers.ModelSerializer):
-    thumbnail_img = serializers.ImageField(write_only=True, required=False)
-
-    class Meta:
-        model = Exam
-        fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
-        read_only_fields = ["id", "thumbnail_img_url"]
-
-    def update(self, instance, validated_data):
-        thumbnail_img = validated_data.pop("thumbnail_img", None)
-        if thumbnail_img:
-            instance.thumbnail_img_url = (
-                f"https://oz-externship.s3.ap-northeast-2.amazonaws.com/exams/{thumbnail_img.name}"
-            )
-        return super().update(instance, validated_data)
-
-
-class ExamDeleteRequestSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Exam
-        fields = ["id"]
+from apps.exam.models.exam_models import Exam
+from apps.exam.models.exam_deployment_models import ExamDeployment
 
 
 # =========================================================
@@ -243,73 +181,3 @@ class ExamDeploymentDeleteResponseSerializer(serializers.Serializer):
 # =========================================================
 class ErrorDetailSerializer(serializers.Serializer):
     error_detail = serializers.CharField()
-
-
-class ExamSubmissionListSerializer(serializers.ModelSerializer):
-    """목록 조회용: 간단한 요약 정보 반환"""
-
-    submission_id = serializers.IntegerField(source="id")
-    student_name = serializers.CharField(source="submitter.name", read_only=True)
-    course_name = serializers.CharField(source="deployment.cohort.subject.name", default="N/A")  # 예시 경로
-    cohort_number = serializers.IntegerField(source="deployment.cohort.number", read_only=True)
-    exam_title = serializers.CharField(source="deployment.exam.title", read_only=True)
-    subject_name = serializers.CharField(source="deployment.exam.subject.name", read_only=True)
-    finished_at = serializers.DateTimeField(source="created_at")  # TimeStampModel 기준
-
-    class Meta:
-        model = ExamSubmission
-        fields = [
-            "submission_id",
-            "student_name",
-            "course_name",
-            "cohort_number",
-            "exam_title",
-            "subject_name",
-            "cheating_count",
-            "started_at",
-            "finished_at",
-        ]
-
-
-class ExamSubmissionDetailSerializer(serializers.ModelSerializer):
-    """상세 조회용: 명세서의 중첩 구조(Nested) 구현"""
-
-    exam = serializers.SerializerMethodField()
-    student = serializers.SerializerMethodField()
-    result = serializers.SerializerMethodField()
-    questions = serializers.JSONField(source="answers_json")  # 모델의 JSON 데이터를 그대로 사용
-
-    class Meta:
-        model = ExamSubmission
-        fields = ["exam", "student", "result", "questions"]
-
-    def get_exam(self, obj):
-        deployment = obj.deployment
-        return {
-            "exam_title": deployment.exam.title,
-            "subject_name": deployment.exam.subject.name,
-            "duration_time": deployment.duration_time,
-            "open_at": deployment.open_at,
-            "close_at": deployment.close_at,
-        }
-
-    def get_student(self, obj):
-        user = obj.submitter
-        return {
-            "nickname": getattr(user, "nickname", user.username),  # 필드 없을 시 username
-            "name": user.name if hasattr(user, "name") else user.username,
-            "course_name": obj.deployment.cohort.subject.name,
-            "cohort_number": obj.deployment.cohort.number,
-        }
-
-    def get_result(self, obj):
-        # 소요 시간 계산 (초 단위 -> 분 단위 예시)
-        elapsed_seconds = (obj.created_at - obj.started_at).total_seconds()
-
-        return {
-            "score": obj.score,
-            "correct_answer_count": obj.correct_answer_count,
-            "total_question_count": 10,  # 이 부분은 기획에 따라 snapshot 개수 count 가능
-            "cheating_count": obj.cheating_count,
-            "elapsed_time": int(elapsed_seconds // 60) if elapsed_seconds > 0 else 0,
-        }

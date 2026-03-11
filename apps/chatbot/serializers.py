@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -8,10 +10,16 @@ from .models import ChatbotCompletions, ChatbotSessions
 User = get_user_model()
 
 
-class ChatbotSessionSerializer(serializers.ModelSerializer):
+class ChatbotSessionSerializer(serializers.ModelSerializer):  # type: ignore
     # """챗봇 세션 생성 및 조회용 시리얼라이저"""
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    question = serializers.PrimaryKeyRelatedField(queryset=Questions.objects.all(), required=False, allow_null=True)
+    user: serializers.PrimaryKeyRelatedField[Any] = serializers.PrimaryKeyRelatedField(
+        read_only=True, default=serializers.CurrentUserDefault()
+    )
+    question: serializers.PrimaryKeyRelatedField[Any] = serializers.PrimaryKeyRelatedField(
+        queryset=Questions.objects.all(),
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = ChatbotSessions
@@ -27,16 +35,15 @@ class ChatbotSessionSerializer(serializers.ModelSerializer):
     #     return representation
 
 
-class ChatbotMessageSerializer(serializers.ModelSerializer):
+class ChatbotMessageSerializer(serializers.ModelSerializer):  # type: ignore
     # """챗봇 대화 내역 조회용 시리얼라이저 (GET) """
-    role = serializers.CharField()
 
     class Meta:
         model = ChatbotCompletions
         fields = ["id", "message", "role", "created_at"]
 
 
-class ChatbotCompletionRequestSerializer(serializers.Serializer):
+class ChatbotCompletionRequestSerializer(serializers.Serializer):  # type: ignore
     # """ 사용자 메시지 입력 검증용 시리얼라이저 (POST) """
     message = serializers.CharField(
         required=True,

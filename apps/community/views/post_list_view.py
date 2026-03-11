@@ -26,23 +26,16 @@ class PostListAPIView(APIView):
             "results": [
                 {
                     "id": 1,
-                    "author": {
-                        "id": 1,
-                        "nickname": "testuser",
-                        "profile_img_url": "https://example.com/uploads/images/users/profiles/image.png",
-                    },
+                    "author": 1,
                     "title": "테스트 게시글 1번",
                     "thumbnail_img_url": "https://example.com/uploads/images/posts/first-image.png",
-                    "content_preview": "그냥 작성한 게시글 1번 입니다. 게시글 본문 내용이 50글자 내로 생략된 형태로 제공됩니다.",
+                    "content_preview": "그냥 작성한 게시글 1번 입니다.",
                     "comment_count": 100,
                     "view_count": 100,
                     "like_count": 100,
                     "created_at": "2025-10-30T14:01:57.505250+09:00",
                     "updated_at": "2025-10-30T14:01:57.505250+09:00",
-                    "category": {
-                        "id": 1,
-                        "name": "자유",
-                    },
+                    "category": 1,
                 }
             ],
         }

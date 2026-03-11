@@ -7,7 +7,7 @@ class PostListSerializer(serializers.Serializer[dict[str, Any]]):
     """게시글 목록 조회용 Serializer"""
 
     id = serializers.IntegerField()
-    author = serializers.DictField()
+    author = serializers.IntegerField()
     title = serializers.CharField()
     thumbnail_img_url = serializers.CharField(allow_null=True)
     content_preview = serializers.CharField()
@@ -16,4 +16,4 @@ class PostListSerializer(serializers.Serializer[dict[str, Any]]):
     like_count = serializers.IntegerField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
-    category = serializers.DictField()
+    category = serializers.IntegerField()

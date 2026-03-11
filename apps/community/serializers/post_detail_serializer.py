@@ -8,11 +8,9 @@ class PostDetailSerializer(serializers.Serializer[dict[str, Any]]):
 
     id = serializers.IntegerField()
     title = serializers.CharField()
-    author = serializers.DictField()
-    category = serializers.DictField()
+    author = serializers.IntegerField()
+    category = serializers.IntegerField()
     content = serializers.CharField()
-    image_urls = serializers.ListField(child=serializers.CharField(), allow_empty=True)
-    comments = serializers.ListField(child=serializers.DictField(), allow_empty=True)
     view_count = serializers.IntegerField()
     like_count = serializers.IntegerField()
     created_at = serializers.DateTimeField()

@@ -8,7 +8,7 @@ from drf_spectacular.views import (
 )
 
 urlpatterns: list[URLPattern | URLResolver] = [
-    path("api/v1/posts", include("apps.community.urls")),
+    path("api/v1/posts/", include("apps.community.urls")),
 ]
 
 if settings.DEBUG:

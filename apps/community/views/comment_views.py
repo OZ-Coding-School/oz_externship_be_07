@@ -1,5 +1,3 @@
-from typing import Any
-
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.request import Request
@@ -18,16 +16,14 @@ class CommentViewSet(
 ):
     serializer_class = PostCommentSerializer
     queryset = PostComment.objects.select_related("author").all()
-    # Todo: 권한설정 예정
-    # permission_classes = [IsSelfOrReadOnly]
 
     lookup_field = "id"
     lookup_url_kwarg = "comment_id"
 
     @extend_schema(
-        summary="댓글 목록",  # api 제목
-        description="특정 게시글의 모든 댓글 list",  # 설명
-        tags=["Community - Comments"],  # api를 기능별로 묶어준다
+        summary="댓글 목록",
+        description="특정 게시글의 모든 댓글 list",
+        tags=["Community - Comments"],
         examples=[
             OpenApiExample(
                 name="댓글 목록 예시",
@@ -48,7 +44,6 @@ class CommentViewSet(
                             "created_at": "2026-03-10T17:00:000",
                             "updated_at": "2026-03-10T18:00:000",
                         },
-                        ...,
                     ],
                 },
                 response_only=True,
@@ -60,9 +55,9 @@ class CommentViewSet(
         return Response(mock_data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        summary="댓글 작성",  # api 제목
-        description="댓글 작성 api",  # 설명
-        tags=["Community - Comments"],  # api를 기능별로 묶어준다
+        summary="댓글 작성",
+        description="댓글 작성 api",
+        tags=["Community - Comments"],
         examples=[
             OpenApiExample(
                 name="댓글 등록 예시",
@@ -75,15 +70,15 @@ class CommentViewSet(
             400: OpenApiResponse(description="필수 항목 데이터가 빠짐."),
             401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),
             404: OpenApiResponse(description="해당 게시글을 찾을 수 없습니다."),
-        },  # 성공 및 실패 명세
+        },
     )
     def create(self, request: Request, post_id: int) -> Response:
 
         return Response({}, status=status.HTTP_200_OK)
 
     @extend_schema(
-        summary="댓글 수정",  # api 제목
-        description="댓글 수정 api",  # 설명
+        summary="댓글 수정",
+        description="댓글 수정 api",
         tags=["Community - Comments"],
         examples=[
             OpenApiExample(

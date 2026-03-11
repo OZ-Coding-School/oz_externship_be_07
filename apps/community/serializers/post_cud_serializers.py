@@ -18,12 +18,10 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
-    images = PostImageSerializer(many=True, read_only=True)
-    attachments = PostAttachmentsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["title", "content", "category", "images", "attachments"]
+        fields = ["title", "content", "category"]
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {
@@ -31,14 +29,11 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
             "pk": instance.pk,
         }
 
-
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
-    images = PostImageSerializer(many=True, read_only=True)
-    attachments = PostAttachmentsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["title", "content", "category", "images", "attachments"]
+        fields = ["title", "content", "category"]
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {

@@ -4,7 +4,7 @@ from rest_framework import status
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post
-from apps.users.models import User
+from apps.users.models.models import User
 
 
 class PostCreateUpdateDeleteViewTest(TestCase):

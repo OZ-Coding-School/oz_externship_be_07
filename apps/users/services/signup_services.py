@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from django.contrib.auth.hashers import make_password
 
-from .models import User
+from apps.users.models import User
 
 
 class UserService:

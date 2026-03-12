@@ -3,6 +3,8 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.community.core.pagination import CustomPaginationComment
+from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.community.models import PostComment
 from apps.community.serializers.comment_serializers import PostCommentSerializer
 
@@ -16,6 +18,8 @@ class CommentViewSet(
 ):
     serializer_class = PostCommentSerializer
     queryset = PostComment.objects.select_related("author").all()
+    permission_classes = [IsSelfOrReadOnly]
+    pagination_class = CustomPaginationComment
 
     lookup_field = "id"
     lookup_url_kwarg = "comment_id"
@@ -23,7 +27,7 @@ class CommentViewSet(
     @extend_schema(
         summary="댓글 목록",
         description="특정 게시글의 모든 댓글 list",
-        tags=["Community - Comments"],
+        tags=["posts"],
         examples=[
             OpenApiExample(
                 name="댓글 목록 예시",
@@ -51,18 +55,24 @@ class CommentViewSet(
         ],
     )
     def list(self, request: Request, post_id: int) -> Response:
-        mock_data = {"total_count": 5123424, "size": 10, "page": 1, "results": []}
-        return Response(mock_data, status=status.HTTP_200_OK)
+        queryset = PostComment.objects.filter(post_id=post_id).select_related("author").all()
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        return Response({"error_detail": "해당 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
     @extend_schema(
         summary="댓글 작성",
         description="댓글 작성 api",
-        tags=["Community - Comments"],
+        tags=["posts"],
         examples=[
             OpenApiExample(
                 name="댓글 등록 예시",
                 description="정상응답 데이터",
-                value={"detail": "댓글이 등록되었습니다."},
+                value={"content": "테스트 댓글"},
             )
         ],
         responses={
@@ -73,17 +83,22 @@ class CommentViewSet(
         },
     )
     def create(self, request: Request, post_id: int) -> Response:
+        # Todo: 태그된 닉네임 테이블등록
+        serializer = self.get_serializer(data=request.data)
 
-        return Response({}, status=status.HTTP_200_OK)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(author=request.user, post_id=post_id)
+
+        return Response({"detail": "댓글이 등록되었습니다."}, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="댓글 수정",
         description="댓글 수정 api",
-        tags=["Community - Comments"],
+        tags=["posts"],
         examples=[
             OpenApiExample(
                 name="댓글 수정 성공 예시",
-                value={"id": 5, "content": "수정 댓글", "updated_at": "2026-03-10T18:00:000"},
+                value={"content": "수정 댓글"},
                 response_only=True,
             )
         ],
@@ -101,14 +116,7 @@ class CommentViewSet(
 
     @extend_schema(
         summary="댓글 삭제",
-        tags=["Community - Comments"],
-        examples=[
-            OpenApiExample(
-                name="댓글 수정 성공 예시",
-                value={"detail": "댓글이 삭제되었습니다."},
-                response_only=True,
-            )
-        ],
+        tags=["posts"],
         responses={
             200: OpenApiResponse(description="댓글이 삭제되었습니다"),
             401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),

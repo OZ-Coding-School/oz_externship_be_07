@@ -22,7 +22,7 @@ class PostCommentAPIViewTest(TestCase):
             email="test@test.com",
             name="test",
             nickname="test",
-            hashed_password="qwer1234",
+            password="qwer1234",
             birthday="1995-01-01",
             gender="M",
         )
@@ -61,7 +61,7 @@ class PostCommentAPIViewTest(TestCase):
         self.assertEqual(result["author"], self.user.id)
 
     def test_create_comment_returns_201(self) -> None:
-        self.client.force_authenticate(user=self.user)  # type: ignore
+        self.client.force_authenticate(user=self.user)
 
         url = reverse("post-comment-list", kwargs={"post_id": self.post.id})
         data = {"content": "로그인후 작성 테스트 댓글"}

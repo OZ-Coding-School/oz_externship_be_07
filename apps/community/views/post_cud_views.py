@@ -61,6 +61,7 @@ class PostCreate(APIView):
     )
     def post(self, request: Request) -> Response:
         serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         mock_data = {
             "detail": "게시글이 성공적으로 등록되었습니다.",
@@ -116,6 +117,7 @@ class PostDetailUpdateDelete(APIView):
     )
     def put(self, request: Request, post_id: int) -> Response:
         serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         mock_data = {
             "id": post_id,

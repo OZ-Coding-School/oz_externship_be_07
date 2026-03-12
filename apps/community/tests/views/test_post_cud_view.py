@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APIClient
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post
@@ -8,6 +9,7 @@ from apps.users.models.models import User
 
 
 class PostCreateUpdateDeleteViewTest(TestCase):
+    client: APIClient
     user: User
     category: PostCategory
     post: Post
@@ -31,9 +33,12 @@ class PostCreateUpdateDeleteViewTest(TestCase):
             category=self.category,
             author=self.user,
         )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)  # type: ignore
+        self.user.is_authenticated = True  # type: ignore
 
     def test_post_create_success(self) -> None:
-        url = reverse("post_create")
+        url = reverse("post-list")
 
         data = {
             "title": "테스트2 title",
@@ -49,9 +54,9 @@ class PostCreateUpdateDeleteViewTest(TestCase):
         self.assertIn("pk", get_data)
 
     def test_post_create_fail(self) -> None:
-        url = reverse("post_create")
+        url = reverse("post-list")
 
-        data = {"title": "테스트2 title", "content": "테스트2 content", "category": self.category.id}
+        data = {"content": "테스트2 content", "category": self.category.id}
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

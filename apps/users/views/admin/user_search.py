@@ -2,14 +2,12 @@ from typing import Any
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
-from rest_framework import filters, viewsets
+from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from apps.users.models import User
-from apps.users.serializers.admin_user_search_serializers import (
-    StudentManagerSerializer,
-)
+from apps.users.models.models import User
+from apps.users.serializers.admin.user_search import StudentManagerSerializer
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -17,14 +15,15 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100  # 최대 페이지 크기
 
 
+@extend_schema(tags=["admin_accounts"])
 class StudentManagementViewSet(viewsets.ReadOnlyModelViewSet[User]):
-
+    # 권한 설정 : 관리자 권한이 있는 사용자만 접근 가능
+    permission_classes = [permissions.IsAdminUser]
     # 페이지네이션 설정
     pagination_class = StandardResultsSetPagination
-
     # ID 순으로 기본 정렬
     queryset = User.objects.all().order_by("id")
-
+    # 시리얼라이저 설정
     serializer_class = StudentManagerSerializer
     # 기능 확장: 필터링, 검색, 정렬 백엔드
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -38,7 +37,6 @@ class StudentManagementViewSet(viewsets.ReadOnlyModelViewSet[User]):
     @extend_schema(
         summary="관리자용 학생 목록 조회",
         description="관리자가 학생들의 정보와 현재 수강 중인 기수/코스 데이터를 목록으로 조회합니다.",
-        tags=["Admin - User Management"],
         examples=[
             OpenApiExample(
                 name="학생 목록 조회 성공 예시",

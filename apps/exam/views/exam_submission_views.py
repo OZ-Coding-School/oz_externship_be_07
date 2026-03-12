@@ -14,7 +14,7 @@ from apps.exam.servieces.exam_submission_services import ExamSubmissionService
 
 class ExamSubmissionListAPIView(APIView):
     @extend_schema(
-        tags=["쪽지시험 응시 내역 관리"],
+        tags=["exams"],
         summary="쪽지시험 응시 내역 목록 조회",
         parameters=[
             OpenApiParameter(name="page", type=int, description="페이지 번호"),
@@ -33,7 +33,7 @@ class ExamSubmissionListAPIView(APIView):
 
 class ExamSubmissionDetailAPIView(APIView):
     @extend_schema(
-        tags=["쪽지시험 응시 내역 관리"],
+        tags=["exams"],
         summary="쪽지시험 응시 내역 상세 조회",
         responses={200: ExamSubmissionDetailSerializer, 404: "Not Found"},
     )
@@ -44,7 +44,7 @@ class ExamSubmissionDetailAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["쪽지시험 응시 내역 관리"],
+        tags=["exams"],
         summary="쪽지시험 응시 내역 삭제",
         responses={
             200: {"example": {"submission_id": 123}},

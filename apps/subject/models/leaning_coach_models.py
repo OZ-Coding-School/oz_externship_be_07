@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.users.models import User
+from apps.users.models.models import User
 
 
 class LearningCoach(TimeStampModel):

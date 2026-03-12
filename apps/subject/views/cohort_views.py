@@ -60,7 +60,7 @@ class AdminCohortCreateAPIView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["쪽지시험 기수 관리"],
+        tags=["subjects"],
         summary="어드민 페이지 기수 등록 API",
         request=CohortCreateRequestSerializer,
         responses={
@@ -128,7 +128,7 @@ class CohortListAPIView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["쪽지시험 기수 관리"],
+        tags=["subjects"],
         summary="기수 리스트 조회 API",
         responses={
             200: OpenApiResponse(response=CohortListItemSerializer(many=True), description="OK"),
@@ -166,7 +166,7 @@ class AdminCohortUpdateAPIView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["쪽지시험 기수 관리"],
+        tags=["subjects"],
         summary="어드민 페이지 기수 정보 수정 API",
         request=CohortUpdateRequestSerializer,
         responses={
@@ -226,7 +226,7 @@ class AdminCohortStudentListAPIView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["쪽지시험 기수 관리"],
+        tags=["subjects"],
         summary="어드민 기수별 수강생 목록 조회 API",
         responses={
             200: OpenApiResponse(response=CohortStudentItemSerializer(many=True), description="OK"),

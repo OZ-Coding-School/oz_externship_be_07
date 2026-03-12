@@ -18,10 +18,10 @@ class ExamListCreateAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     @extend_schema(
+        tags=["exams"],
         summary="쪽지시험 목록 조회",
         description="관리자용 쪽지시험 목록을 조회합니다. 과목 필터 및 키워드 검색이 가능합니다.",
         responses={200: ExamListSerializer(many=True)},
-        tags=["쪽지시험 관리"],
     )
     def get(self, request):
         exams = ExamService.get_exam_list(
@@ -35,11 +35,11 @@ class ExamListCreateAPIView(APIView):
         )
 
     @extend_schema(
+        tags=["exams"],
         summary="쪽지시험 생성",
         description="새로운 쪽지시험을 생성합니다. 썸네일 이미지는 binary 파일로 전송해야 합니다.",
         request=ExamCreateSerializer,
         responses={201: ExamCreateSerializer},
-        tags=["쪽지시험 관리"],
     )
     def post(self, request):
         serializer = ExamCreateSerializer(data=request.data)
@@ -54,10 +54,10 @@ class ExamDetailAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     @extend_schema(
+        tags=["exams"],
         summary="쪽지시험 상세 조회",
         description="특정 ID의 쪽지시험 상세 정보와 질문 목록을 조회합니다.",
         responses={200: ExamDetailSerializer},
-        tags=["쪽지시험 관리"],
     )
     def get(self, request, exam_id):
         # Service를 통해 객체 조회
@@ -66,11 +66,11 @@ class ExamDetailAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
+        tags=["exams"],
         summary="쪽지시험 수정",
         description="기존 쪽지시험의 정보를 수정합니다. 이미지 변경이 없을 경우 필드를 비워둘 수 있습니다.",
         request=ExamUpdateSerializer,
         responses={200: ExamUpdateSerializer},
-        tags=["쪽지시험 관리"],
     )
     def put(self, request, exam_id):
         serializer = ExamUpdateSerializer(data=request.data, partial=True)
@@ -81,10 +81,10 @@ class ExamDetailAPIView(APIView):
         return Response(ExamUpdateSerializer(exam).data, status=status.HTTP_200_OK)
 
     @extend_schema(
+        tags=["exams"],
         summary="쪽지시험 삭제",
         description="특정 쪽지시험을 삭제합니다. 성공 시 삭제된 시험의 ID를 반환합니다.",
         responses={200: ExamDeleteRequestSerializer},
-        tags=["쪽지시험 관리"],
     )
     def delete(self, request, exam_id):
         deleted_id = ExamService.delete_exam(exam_id)

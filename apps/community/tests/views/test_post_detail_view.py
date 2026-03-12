@@ -49,11 +49,19 @@ class PostDetailAPIViewTest(TestCase):
         data = response.json()
 
         self.assertEqual(data["id"], self.post.id)
+        self.assertEqual(data["title"], self.post.title)
+        self.assertEqual(data["content"], self.post.content)
         self.assertEqual(data["author"]["id"], self.user.id)
         self.assertEqual(data["category"]["id"], self.category.id)
+
+        self.assertIn("view_count", data)
+        self.assertIn("like_count", data)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
 
     def test_get_post_detail_not_found(self) -> None:
         url = reverse("post-detail", kwargs={"post_id": 999999})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json()["error_detail"], "게시글을 찾을 수 없습니다.")

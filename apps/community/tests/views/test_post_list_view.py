@@ -50,8 +50,26 @@ class PostListAPIViewTest(TestCase):
         url = reverse("post-list")
         response = self.client.get(url)
 
-        result = response.json()["results"][0]
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.json()
+
+        self.assertIn("count", data)
+        self.assertIn("next", data)
+        self.assertIn("previous", data)
+        self.assertIn("results", data)
+
+        result = data["results"][0]
 
         self.assertEqual(result["id"], self.post.id)
         self.assertEqual(result["author"]["id"], self.user.id)
         self.assertEqual(result["category_id"], self.category.id)
+        self.assertEqual(result["title"], self.post.title)
+
+        self.assertIn("thumbnail_img_url", result)
+        self.assertIn("content_preview", result)
+        self.assertIn("comment_count", result)
+        self.assertIn("view_count", result)
+        self.assertIn("like_count", result)
+        self.assertIn("created_at", result)
+        self.assertIn("updated_at", result)

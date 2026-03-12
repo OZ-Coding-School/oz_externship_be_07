@@ -1,6 +1,5 @@
 from typing import Any
 
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIRequestFactory
 
@@ -10,26 +9,26 @@ from apps.chatbot.serializers import (
     ChatbotSessionReadSerializer,
 )
 from apps.questions.models import QuestionCategories, Questions
+from apps.users.models.models import User
 
 from .choices import ChatbotModelChoices
 
-User = get_user_model()
-
 
 class ChatbotSerializerTest(TestCase):
-    user: Any
+    user: User
     question: Questions
     category: QuestionCategories
 
     @classmethod
     def setUpTestData(cls) -> None:
-        from django.contrib.auth import get_user_model
-
         cls.user = User.objects.create_user(
-            username="testuser",
             email="test@test.com",
-            password="123",
-            first_name="xptmx",
+            password="testpassword123",
+            name="테스트유저",
+            nickname="테스트닉",
+            phone_number="01012345678",
+            gender="MALE",
+            birthday="2000-01-01",
         )
 
         cls.category = QuestionCategories.objects.create()

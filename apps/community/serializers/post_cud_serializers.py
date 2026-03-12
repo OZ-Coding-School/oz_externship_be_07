@@ -1,7 +1,7 @@
 from typing import Any
 
 from drf_spectacular.utils import extend_schema_field
-from martor.utils import markdownify
+from martor.utils import markdownify  # type: ignore
 from rest_framework import serializers
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -24,16 +24,14 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
 
     class Meta:
         model = Post
-        fields = ["title", "content", 'content_html', "category"]
-        extra_kwargs = {
-            'content': {'help_text': 'Markdown format supported.'}
-        }
+        fields = ["title", "content", "content_html", "category"]
+        extra_kwargs = {"content": {"help_text": "Markdown format supported."}}
 
-    def get_content_html(self, obj):
+    def get_content_html(self, obj: Post) -> Any:
         return markdownify(obj.content)
 
     @extend_schema_field(serializers.CharField())
-    def get_content(self, obj):
+    def get_content(self, obj: Post) -> str:
         return obj.content
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
@@ -42,21 +40,21 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
             "pk": instance.pk,
         }
 
+
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
 
     class Meta:
         model = Post
         fields = ["title", "content", "category"]
-        extra_kwargs = {
-            'content': {'help_text': 'Markdown format supported.'}
-        }
+        extra_kwargs = {"content": {"help_text": "Markdown format supported."}}
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {
             "id": instance.pk,
             "title": instance.title,
             "content": instance.content,
-            "category_id": instance.category.id}
+            "category_id": instance.category.id,
+        }
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
@@ -68,5 +66,17 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
         return data
 
     @extend_schema_field(serializers.CharField())
-    def get_content(self, obj):
+    def get_content(self, obj: Post) -> str:
         return obj.content
+
+    def get_content_html(self, obj: Post) -> Any:
+        return markdownify(obj.content)
+
+    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
+        title = data.get("title")
+        content = data.get("content")
+        category_id = data.get("category")
+
+        if title is None and content is None and (category_id is None or category_id != 0):
+            raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
+        return data

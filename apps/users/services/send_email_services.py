@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from rest_framework.exceptions import Throttled
 
 
-class EmailSendService:
+class SendEmailService:
     def create_code(self) -> str:
         return "".join(secrets.choice(string.digits) for _ in range(6))
 

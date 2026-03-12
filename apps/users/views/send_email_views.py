@@ -6,13 +6,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.users.serializers.send_email_serializers import EmailSendSerializer
-from apps.users.services.send_email_services import EmailSendService
+from apps.users.services.send_email_services import SendEmailService
 
 
 class EmailSendView(APIView):
     permission_classes = [AllowAny]
     serializer_class = EmailSendSerializer
-    service = EmailSendService()
+    service = SendEmailService()
 
     @extend_schema(
         summary="이메일 인증 발송 API",

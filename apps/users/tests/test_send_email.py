@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 
-class EmailSendTest(APITestCase):
+class SendEmailTest(APITestCase):
     url: str
     valid_email: str
 

@@ -1,12 +1,33 @@
-from typing import Any
+from typing import Any, cast
 
-from rest_framework import status
+from django.db.models import Count, OuterRef, Q, Subquery
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
+from rest_framework import serializers
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.community.models.post_model import Post
+from apps.community.models.post_model import Post, PostImage
 from apps.community.serializers.post_list_serializer import PostListSerializer
+
+
+class PostListPagination(PageNumberPagination):
+    """게시글 목록 페이지네이션"""
+
+    page_size = 10
+    page_size_query_param = "page_size"
+    page_query_param = "page"
+    max_page_size = 100
+
+
+class PostListResponseSerializer(serializers.Serializer[dict[str, Any]]):
+    """게시글 목록 응답 Serializer"""
+
+    count = serializers.IntegerField()
+    next = serializers.CharField(allow_null=True)
+    previous = serializers.CharField(allow_null=True)
+    results = PostListSerializer(many=True)
 
 
 class PostListAPIView(APIView):
@@ -18,6 +39,47 @@ class PostListAPIView(APIView):
         summary="게시글 조회",
         description="게시글 list",
         tags=["posts"],
+        parameters=[
+            OpenApiParameter(
+                name="page",
+                description="페이지 번호",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="page_size",
+                description="페이지 크기",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="search",
+                description="검색어",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="search_filter",
+                description="검색 기준",
+                required=False,
+                type=str,
+                enum=["author", "title", "content", "title_or_content"],
+            ),
+            OpenApiParameter(
+                name="category_id",
+                description="카테고리 ID",
+                required=False,
+                type=int,
+            ),
+            OpenApiParameter(
+                name="sort",
+                description="정렬 기준",
+                required=False,
+                type=str,
+                enum=["latest", "oldest", "most_views", "most_likes", "most_comments"],
+            ),
+        ],
+        responses={200: PostListResponseSerializer},
         examples=[
             OpenApiExample(
                 name="게시글 조회 예시",
@@ -42,6 +104,31 @@ class PostListAPIView(APIView):
             )
         ],
     )
+    def get(self, request: Request) -> Response:
+        search = (request.query_params.get("search") or "").strip()
+        search_filter = (request.query_params.get("search_filter") or "").strip()
+        sort = (request.query_params.get("sort") or "latest").strip()
+
+        category_id_param = request.query_params.get("category_id")
+        category_id: int | None = None
+        if category_id_param and category_id_param.isdigit():
+            category_id = int(category_id_param)
+
+        thumbnail_subquery = PostImage.objects.filter(post_id=OuterRef("pk")).order_by("id").values("img_url")[:1]
+
+        queryset = (
+            Post.objects.select_related("author", "category")
+            .filter(is_visible=True, category__status=True)
+            .annotate(
+                like_count=Count(
+                    "likes",
+                    filter=Q(likes__is_liked=True),
+                    distinct=True,
+                ),
+                comment_count=Count("postcomment", distinct=True),
+                thumbnail_img_url=Subquery(thumbnail_subquery),
+            )
+        )
 
     def get(self: "PostListAPIView", request: Request) -> Response:
         search = request.query_params.get("search")

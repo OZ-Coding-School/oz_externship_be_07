@@ -1,12 +1,20 @@
 from typing import Any
 
-from rest_framework import status
+from django.db.models import Count, Q
+from drf_spectacular.utils import OpenApiExample, extend_schema
+from rest_framework import serializers, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.models.post_model import Post
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
+
+
+class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, Any]]):
+    """게시글 상세 조회 실패 응답 Serializer"""
+
+    error_detail = serializers.CharField()
 
 
 class PostDetailAPIView(APIView):
@@ -18,6 +26,10 @@ class PostDetailAPIView(APIView):
         summary="게시글 상세 조회",
         description="게시글에 대한 상세한 정보 조회",
         tags=["posts"],
+        responses={
+            200: PostDetailSerializer,
+            404: PostDetailNotFoundSerializer,
+        },
         examples=[
             OpenApiExample(
                 name="게시글 상세 조회 성공 예시",

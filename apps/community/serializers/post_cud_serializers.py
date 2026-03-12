@@ -1,7 +1,8 @@
 from typing import Any
 
 from drf_spectacular.utils import extend_schema, extend_schema_field
-from rest_framework import serializers
+from martor.utils import markdownify
+from rest_framework import serializers, settings
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 from apps.users.serializers import SignUpSerializer
@@ -20,13 +21,17 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
+    content_html = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ["title", "content", "category"]
+        fields = ["title", "content", 'content_html', "category"]
         extra_kwargs = {
             'content': {'help_text': 'Markdown format supported.'}
         }
+
+    def get_content_html(self, obj):
+        return markdownify(obj.content)
 
     @extend_schema_field(serializers.CharField())
     def get_content(self, obj):
@@ -52,8 +57,7 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
             "id": instance.pk,
             "title": instance.title,
             "content": instance.content,
-            "category_id": instance.category.id,
-        }
+            "category_id": instance.category.id}
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")

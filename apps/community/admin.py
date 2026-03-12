@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from apps.community.models.post_model import Post
+
+
+class CommunityAdmin(admin.ModelAdmin):
+    class Media:
+        model = Post

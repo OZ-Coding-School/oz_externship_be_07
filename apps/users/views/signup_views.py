@@ -5,8 +5,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import SignUpSerializer
-from .services import UserService
+from apps.users.serializers.signup_serializers import SignUpSerializer
+from apps.users.services.signup_services import UserService
 
 
 class SignUpView(APIView):

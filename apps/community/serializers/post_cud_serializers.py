@@ -1,11 +1,10 @@
 from typing import Any
 
-from drf_spectacular.utils import extend_schema, extend_schema_field
+from drf_spectacular.utils import extend_schema_field
 from martor.utils import markdownify
-from rest_framework import serializers, settings
+from rest_framework import serializers
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
-from apps.users.serializers import SignUpSerializer
 
 
 class PostImageSerializer(serializers.ModelSerializer[PostImage]):

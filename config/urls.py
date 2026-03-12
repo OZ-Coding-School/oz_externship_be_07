@@ -27,6 +27,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.exam.urls.exam_question_url")),
     path("api/v1/chatbot/", include("apps.chatbot.urls")),
     path("api/v1/admin/exams/", include("apps.exam.urls.exam_question_url")),
+    path("api/v1/", include("apps.exam.urls.exam_question_url")),
+    path("api/v1/chatbot/", include("apps.chatbot.urls")),
 ]
 
 if settings.DEBUG:

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+
 from apps.core.models import TimeStampModel
 from apps.users.models.models import User
 
@@ -26,10 +27,7 @@ class ChatbotSessions(TimeStampModel):
     title = models.CharField(max_length=30, null=False, help_text="AI가 요약한 세션 제목")
 
     using_model = models.CharField(
-        max_length=50,
-        choices=ChatbotModelChoices.choices,
-        null=False,
-        help_text="LLM 사용 모델"
+        max_length=50, choices=ChatbotModelChoices.choices, null=False, help_text="LLM 사용 모델"
     )
 
     class Meta:

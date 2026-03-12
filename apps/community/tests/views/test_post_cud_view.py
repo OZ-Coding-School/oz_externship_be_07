@@ -48,22 +48,14 @@ class PostCreateUpdateDeleteViewTest(TestCase):
     def test_post_create_fail(self) -> None:
         url = reverse("post_create")
 
-        data = {
-            "title": "테스트2 title",
-            "content": "테스트2 content",
-            "category": self.category.id
-        }
+        data = {"title": "테스트2 title", "content": "테스트2 content", "category": self.category.id}
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_update_success(self) -> None:
         url = reverse("post_detail_update_delete", kwargs={"post_id": self.post.id})
-        data = {
-            "title": "테스트 수정 title",
-            "content": "테스트 수정 content",
-            "category": self.category.id
-        }
+        data = {"title": "테스트 수정 title", "content": "테스트 수정 content", "category": self.category.id}
         response = self.client.put(url, data, content_type="application/json")
         get_data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -3,7 +3,7 @@ from django.db import models
 from apps.core.models import TimeStampModel
 from apps.exam.choices import DeploymentStatus, QuestionType
 from apps.subject.models import Cohort, Subject
-from apps.users.models import User
+from apps.users.models.models import User
 
 # Create your models here.
 

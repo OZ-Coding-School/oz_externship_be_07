@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from rest_framework import serializers
 
-from apps.users.models import User
+from apps.users.models.models import User
 
 
 class SignUpSerializer(serializers.ModelSerializer["User"]):

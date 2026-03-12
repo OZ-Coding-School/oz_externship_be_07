@@ -1,8 +1,13 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-
-from .choices import SocialProvider, UserGender, UserRole, UserStatus, WithdrawalReason
+from apps.users.choices import (
+    SocialProvider,
+    UserGender,
+    UserRole,
+    UserStatus,
+    WithdrawalReason,
+)
 
 
 # 사용자 테이블

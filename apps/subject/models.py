@@ -2,7 +2,7 @@ from django.db import models
 
 from apps.core.models import TimeStampModel
 from apps.subject.choices import CohortStatus, StudentEnrollmentRequestsStatus
-from apps.users.models import User
+from apps.users.models.models import User
 
 # Create your models here.
 

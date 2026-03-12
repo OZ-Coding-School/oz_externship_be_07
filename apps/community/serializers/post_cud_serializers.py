@@ -4,6 +4,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_field
 from rest_framework import serializers
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
+from apps.users.serializers import SignUpSerializer
 
 
 class PostImageSerializer(serializers.ModelSerializer[PostImage]):
@@ -42,6 +43,9 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     class Meta:
         model = Post
         fields = ["title", "content", "category"]
+        extra_kwargs = {
+            'content': {'help_text': 'Markdown format supported.'}
+        }
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {
@@ -59,3 +63,7 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
         if not title or not content or category_id is None:
             raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
         return data
+
+    @extend_schema_field(serializers.CharField())
+    def get_content(self, obj):
+        return obj.content

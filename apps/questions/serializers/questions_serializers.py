@@ -17,10 +17,21 @@ class CategorySerializer(serializers.ModelSerializer[QuestionCategories]):
         fields = ["id", "depth", "names"]
 
     def get_depth(self, obj: QuestionCategories) -> int:
-        return 1 if obj.parent is None else 2
+        depth = 0
+        current: QuestionCategories | None = obj
+        while current:
+            depth += 1
+            current = current.parent
+        return depth
 
     def get_names(self, obj: QuestionCategories) -> list[str]:
-        return [obj.name]
+        names: list[str] = []
+        current: QuestionCategories | None = obj
+
+        while current:
+            names.append(current.name)
+            current = current.parent
+        return names[::-1]
 
 
 # 질문 이미지 시리얼라이저
@@ -81,7 +92,7 @@ class QuestionCreateSerializer(serializers.Serializer[Any]):
         max_length=100, min_length=3, error_messages={"min_length": "제목은 최소 3글자 이상이어야 합니다."}
     )
     content = serializers.CharField(min_length=5, error_messages={"min_length": "내용은 최소 5글자 이상이어야 합니다."})
-    image_urls = serializers.ListField(child=serializers.URLField(), required=False, default=[])
+    image_urls = serializers.ListField(child=serializers.URLField(), required=False, default=list)
 
     def validate_category_id(self, value: int) -> int:
         if not QuestionCategories.objects.filter(id=value).exists():

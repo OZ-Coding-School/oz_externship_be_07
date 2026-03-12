@@ -79,12 +79,10 @@ from apps.subject.models.cohort_models import Cohort
 class ExamDeploymentCreateSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(
         queryset=Exam.objects.all(),
-        source="exam",
         write_only=True,
     )
     cohort = serializers.PrimaryKeyRelatedField(
         queryset=Cohort.objects.all(),
-        source="cohort",
         write_only=True,
     )
     duration_time = serializers.IntegerField(

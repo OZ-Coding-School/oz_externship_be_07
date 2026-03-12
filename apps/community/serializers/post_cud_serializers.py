@@ -1,5 +1,6 @@
 from typing import Any
 
+from drf_spectacular.utils import extend_schema, extend_schema_field
 from rest_framework import serializers
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -22,6 +23,13 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
     class Meta:
         model = Post
         fields = ["title", "content", "category"]
+        extra_kwargs = {
+            'content': {'help_text': 'Markdown format supported.'}
+        }
+
+    @extend_schema_field(serializers.CharField())
+    def get_content(self, obj):
+        return obj.content
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {

@@ -22,7 +22,7 @@ class SubjectCreateResponseSerializer(serializers.ModelSerializer):
         model = Subject
         fields = (
             "id",
-            "course_id",
+            "course",
             "title",
             "number_of_days",
             "number_of_hours",
@@ -38,7 +38,7 @@ class SubjectListItemSerializer(serializers.ModelSerializer):
         model = Subject
         fields = (
             "id",
-            "course_id",
+            "course",
             "title",
             "status",
             "thumbnail_img_url",
@@ -68,7 +68,7 @@ class SubjectDetailResponseSerializer(serializers.ModelSerializer):
         model = Subject
         fields = (
             "id",
-            "course_id",
+            "course",
             "title",
             "number_of_days",
             "number_of_hours",

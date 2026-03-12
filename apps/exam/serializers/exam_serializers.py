@@ -10,7 +10,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
+        fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
     def create(self, validated_data):
@@ -49,7 +49,7 @@ class ExamUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
+        fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
     def update(self, instance, validated_data):

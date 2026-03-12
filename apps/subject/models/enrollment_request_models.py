@@ -1,8 +1,9 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.subject.models.choices import CohortStatus, StudentEnrollmentRequestsStatus
+from apps.subject.models.choices import StudentEnrollmentRequestsStatus
 from apps.users.models.models import User
+from apps.subject.models.cohort_models import Cohort
 
 
 class EnrollmentRequest(TimeStampModel):

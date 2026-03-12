@@ -56,7 +56,7 @@ class PostCommentAPIViewTest(TestCase):
         print(f"data: {data}")
         print(f"result: {result}")
 
-        self.assertEqual(data["total_count"], 1)
+        self.assertEqual(data["count"], 1)
         self.assertEqual(result["content"], self.comment.content)
         self.assertEqual(result["author"], self.user.id)
 
@@ -71,7 +71,7 @@ class PostCommentAPIViewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json()["detail"], "댓글이 등록되었습니다.")
 
-        print(f"total_count: {PostComment.objects.count()}")
+        print(f"count: {PostComment.objects.count()}")
         self.assertEqual(PostComment.objects.count(), 2)
 
     def test_create_comment_anonymous_returns_401(self) -> None:

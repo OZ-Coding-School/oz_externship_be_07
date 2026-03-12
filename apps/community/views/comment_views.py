@@ -1,9 +1,9 @@
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import mixins, status, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from apps.community.core.pagination import CustomPaginationComment
 from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.community.models import PostComment
 from apps.community.serializers.comment_serializers import PostCommentSerializer
@@ -19,7 +19,7 @@ class CommentViewSet(
     serializer_class = PostCommentSerializer
     queryset = PostComment.objects.select_related("author").all()
     permission_classes = [IsSelfOrReadOnly]
-    pagination_class = CustomPaginationComment
+    pagination_class = PageNumberPagination
 
     lookup_field = "id"
     lookup_url_kwarg = "comment_id"
@@ -33,9 +33,9 @@ class CommentViewSet(
                 name="댓글 목록 예시",
                 description="정상응답 데이터",
                 value={
-                    "total_count": 254,
-                    "size": 10,
-                    "page": 1,
+                    "count": 254,
+                    "next": "https://api.example.com/posts/1/comments/?page=3",
+                    "previous": "https://api.example.com/posts/1/comments/?page=1",
                     "results": [
                         {
                             "id": 1,

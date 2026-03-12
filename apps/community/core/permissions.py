@@ -19,8 +19,6 @@ class IsSelfOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # if not request.user.is_authenticated:
-        #     return False
         if not request.user or request.user.id is None:
             return False
 

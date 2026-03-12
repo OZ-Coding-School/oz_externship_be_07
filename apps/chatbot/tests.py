@@ -1,7 +1,8 @@
-# from apps.users.models.models import User
 from typing import Any
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
+from rest_framework.test import APIRequestFactory
 
 from apps.chatbot.models import ChatbotSessions
 from apps.chatbot.serializers import (
@@ -11,6 +12,8 @@ from apps.chatbot.serializers import (
 from apps.questions.models import QuestionCategories, Questions
 
 from .choices import ChatbotModelChoices
+
+User = get_user_model()
 
 
 class ChatbotSerializerTest(TestCase):
@@ -22,32 +25,51 @@ class ChatbotSerializerTest(TestCase):
     def setUpTestData(cls) -> None:
         from django.contrib.auth import get_user_model
 
-        UserModel = get_user_model()
-        cls.user = UserModel.objects.create_user(
+        cls.user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
             password="123",
             first_name="xptmx",
-            # gender="MALE"
         )
 
         cls.category = QuestionCategories.objects.create()
 
-        cls.question = Questions.objects.create(title="테스트 질문", content="내용", category_id=cls.category.id)
+        cls.question = Questions.objects.create(
+            title="테스트 질문",
+            content="내용",
+            category_id=cls.category.id,  #
+        )
 
     def test_create_serializer_valid(self) -> None:
+        factory = APIRequestFactory()
+        request = factory.post("/api/v1/chatbot/sessions/")
+        request.user = self.user
+
         valid_data = {
-            "user": self.user.id,
             "question": self.question.id,
             "title": " Test 관련 심오한 질문",
             "using_model": ChatbotModelChoices.GEMINI_2_5_FLASH,
         }
-        serializer = ChatbotSessionCreateSerializer(data=valid_data)
-        self.assertTrue(serializer.is_valid(), msg=serializer.errors)
+        serializer = ChatbotSessionCreateSerializer(data=valid_data, context={"request": request})
+
+        is_valid = serializer.is_valid()  # is_valid() 먼저 호출
+
+        self.assertTrue(is_valid, msg=serializer.errors)
+
+        session = serializer.save()
+
+        self.assertEqual(session.user, self.user)
 
     def test_create_serializer_invalid(self) -> None:
-        invalid_data = {"user": self.user.id, "using_model": "gemini-2.5-flash"}
-        serializer = ChatbotSessionCreateSerializer(data=invalid_data)
+        factory = APIRequestFactory()
+        request = factory.post("/api/v1/chatbot/sessions/")
+        request.user = self.user
+
+        invalid_data = {
+            "using_model": "gemini-2.5-flash"
+        }  # question, title 누락된 경우// 경우의 수 생성하는 로직 괜찮겠다.
+
+        serializer = ChatbotSessionCreateSerializer(data=invalid_data, context={"request": request})
 
         self.assertFalse(serializer.is_valid())
         self.assertIn("question", serializer.errors)

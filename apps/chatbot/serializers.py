@@ -1,14 +1,10 @@
 from typing import Any
 
-# from apps.users.models.models import User
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from apps.questions.models import Questions
 
 from .models import ChatbotCompletions, ChatbotSessions
-
-User = get_user_model()
 
 
 class ChatbotSessionCreateSerializer(serializers.ModelSerializer[ChatbotSessions]):
@@ -18,8 +14,9 @@ class ChatbotSessionCreateSerializer(serializers.ModelSerializer[ChatbotSessions
 
     """
 
-    user: serializers.PrimaryKeyRelatedField[Any] = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    question: serializers.PrimaryKeyRelatedField[Any] = serializers.PrimaryKeyRelatedField(
+    user: serializers.HiddenField = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    question: serializers.PrimaryKeyRelatedField[Questions] = serializers.PrimaryKeyRelatedField(
         queryset=Questions.objects.all(),
     )
 

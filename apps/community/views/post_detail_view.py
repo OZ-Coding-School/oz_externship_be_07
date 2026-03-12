@@ -1,13 +1,11 @@
 from typing import Any
 
 from rest_framework import status
-from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.models.post_model import Post
-from apps.community.serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
 
 
@@ -15,6 +13,36 @@ class PostDetailAPIView(APIView):
     """게시글 상세 조회 API"""
 
     serializer_class = PostUpdateSerializer
+
+    @extend_schema(
+        summary="게시글 상세 조회",
+        description="게시글에 대한 상세한 정보 조회",
+        tags=["posts"],
+        examples=[
+            OpenApiExample(
+                name="게시글 상세 조회 성공 예시",
+                value={
+                    "id": 1,
+                    "title": "테스트 게시글",
+                    "author": {
+                        "id": 1,
+                        "nickname": "testuser",
+                        "profile_img_url": "https://example.com/uploads/images/users/profiles/profile.png",
+                    },
+                    "category": {
+                        "id": 1,
+                        "name": "자유게시판",
+                    },
+                    "content": "게시글 내용입니다.",
+                    "view_count": 100,
+                    "like_count": 10,
+                    "created_at": "2025-10-30T14:01:57.505250+09:00",
+                    "updated_at": "2025-10-30T14:01:57.505250+09:00",
+                },
+                response_only=True,
+            )
+        ],
+    )
 
     def get(self: "PostDetailAPIView", request: Request, post_id: int) -> Response:
         post = Post.objects.select_related("author", "category").filter(id=post_id).first()
@@ -50,26 +78,3 @@ class PostDetailAPIView(APIView):
 
         serializer = PostDetailSerializer(mock_response)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request: Request, post_id: int) -> Response:
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        mock_data = {
-            "id": post_id,
-            "title": request.data.get("title", "기본 제목"),
-            "content": request.data.get("content", "기본 내용"),
-            "category_id": request.data.get("category", 1),
-        }
-
-        return Response(mock_data, status=status.HTTP_200_OK)
-
-    def delete(self, request: Request, post_id: int) -> Response:
-        post = get_object_or_404(Post, pk=post_id)
-
-        if post.author != request.user:
-            return Response({"error_detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
-
-        post.delete()
-        mock_data = {"detail": "게시글이 삭제되었습니다."}
-        return Response(mock_data, status=status.HTTP_200_OK)

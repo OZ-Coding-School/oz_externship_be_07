@@ -1,8 +1,11 @@
 from typing import Any
 from rest_framework import serializers
-from apps.users.models import User
+# from apps.users.models.models import User
+from django.contrib.auth import get_user_model
 from apps.questions.models import Questions
 from .models import ChatbotCompletions, ChatbotSessions
+
+User = get_user_model()
 
 
 class ChatbotSessionCreateSerializer(serializers.ModelSerializer[ChatbotSessions]):
@@ -45,7 +48,7 @@ class ChatbotSessionReadSerializer(serializers.ModelSerializer[ChatbotSessions])
     
     class Meta:
         model = ChatbotSessions
-        fields = ["id", "user","question_id", "title", "using_model","created_at","updated_at"]
+        fields = ["id", "user_id","question_id", "title", "using_model","created_at","updated_at"]
         read_only_fields = fields
 
 

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 from apps.core.models import TimeStampModel
-from apps.users.models import User
+from apps.users.models.models import User
 
 from .choices import ChatbotModelChoices, MessageRoleChoices
 

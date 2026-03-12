@@ -1,5 +1,5 @@
 from django.test import TestCase
-from apps.users.models import User
+# from apps.users.models.models import User
 from typing import Any
 from .choices import ChatbotModelChoices
 from apps.questions.models import Questions, QuestionCategories
@@ -14,14 +14,14 @@ class ChatbotSerializerTest(TestCase):
     
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.user = User.objects.create(
+        from django.contrib.auth import get_user_model
+        UserModel = get_user_model()
+        cls.user = UserModel.objects.create_user(
+            username="testuser",
             email="test@test.com",
-            name="xptmxj",
-            nickname="test",
-            hashed_password="123",
-            phone_number="010-0000-0000",
-            birthday="1990-01-01",
-            gender="MALE"
+            password="123",
+            first_name="xptmx"
+            # gender="MALE"
         )
         
         cls.category = QuestionCategories.objects.create(
@@ -56,8 +56,8 @@ class ChatbotSerializerTest(TestCase):
         
     def test_read_serializer_output(self):
         session = ChatbotSessions.objects.create(
-            user_id=self.user.id,
-            question_id=self.question.id,
+            user=self.user,
+            question=self.question,
             title="테스트 채팅방",
             using_model="gemini"
         )

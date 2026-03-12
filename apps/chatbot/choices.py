@@ -16,5 +16,5 @@ class MessageRoleChoices(models.TextChoices):
     챗봇 메시지 발화자
     """
 
-    USER = "USER", "사용자"
-    ASSISTANT = "ASSISTANT", "AI"
+    USER = "user", "사용자"
+    ASSISTANT = "assistant", "AI"

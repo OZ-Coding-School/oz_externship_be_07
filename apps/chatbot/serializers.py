@@ -74,12 +74,7 @@ class ChatbotCompletionReadSerializer(serializers.ModelSerializer[ChatbotComplet
     챗봇 대화 내역 조회 응답용
     """
 
-    role: serializers.SerializerMethodField = serializers.SerializerMethodField()
-
     class Meta:
         model = ChatbotCompletions
         fields = ["id", "message", "role", "created_at"]
         read_only_fields = fields
-
-    def get_role(self, obj: ChatbotCompletions) -> str:
-        return obj.role.lower()

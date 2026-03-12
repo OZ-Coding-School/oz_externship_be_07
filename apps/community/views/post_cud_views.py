@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
@@ -7,6 +8,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.community.models import Post
 from apps.community.serializers.post_cud_serializers import (
     PostCreateSerializer,
     PostUpdateSerializer,
@@ -62,7 +64,7 @@ class PostCreate(APIView):
 
         mock_data = {
             "detail": "게시글이 성공적으로 등록되었습니다.",
-            "id": "1",
+            "pk": "1",
         }
 
         return Response(mock_data, status=status.HTTP_201_CREATED)
@@ -152,5 +154,7 @@ class PostDetailUpdateDelete(APIView):
         },
     )
     def delete(self, request: Request, post_id: int) -> Response:
+        post = get_object_or_404(Post, pk=post_id)
+        post.delete()
         mock_data = {"detail": "게시글이 삭제되었습니다."}
         return Response(mock_data, status=status.HTTP_200_OK)

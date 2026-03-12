@@ -24,4 +24,4 @@ class PostListSerializer(serializers.Serializer[dict[str, Any]]):
     like_count = serializers.IntegerField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
-    category_id = serializers.IntegerField()
+    category_name = serializers.CharField()

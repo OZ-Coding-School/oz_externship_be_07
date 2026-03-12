@@ -84,21 +84,28 @@ class PostListAPIView(APIView):
             OpenApiExample(
                 name="게시글 조회 예시",
                 value={
-                    "id": 1,
-                    "author": {
-                        "id": 1,
-                        "nickname": "testuser",
-                        "profile_img_url": "https://example.com/uploads/images/users/profiles/image.png",
-                    },
-                    "title": "테스트 게시글 1번",
-                    "thumbnail_img_url": "https://example.com/uploads/images/posts/first-image.png",
-                    "content_preview": "그냥 작성한 게시글 1번 입니다. 게시글 본문 내용이 50글자 내로 생략된 형태로 제공됩니다.",
-                    "comment_count": 100,
-                    "view_count": 100,
-                    "like_count": 100,
-                    "created_at": "2025-10-30T14:01:57.505250+09:00",
-                    "updated_at": "2025-10-30T14:01:57.505250+09:00",
-                    "category_id": 1,
+                    "count": 100,
+                    "next": "http://api.ozcoding.site/api/v1/posts?page=2&page_size=10",
+                    "previous": None,
+                    "results": [
+                        {
+                            "id": 1,
+                            "author": {
+                                "id": 1,
+                                "nickname": "testuser",
+                                "profile_img_url": "https://example.com/uploads/images/users/profiles/image.png",
+                            },
+                            "title": "테스트 게시글 1번",
+                            "thumbnail_img_url": "https://example.com/uploads/images/posts/first-image.png",
+                            "content_preview": "그냥 작성한 게시글 1번 입니다. 게시글 본문 내용이 50글자 내로 생략된 형태로 제공됩니다.",
+                            "comment_count": 100,
+                            "view_count": 100,
+                            "like_count": 100,
+                            "created_at": "2025-10-30T14:01:57.505250+09:00",
+                            "updated_at": "2025-10-30T14:01:57.505250+09:00",
+                            "category_id": 1,
+                        }
+                    ],
                 },
                 response_only=True,
             )
@@ -130,53 +137,87 @@ class PostListAPIView(APIView):
             )
         )
 
-    def get(self: "PostListAPIView", request: Request) -> Response:
-        search = request.query_params.get("search")
-        search_filter = request.query_params.get("search_filter")
-        category_id = request.query_params.get("category_id")
-        sort = request.query_params.get("sort")
-        page = request.query_params.get("page")
-        page_size = request.query_params.get("page_size")
+        if category_id is not None:
+            queryset = queryset.filter(category_id=category_id)
 
-        post = Post.objects.select_related("author", "category").first()
+        if search:
+            if search_filter == "author":
+                queryset = queryset.filter(author__nickname__icontains=search)
+            elif search_filter == "title":
+                queryset = queryset.filter(title__icontains=search)
+            elif search_filter == "content":
+                queryset = queryset.filter(content__icontains=search)
+            else:
+                queryset = queryset.filter(Q(title__icontains=search) | Q(content__icontains=search))
 
-        mock_response: dict[str, Any] = {
-            "count": 100,
-            "next": "http://api.ozcoding.site/api/v1/posts?page=2&page_size=10",
-            "previous": "http://api.ozcoding.site/api/v1/posts?page=1&page_size=10",
-            "results": [
-                {
-                    "id": post.id if post else 1,
-                    "author": {
-                        "id": post.author_id if post else 1,
-                        "nickname": post.author.nickname if post else "testuser",
-                        "profile_img_url": (
-                            post.author.profile_img_url
-                            if post and post.author.profile_img_url
-                            else "https://example.com/uploads/images/users/profiles/image.png"
-                        ),
-                    },
-                    "title": "테스트 게시글 1번",
-                    "thumbnail_img_url": "https://example.com/uploads/images/posts/first-image.png",
-                    "content_preview": "그냥 작성한 게시글 1번 입니다. 게시글 본문 내용이 50글자 내로 생략된 형태로 제공됩니다.",
-                    "comment_count": 100,
-                    "view_count": 100,
-                    "like_count": 100,
-                    "created_at": "2025-10-30T14:01:57.505250+09:00",
-                    "updated_at": "2025-10-30T14:01:57.505250+09:00",
-                    "category_id": post.category_id if post else 1,
-                }
-            ],
-        }
+        queryset_any = cast(Any, queryset)
+        if sort == "oldest":
+            queryset = queryset_any.order_by("created_at", "id")
+        elif sort == "most_views":
+            queryset = queryset_any.order_by("-view_count", "-id")
+        elif sort == "most_likes":
+            queryset = queryset_any.order_by("-like_count", "-id")
+        elif sort == "most_comments":
+            queryset = queryset_any.order_by("-comment_count", "-id")
+        else:
+            queryset = queryset_any.order_by("-created_at", "-id")
 
-        serializer = PostListSerializer(mock_response["results"], many=True)
+        values_queryset = queryset.values(
+            "id",
+            "title",
+            "content",
+            "view_count",
+            "created_at",
+            "updated_at",
+            "category_id",
+            "author_id",
+            "author__nickname",
+            "author__profile_img_url",
+            "like_count",
+            "comment_count",
+            "thumbnail_img_url",
+        )
+
+        paginator = PostListPagination()
+        page = paginator.paginate_queryset(values_queryset, request)
+
+        page_items: list[dict[str, Any]]
+        if page is None:
+            page_items = list(values_queryset)
+        else:
+            page_items = cast(list[dict[str, Any]], page)
+
+        response_data: list[dict[str, Any]] = [
+            {
+                "id": post["id"],
+                "author": {
+                    "id": post["author_id"],
+                    "nickname": post["author__nickname"],
+                    "profile_img_url": post["author__profile_img_url"],
+                },
+                "title": post["title"],
+                "thumbnail_img_url": post["thumbnail_img_url"],
+                "content_preview": (f"{post['content'][:50]}..." if len(post["content"]) > 50 else post["content"]),
+                "comment_count": post["comment_count"],
+                "view_count": post["view_count"],
+                "like_count": post["like_count"],
+                "created_at": post["created_at"],
+                "updated_at": post["updated_at"],
+                "category_id": post["category_id"],
+            }
+            for post in page_items
+        ]
+
+        serializer = PostListSerializer(cast(Any, response_data), many=True)
+
+        if page is not None:
+            return paginator.get_paginated_response(serializer.data)
 
         return Response(
             {
-                "count": mock_response["count"],
-                "next": mock_response["next"],
-                "previous": mock_response["previous"],
+                "count": len(serializer.data),
+                "next": None,
+                "previous": None,
                 "results": serializer.data,
-            },
-            status=status.HTTP_200_OK,
+            }
         )

@@ -63,7 +63,7 @@ class PostListAPIViewTest(TestCase):
 
         self.assertEqual(result["id"], self.post.id)
         self.assertEqual(result["author"]["id"], self.user.id)
-        self.assertEqual(result["category_id"], self.category.id)
+        self.assertEqual(result["category_name"], self.category.name)
         self.assertEqual(result["title"], self.post.title)
 
         self.assertIn("thumbnail_img_url", result)

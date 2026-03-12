@@ -11,7 +11,7 @@ class Cohort(TimeStampModel):
     max_student = models.SmallIntegerField()
     start_date = models.DateField()
     end_date = models.DateField()
-    status = models.CharField(max_length=15, default="PENDING", choices=CohortStatus)
+    status = models.CharField(max_length=15, default=CohortStatus.PENNDING, choices=CohortStatus)
 
     class Meta:
         db_table = "cohorts"

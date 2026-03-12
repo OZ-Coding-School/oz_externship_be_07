@@ -57,14 +57,14 @@ class SignupTest(TestCase):
     def test_signup_duplicate_fail(self) -> None:
         """닉네임,이메일,휴대폰 중복 시 (409)"""
 
-        User.objects.create(
+        User.objects.create_user(
             email="example@example.com",
+            password="password123",
             nickname="testuser",
             name="홍길동",
             phone_number="010-1111-2222",
             birthday="2000-09-25",
             gender="M",
-            hashed_password="password123",
         )
 
         data = self.user_data.copy()

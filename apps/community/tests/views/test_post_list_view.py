@@ -16,10 +16,13 @@ class PostListAPIViewTest(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.user = User.objects.create(
+        cls.user = User.objects.create_user(
             email="test@test.com",
+            password="password123",
             name="testuser",
-            hashed_password="password123",
+            nickname="testuser",
+            phone_number="01000000000",
+            gender="M",
             birthday="2000-01-01",
         )
 

@@ -5,7 +5,7 @@ from apps.subject.models.subject_models import Subject
 
 
 class SubjectCreateRequestSerializer(serializers.Serializer):
-    course_id = serializers.IntegerField()
+    course = serializers.IntegerField()
     title = serializers.CharField(max_length=30)
     number_of_days = serializers.IntegerField(min_value=1)
     number_of_hours = serializers.IntegerField(min_value=1)
@@ -32,7 +32,7 @@ class SubjectCreateResponseSerializer(serializers.ModelSerializer):
 
 
 class SubjectListItemSerializer(serializers.ModelSerializer):
-    course_id = serializers.IntegerField(source="course.id", read_only=True)
+    course = serializers.IntegerField(source="course.id", read_only=True)
 
     class Meta:
         model = Subject

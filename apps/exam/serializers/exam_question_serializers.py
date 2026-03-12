@@ -32,7 +32,7 @@ class ExamQuestionUpdateSerializer(ExamQuestionCreateSerializer):
 
 
 class ExamQuestionResponseSerializer(serializers.Serializer):
-    question_id = serializers.IntegerField()
+    question = serializers.IntegerField()
     type = serializers.CharField()
     question = serializers.CharField()
     prompt = serializers.CharField(allow_null=True, allow_blank=True)
@@ -52,7 +52,7 @@ def serialize_question_response(question: ExamQuestion) -> dict:
             options = None
 
     return {
-        "question_id": question.id,
+        "question": question.id,
         "type": question.type.lower(),
         "question": question.question,
         "options": options,
@@ -65,5 +65,5 @@ def serialize_question_response(question: ExamQuestion) -> dict:
 
 
 class ExamQuestionDeleteResponseSerializer(serializers.Serializer):
-    exam_id = serializers.IntegerField()
-    question_id = serializers.IntegerField()
+    exam = serializers.IntegerField()
+    question = serializers.IntegerField()

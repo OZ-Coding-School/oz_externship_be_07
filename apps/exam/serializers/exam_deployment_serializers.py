@@ -10,7 +10,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
+        fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
     def create(self, validated_data):
@@ -24,7 +24,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
 
 # 2. 목록 조회용 (GET List)
 class ExamListSerializer(serializers.ModelSerializer):
-    subject_name = serializers.CharField(source="subject_id.title", read_only=True)
+    subject_name = serializers.CharField(source="subject.title", read_only=True)
 
     class Meta:
         model = Exam
@@ -40,7 +40,7 @@ class ExamDetailSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "subject", "thumbnail_img_url", "created_at", "updated_at"]
 
     def get_subject(self, obj):
-        return {"id": obj.subject_id.id, "title": obj.subject_id.title}
+        return {"id": obj.subject.id, "title": obj.subject.title}
 
 
 # 4. 수정용 (PUT)
@@ -49,7 +49,7 @@ class ExamUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
+        fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
     def update(self, instance, validated_data):
@@ -77,12 +77,12 @@ from apps.subject.models.cohort_models import Cohort
 # POST /api/v1/admin/exams/deployments
 # =========================================================
 class ExamDeploymentCreateSerializer(serializers.ModelSerializer):
-    exam_id = serializers.PrimaryKeyRelatedField(
+    exam = serializers.PrimaryKeyRelatedField(
         queryset=Exam.objects.all(),
         source="exam",
         write_only=True,
     )
-    cohort_id = serializers.PrimaryKeyRelatedField(
+    cohort = serializers.PrimaryKeyRelatedField(
         queryset=Cohort.objects.all(),
         source="cohort",
         write_only=True,
@@ -97,8 +97,8 @@ class ExamDeploymentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamDeployment
         fields = [
-            "exam_id",
-            "cohort_id",
+            "exam",
+            "cohort",
             "duration_time",
             "open_at",
             "close_at",
@@ -137,8 +137,8 @@ class ExamDeploymentListQuerySerializer(serializers.Serializer):
     page = serializers.IntegerField(required=False, default=1, min_value=1)
     size = serializers.IntegerField(required=False, default=10, min_value=1)
     search_keyword = serializers.CharField(required=False, allow_blank=True)
-    subject_id = serializers.IntegerField(required=False, min_value=1)
-    cohort_id = serializers.IntegerField(required=False, min_value=1)
+    subject = serializers.IntegerField(required=False, min_value=1)
+    cohort = serializers.IntegerField(required=False, min_value=1)
     sort = serializers.CharField(required=False, allow_blank=True)
     order = serializers.ChoiceField(
         choices=["asc", "desc"],
@@ -166,7 +166,7 @@ class ExamDeploymentListResponseSerializer(serializers.Serializer):
 
 # =========================================================
 # 쪽지시험 배포 상세 조회 API
-# GET /api/v1/admin/exams/deployments/{deployment_id}
+# GET /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
 class ExamDeploymentDetailSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -185,7 +185,7 @@ class ExamDeploymentDetailSerializer(serializers.Serializer):
 
 # =========================================================
 # 쪽지시험 배포 정보 수정 API
-# PATCH /api/v1/admin/exams/deployments/{deployment_id}
+# PATCH /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
 class ExamDeploymentUpdateSerializer(serializers.ModelSerializer):
     duration_time = serializers.IntegerField(
@@ -213,7 +213,7 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer):
 
 
 class ExamDeploymentUpdateResponseSerializer(serializers.Serializer):
-    deployment_id = serializers.IntegerField()
+    deployment = serializers.IntegerField()
     duration_time = serializers.IntegerField()
     open_at = serializers.CharField()
     close_at = serializers.CharField()
@@ -222,20 +222,20 @@ class ExamDeploymentUpdateResponseSerializer(serializers.Serializer):
 
 # =========================================================
 # 쪽지시험 배포 on/off API
-# PATCH /api/v1/admin/exams/deployments/{deployment_id}/status
+# PATCH /api/v1/admin/exams/deployments/{deployment}/status
 # =========================================================
 class ExamDeploymentStatusUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=["Activated", "Deactivated"])
 
 
 class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer):
-    deployment_id = serializers.IntegerField()
+    deployment = serializers.IntegerField()
     status = serializers.CharField()
 
 
 # =========================================================
 # 쪽지시험 배포 삭제 API
-# DELETE /api/v1/admin/exams/deployments/{deployment_id}
+# DELETE /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
 class ExamDeploymentDeleteResponseSerializer(serializers.Serializer):
     detail = serializers.CharField()

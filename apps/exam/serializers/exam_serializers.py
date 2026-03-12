@@ -24,7 +24,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
 
 # 2. 목록 조회용 (GET List)
 class ExamListSerializer(serializers.ModelSerializer):
-    subject_name = serializers.CharField(source="subject_id.title", read_only=True)
+    subject_name = serializers.CharField(source="subject.title", read_only=True)
 
     class Meta:
         model = Exam
@@ -40,7 +40,7 @@ class ExamDetailSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "subject", "thumbnail_img_url", "created_at", "updated_at"]
 
     def get_subject(self, obj):
-        return {"id": obj.subject_id.id, "title": obj.subject_id.title}
+        return {"id": obj.subject.id, "title": obj.subject.title}
 
 
 # 4. 수정용 (PUT)

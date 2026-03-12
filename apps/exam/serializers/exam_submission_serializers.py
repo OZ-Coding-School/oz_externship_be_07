@@ -7,7 +7,7 @@ from apps.exam.models.exam_submission_models import ExamSubmission
 class ExamSubmissionListSerializer(serializers.ModelSerializer):
     """목록 조회용: 간단한 요약 정보 반환"""
 
-    submission_id = serializers.IntegerField(source="id")
+    submission = serializers.IntegerField(source="id")
     student_name = serializers.CharField(source="submitter.name", read_only=True)
     course_name = serializers.CharField(source="deployment.cohort.subject.name", default="N/A")  # 예시 경로
     cohort_number = serializers.IntegerField(source="deployment.cohort.number", read_only=True)
@@ -18,7 +18,7 @@ class ExamSubmissionListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamSubmission
         fields = [
-            "submission_id",
+            "submission",
             "student_name",
             "course_name",
             "cohort_number",

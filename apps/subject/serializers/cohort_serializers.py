@@ -6,7 +6,7 @@ COHORT_STATUS_CHOICES = ("PREPARING", "IN_PROGRESS", "FINISHED")
 
 
 class CohortCreateRequestSerializer(serializers.Serializer):
-    course_id = serializers.IntegerField(required=True)
+    course = serializers.IntegerField(required=True)
     number = serializers.IntegerField(required=True)
     max_student = serializers.IntegerField(required=True)
     start_date = serializers.DateField(required=True, format="%Y-%m-%d", input_formats=["%Y-%m-%d"])
@@ -48,14 +48,14 @@ class CohortCreateResponseSerializer(serializers.Serializer):
 
 class CohortListItemSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    course_id = serializers.IntegerField()
+    course = serializers.IntegerField()
     number = serializers.IntegerField()
     status = serializers.CharField()
 
 
 class CohortUpdateResponseSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    course_id = serializers.IntegerField()
+    course = serializers.IntegerField()
     number = serializers.IntegerField()
     max_student = serializers.IntegerField()
     start_date = serializers.DateField(format="%Y-%m-%d")

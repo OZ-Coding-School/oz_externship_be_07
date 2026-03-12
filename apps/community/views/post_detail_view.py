@@ -9,6 +9,10 @@ from rest_framework.views import APIView
 
 from apps.community.models.post_model import Post
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
+from apps.community.services.post_service import (
+    build_post_detail_response,
+    get_post_detail,
+)
 
 
 class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, Any]]):
@@ -58,6 +62,18 @@ class PostDetailAPIView(APIView):
 
     def get(self: "PostDetailAPIView", request: Request, post_id: int) -> Response:
         post = Post.objects.select_related("author", "category").filter(id=post_id).first()
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                name="게시글 상세 조회 실패 예시",
+                value={"error_detail": "게시글을 찾을 수 없습니다."},
+                response_only=True,
+                status_codes=["404"],
+            ),
+        ],
+    )
+    def get(self, request: Request, post_id: int) -> Response:
+        post = get_post_detail(post_id)
 
         if post is None:
             return Response(
@@ -89,4 +105,6 @@ class PostDetailAPIView(APIView):
         }
 
         serializer = PostDetailSerializer(mock_response)
+        response_data: dict[str, Any] = build_post_detail_response(post)
+        serializer = PostDetailSerializer(response_data)
         return Response(serializer.data, status=status.HTTP_200_OK)

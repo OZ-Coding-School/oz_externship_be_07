@@ -10,6 +10,11 @@ from rest_framework.views import APIView
 
 from apps.community.models.post_model import Post, PostImage
 from apps.community.serializers.post_list_serializer import PostListSerializer
+from apps.community.services.post_service import (
+    build_post_list_response,
+    get_post_list_queryset,
+    get_post_list_values,
+)
 
 
 class PostListPagination(PageNumberPagination):
@@ -121,21 +126,13 @@ class PostListAPIView(APIView):
         if category_id_param and category_id_param.isdigit():
             category_id = int(category_id_param)
 
-        thumbnail_subquery = PostImage.objects.filter(post_id=OuterRef("pk")).order_by("id").values("img_url")[:1]
-
-        queryset = (
-            Post.objects.select_related("author", "category")
-            .filter(is_visible=True, category__status=True)
-            .annotate(
-                like_count=Count(
-                    "likes",
-                    filter=Q(likes__is_liked=True),
-                    distinct=True,
-                ),
-                comment_count=Count("postcomment", distinct=True),
-                thumbnail_img_url=Subquery(thumbnail_subquery),
-            )
+        queryset = get_post_list_queryset(
+            search=search,
+            search_filter=search_filter,
+            category_id=category_id,
+            sort=sort,
         )
+        values_queryset = get_post_list_values(queryset)
 
         if category_id is not None:
             queryset = queryset.filter(category_id=category_id)
@@ -208,6 +205,7 @@ class PostListAPIView(APIView):
             for post in page_items
         ]
 
+        response_data = build_post_list_response(page_items)
         serializer = PostListSerializer(cast(Any, response_data), many=True)
 
         if page is not None:

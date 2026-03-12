@@ -1,11 +1,13 @@
-from apps.subject.models import Cohort, CohortStudent, Course
-from apps.users.models import User
+from typing import Any
+
+from apps.subject.models import CohortStudent
+from apps.users.models.models import User
 
 
-def get_user_course_data(user: User) -> str | dict[str, Cohort | Course]:
+def get_user_course_data(user: User) -> dict[str, Any] | None:
     cohort_student = CohortStudent.objects.filter(user=user).select_related("cohort__course").last()
 
     if not cohort_student:
-        return "정보 없음"
+        return None
 
     return {"cohort": cohort_student.cohort, "course": cohort_student.cohort.course}

@@ -4,8 +4,8 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.subject.models import Cohort, Course
-from apps.users.models import User
-from apps.users.services.admin_user_search_services import get_user_course_data
+from apps.users.models.models import User
+from apps.users.services.admin.user_search import get_user_course_data
 
 
 # Course
@@ -23,13 +23,12 @@ class CohortSimpleSerializer(serializers.ModelSerializer[Cohort]):
 
 
 # in_progress_course 필드에 사용할 시리얼라이저
-class InProgressCourseSerializer(serializers.Serializer[str | dict[str, Cohort | Course]]):
+class InProgressCourseSerializer(serializers.Serializer[Dict[str, Any]]):
     cohort = CohortSimpleSerializer()
     course = CourseSimpleSerializer()
 
 
 class StudentManagerSerializer(serializers.ModelSerializer[User]):
-    # 이제 이 필드는 단순 문자열이 아니라 위에서 만든 객체 모양을 따릅니다.
     in_progress_course = serializers.SerializerMethodField()
 
     class Meta:
@@ -47,11 +46,9 @@ class StudentManagerSerializer(serializers.ModelSerializer[User]):
             "created_at",
         ]
 
-    @extend_schema_field(InProgressCourseSerializer)
+    @extend_schema_field(InProgressCourseSerializer(allow_null=True))
     def get_in_progress_course(self, obj: User) -> Optional[Dict[str, Any]]:
         data = get_user_course_data(obj)
-
         if not data:
             return None
-
         return InProgressCourseSerializer(data).data

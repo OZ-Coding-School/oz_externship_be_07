@@ -1,6 +1,5 @@
 from django.urls import path
 
-from apps.subject.views.subject_views import AdminSubjectCreateAPIView, AdminSubjectListAPIView
 from apps.subject.views.cohort_views import (
     AdminCohortCreateAPIView,
     AdminCohortStudentListAPIView,

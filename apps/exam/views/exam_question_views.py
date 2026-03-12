@@ -1,19 +1,21 @@
 import json
+
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 from apps.exam.serializers.exam_deployment_serializers import ErrorDetailSerializer
 from apps.exam.serializers.exam_question_serializers import (
     ExamQuestionCreateSerializer,
-    ExamQuestionUpdateSerializer,
+    ExamQuestionDeleteResponseSerializer,
     ExamQuestionResponseSerializer,
-    serialize_question_response, ExamQuestionDeleteResponseSerializer,
+    ExamQuestionUpdateSerializer,
+    serialize_question_response,
 )
 
 
@@ -23,7 +25,7 @@ class ExamQuestionListCreateAPIView(APIView):
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 문제 목록 조회",
-        responses={200: ExamQuestionResponseSerializer(many=True), 404: ErrorDetailSerializer}
+        responses={200: ExamQuestionResponseSerializer(many=True), 404: ErrorDetailSerializer},
     )
     def get(self, request, exam_id):
         exam = get_object_or_404(Exam, pk=exam_id)
@@ -35,13 +37,14 @@ class ExamQuestionListCreateAPIView(APIView):
         tags=["exams"],
         summary="쪽지시험 문제 등록",
         request=ExamQuestionCreateSerializer,
-        responses={201: ExamQuestionResponseSerializer,
-                   400: ErrorDetailSerializer,
-                   401: ErrorDetailSerializer,
-                   403: ErrorDetailSerializer,
-                   404: ErrorDetailSerializer,
-                   409: ErrorDetailSerializer,
-                   },
+        responses={
+            201: ExamQuestionResponseSerializer,
+            400: ErrorDetailSerializer,
+            401: ErrorDetailSerializer,
+            403: ErrorDetailSerializer,
+            404: ErrorDetailSerializer,
+            409: ErrorDetailSerializer,
+        },
         examples=[
             OpenApiExample(
                 "400",
@@ -114,54 +117,56 @@ class ExamQuestionDetailAPIView(APIView):
         question = get_object_or_404(ExamQuestion, id=question_id)
         return Response(serialize_question_response(question), status=status.HTTP_200_OK)
 
-
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 문제 수정",
         request=ExamQuestionUpdateSerializer,
         responses={
-            200: OpenApiResponse(
-                response=ExamQuestionResponseSerializer,
-                description="OK"
-            ),
+            200: OpenApiResponse(response=ExamQuestionResponseSerializer, description="OK"),
             400: OpenApiResponse(
                 response=ErrorDetailSerializer,
                 description="Bad Request",
-                examples=[OpenApiExample("400", value={"error_detail": "유효하지 않은 문제 수정 데이터입니다."})]
+                examples=[OpenApiExample("400", value={"error_detail": "유효하지 않은 문제 수정 데이터입니다."})],
             ),
             401: OpenApiResponse(
                 response=ErrorDetailSerializer,
                 description="Unauthorized",
-                examples=[OpenApiExample("401",value={"error_detail": "자격 인증 데이터가 제공되이 않았습니다."})]
+                examples=[OpenApiExample("401", value={"error_detail": "자격 인증 데이터가 제공되이 않았습니다."})],
             ),
             403: OpenApiResponse(
                 response=ErrorDetailSerializer,
                 description="Forbidden",
-                examples=[OpenApiExample("403", value={"error_detail": "쪽지시험 문제 수정 권한이 없습니다."})]
+                examples=[OpenApiExample("403", value={"error_detail": "쪽지시험 문제 수정 권한이 없습니다."})],
             ),
             404: OpenApiResponse(
-            response=ErrorDetailSerializer,
-            description="Not Found",
-            examples=[OpenApiExample("404", value={"error_detail": "수정하려는 문제 정보를 찾을 수 없습니다."})],
-        ),
-        409: OpenApiResponse(
-            response=ErrorDetailSerializer,
-            description="Conflict",
-            examples=[OpenApiExample("409", value={"error_detail": "시험 문제 수 제한 또는 총 배점을 초과하여 문제를 수정할 수 없습니다."})],
-        ),
-    },
-)
-
+                response=ErrorDetailSerializer,
+                description="Not Found",
+                examples=[OpenApiExample("404", value={"error_detail": "수정하려는 문제 정보를 찾을 수 없습니다."})],
+            ),
+            409: OpenApiResponse(
+                response=ErrorDetailSerializer,
+                description="Conflict",
+                examples=[
+                    OpenApiExample(
+                        "409",
+                        value={"error_detail": "시험 문제 수 제한 또는 총 배점을 초과하여 문제를 수정할 수 없습니다."},
+                    )
+                ],
+            ),
+        },
+    )
     def patch(self, request, question_id):
         question = get_object_or_404(ExamQuestion, id=question_id)
 
         serializer = ExamQuestionUpdateSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({"error_detail":"요청 값이 올바르지 않음."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error_detail": "요청 값이 올바르지 않음."}, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
         if "options" in data:
-            question.options_json = json.dumps(data["options"], ensure_ascii=False) if data["options"] is not None else None
+            question.options_json = (
+                json.dumps(data["options"], ensure_ascii=False) if data["options"] is not None else None
+            )
         if "type" in data:
             question.type = data["type"]
         if "question" in data:
@@ -184,12 +189,13 @@ class ExamQuestionDetailAPIView(APIView):
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 문제 삭제",
-        responses={200: ExamQuestionDeleteResponseSerializer,
-                   400: ErrorDetailSerializer,
-                   401: ErrorDetailSerializer,
-                   403: ErrorDetailSerializer,
-                   404: ErrorDetailSerializer,
-                   409: ErrorDetailSerializer,
+        responses={
+            200: ExamQuestionDeleteResponseSerializer,
+            400: ErrorDetailSerializer,
+            401: ErrorDetailSerializer,
+            403: ErrorDetailSerializer,
+            404: ErrorDetailSerializer,
+            409: ErrorDetailSerializer,
         },
         examples=[
             OpenApiExample(

@@ -1,8 +1,9 @@
 import json
+
 from rest_framework import serializers
 
-from apps.exam.models.exam_question_models import ExamQuestion
 from apps.exam.models.choices import QuestionType
+from apps.exam.models.exam_question_models import ExamQuestion
 
 
 class ExamQuestionCreateSerializer(serializers.Serializer):
@@ -21,8 +22,10 @@ class ExamQuestionCreateSerializer(serializers.Serializer):
 
     def validate(self, data):
         return data
+
     def validate_type(self, value):
         return value.upper()
+
 
 class ExamQuestionUpdateSerializer(ExamQuestionCreateSerializer):
     pass
@@ -59,6 +62,7 @@ def serialize_question_response(question: ExamQuestion) -> dict:
         "point": question.point,
         "explanation": question.explanation,
     }
+
 
 class ExamQuestionDeleteResponseSerializer(serializers.Serializer):
     exam_id = serializers.IntegerField()

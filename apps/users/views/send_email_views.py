@@ -6,13 +6,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.users.serializers.send_email_serializers import EmailSendSerializer
-from apps.users.services.send_email_services import EmailVerificationService
+from apps.users.services.send_email_services import EmailSendService
 
 
 class EmailSendView(APIView):
     permission_classes = [AllowAny]
     serializer_class = EmailSendSerializer
-    service = EmailVerificationService()
+    service = EmailSendService()
 
     @extend_schema(
         summary="이메일 인증 발송 API",
@@ -38,6 +38,6 @@ class EmailSendView(APIView):
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
-        self.service.send_verification_code(email)
+        self.service.send_email_code(email)
 
         return Response({"detail": "이메일 인증 코드가 전송되었습니다."}, status=status.HTTP_200_OK)

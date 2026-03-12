@@ -1,23 +1,28 @@
-import random
+import secrets
+import string
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import send_mail
+from rest_framework.exceptions import Throttled
 
 
-class EmailVerificationService:
+class EmailSendService:
     def create_code(self) -> str:
-        """6자리 숫자 번호 만들기"""
-        return str(random.randint(100000, 999999))
+        return "".join(secrets.choice(string.digits) for _ in range(6))
 
-    def send_verification_code(self, email: str) -> None:
-        """번호 생성 -> Redis 저장 -> 이메일 발송"""
+    def send_email_code(self, email: str) -> None:
+        limit_key = f"limit:{email}"
+
+        if cache.get(limit_key):
+            raise Throttled(detail="1분 후에 다시 시도해주세요.")
+
         code = self.create_code()
-
-        # Redis에 'verify:이메일' 이름으로 5분간 저장
         cache.set(f"verify:{email}", code, timeout=300)
 
-        # 실제 이메일 발송
+        cache.set(limit_key, True, timeout=60)
+
         subject = "[OZ] 이메일 인증 코드"
-        message = f"인증 코드는 [{code}] 입니다."
+        message = f"요청하신 인증코드는 {code} 입니다."
+
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])

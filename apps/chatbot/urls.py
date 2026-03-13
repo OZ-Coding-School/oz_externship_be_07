@@ -1,4 +1,5 @@
 from django.urls import path
+
 from . import views
 
 app_name = "chatbot"
@@ -13,4 +14,3 @@ urlpatterns = [
     # AI 답변 생성, 대화내역 조회, 초기화
     path("sessions/<int:session_id>/completions", views.ChatbotCompletionView.as_view(), name="session-completions"),
 ]
-

@@ -15,8 +15,8 @@ class SocialProvider(models.TextChoices):
 
 # 유저 권한
 class UserRole(models.TextChoices):
-    USER = "USER"
-    STUDENT = "STUDENT"
+    USER = "U"
+    STUDENT = "ST"
     TA = "TA"
     OM = "OM"
     LC = "LC"

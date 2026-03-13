@@ -54,3 +54,16 @@ class EmailVerifyTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("인증번호는 숫자만 입력 가능합니다.", str(response.data["error_detail"]["code"]))
+
+    def test_verify_email_brute_force_protection(self) -> None:
+        data = {"email": self.email, "code": "999999"}
+
+        for i in range(4):
+            response = self.client.post(self.url, data, format="json")
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.post(self.url, data, format="json")
+        self.assertIn("인증 번호 5회 실패", str(response.data["error_detail"]["code"]))
+
+        self.assertIsNone(cache.get(f"verify:{self.email}"))
+        self.assertIsNone(cache.get(f"failure_count:{self.email}"))

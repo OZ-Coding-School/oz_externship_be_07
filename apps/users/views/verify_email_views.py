@@ -2,6 +2,7 @@ from typing import Any
 
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -53,5 +54,5 @@ class EmailVerifyView(APIView):
                 {"detail": "이메일 인증에 성공하였습니다.", "email_token": email_token}, status=status.HTTP_200_OK
             )
 
-        except Exception as e:
-            return Response({"error_detail": {"code": [str(e)]}}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            return Response({"error_detail": {"code": e.detail}}, status=status.HTTP_400_BAD_REQUEST)

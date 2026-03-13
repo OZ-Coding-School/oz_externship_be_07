@@ -66,6 +66,10 @@ class PostDetailAPIView(APIView):
 
     def delete(self, request: Request, post_id: int) -> Response:
         post = get_object_or_404(Post, pk=post_id)
+
+        if post.author != request.user:
+            return Response({"error_detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+
         post.delete()
         mock_data = {"detail": "게시글이 삭제되었습니다."}
         return Response(mock_data, status=status.HTTP_200_OK)

@@ -1,10 +1,8 @@
-from typing import Any
-
 from apps.subject.models import CohortStudent
 from apps.users.models.models import User
 
 
-def get_user_course_data(user: User) -> dict[str, Any] | None:
+def get_user_course_data(user: User) -> dict | None:
     cohort_student = CohortStudent.objects.filter(user=user).select_related("cohort__course").last()
 
     if not cohort_student:

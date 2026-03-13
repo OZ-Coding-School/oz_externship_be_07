@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -70,26 +72,26 @@ class PostListAPIViewTest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
+    def _get(self, **params: str | int) -> Any:
+        return self.client.get(reverse("post-list"), params)
+
+    def _json(self, **params: str | int) -> dict[str, Any]:
+        return cast(dict[str, Any], self._get(**params).json())
+
     def test_get_post_list_returns_200(self) -> None:
-        response = self.client.get(reverse("post-list"))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self._get().status_code, status.HTTP_200_OK)
 
     def test_get_post_list_returns_expected_result_fields(self) -> None:
-        response = self.client.get(reverse("post-list"))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        data = response.json()
+        data = self._json()
         self.assertIn("count", data)
         self.assertIn("next", data)
         self.assertIn("previous", data)
         self.assertIn("results", data)
-
         result = data["results"][0]
         self.assertEqual(result["id"], self.other_post.id)
         self.assertEqual(result["author"]["id"], self.other_user.id)
         self.assertEqual(result["category_name"], self.other_category.name)
         self.assertEqual(result["title"], self.other_post.title)
-
         for field in (
             "thumbnail_img_url",
             "content_preview",
@@ -102,93 +104,55 @@ class PostListAPIViewTest(TestCase):
             self.assertIn(field, result)
 
     def test_get_post_list_excludes_invisible_post(self) -> None:
-        response = self.client.get(reverse("post-list"))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        result_ids = [result["id"] for result in response.json()["results"]]
+        result_ids = [result["id"] for result in self._json()["results"]]
         self.assertIn(self.post.id, result_ids)
         self.assertIn(self.other_post.id, result_ids)
         self.assertNotIn(self.hidden_post.id, result_ids)
 
     def test_get_post_list_with_category_filter_success(self) -> None:
-        response = self.client.get(reverse("post-list"), {"category_id": self.category.id})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        data = response.json()
+        data = self._json(category_id=self.category.id)
         self.assertEqual(data["count"], 1)
         self.assertEqual(data["results"][0]["id"], self.post.id)
         self.assertEqual(data["results"][0]["category_name"], self.category.name)
 
     def test_get_post_list_with_category_filter_no_result(self) -> None:
-        response = self.client.get(reverse("post-list"), {"category_id": 999999})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        data = response.json()
+        data = self._json(category_id=999999)
         self.assertEqual(data["count"], 0)
         self.assertEqual(data["results"], [])
 
     def test_get_post_list_with_author_search(self) -> None:
-        response = self.client.get(
-            reverse("post-list"),
-            {"search": self.user.nickname, "search_filter": "author"},
+        self.assertEqual(
+            self._json(search=self.user.nickname, search_filter="author")["results"][0]["id"], self.post.id
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["results"][0]["id"], self.post.id)
 
     def test_get_post_list_with_title_search(self) -> None:
-        response = self.client.get(
-            reverse("post-list"),
-            {"search": "테스트 게시글", "search_filter": "title"},
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["results"][0]["id"], self.post.id)
+        self.assertEqual(self._json(search="테스트 게시글", search_filter="title")["results"][0]["id"], self.post.id)
 
     def test_get_post_list_with_content_search(self) -> None:
-        response = self.client.get(
-            reverse("post-list"),
-            {"search": "다른 게시글 본문", "search_filter": "content"},
+        self.assertEqual(
+            self._json(search="다른 게시글 본문", search_filter="content")["results"][0]["id"], self.other_post.id
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["results"][0]["id"], self.other_post.id)
 
     def test_get_post_list_with_title_or_content_search(self) -> None:
-        response = self.client.get(
-            reverse("post-list"),
-            {"search": "자유게시판 글", "search_filter": "title_or_content"},
+        self.assertEqual(
+            self._json(search="자유게시판 글", search_filter="title_or_content")["results"][0]["id"], self.other_post.id
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["results"][0]["id"], self.other_post.id)
 
     def test_get_post_list_with_search_no_result(self) -> None:
-        response = self.client.get(
-            reverse("post-list"),
-            {"search": "없는검색어", "search_filter": "title"},
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        data = response.json()
+        data = self._json(search="없는검색어", search_filter="title")
         self.assertEqual(data["count"], 0)
         self.assertEqual(data["results"], [])
 
     def test_get_post_list_sort_oldest(self) -> None:
-        response = self.client.get(reverse("post-list"), {"sort": "oldest"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        results = response.json()["results"]
+        results = self._json(sort="oldest")["results"]
         self.assertEqual(results[0]["id"], self.post.id)
         self.assertEqual(results[1]["id"], self.other_post.id)
 
     def test_get_post_list_sort_most_views(self) -> None:
-        response = self.client.get(reverse("post-list"), {"sort": "most_views"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["results"][0]["id"], self.other_post.id)
+        self.assertEqual(self._json(sort="most_views")["results"][0]["id"], self.other_post.id)
 
     def test_get_post_list_sort_most_likes(self) -> None:
-        response = self.client.get(reverse("post-list"), {"sort": "most_likes"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()["results"]), 2)
+        self.assertEqual(len(self._json(sort="most_likes")["results"]), 2)
 
     def test_get_post_list_sort_most_comments(self) -> None:
-        response = self.client.get(reverse("post-list"), {"sort": "most_comments"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["results"][0]["id"], self.post.id)
+        self.assertEqual(self._json(sort="most_comments")["results"][0]["id"], self.post.id)

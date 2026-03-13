@@ -1,5 +1,3 @@
-from typing import Any
-
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
 from rest_framework.request import Request
@@ -14,7 +12,7 @@ from apps.community.services.post_service import (
 )
 
 
-class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, Any]]):
+class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, str]]):
     """게시글 상세 조회 실패 응답 Serializer"""
 
     error_detail = serializers.CharField()

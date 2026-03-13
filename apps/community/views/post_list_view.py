@@ -1,7 +1,6 @@
 from typing import Any, cast
 
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
-from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -23,15 +22,6 @@ class PostListPagination(PageNumberPagination):
     page_size_query_param = "page_size"
     page_query_param = "page"
     max_page_size = 100
-
-
-class PostListResponseSerializer(serializers.Serializer[dict[str, Any]]):
-    """게시글 목록 응답 Serializer"""
-
-    count = serializers.IntegerField()
-    next = serializers.CharField(allow_null=True)
-    previous = serializers.CharField(allow_null=True)
-    results = PostListSerializer(many=True)
 
 
 class PostListAPIView(APIView):
@@ -63,7 +53,7 @@ class PostListAPIView(APIView):
                 enum=["latest", "oldest", "most_views", "most_likes", "most_comments"],
             ),
         ],
-        responses={200: PostListResponseSerializer},
+        responses={200: PostListSerializer(many=True)},
         examples=[
             OpenApiExample(
                 name="게시글 조회 예시",
@@ -96,26 +86,26 @@ class PostListAPIView(APIView):
         ],
     )
     def get(self, request: Request) -> Response:
-        category_id_param = request.query_params.get("category_id")
-        queryset = get_post_list_queryset(
-            search=(request.query_params.get("search") or "").strip(),
-            search_filter=(request.query_params.get("search_filter") or "").strip(),
-            category_id=int(category_id_param) if category_id_param and category_id_param.isdigit() else None,
-            sort=(request.query_params.get("sort") or "latest").strip(),
+        category_id = request.query_params.get("category_id")
+        values_queryset = get_post_list_values(
+            get_post_list_queryset(
+                search=(request.query_params.get("search") or "").strip(),
+                search_filter=(request.query_params.get("search_filter") or "").strip(),
+                category_id=int(category_id) if category_id and category_id.isdigit() else None,
+                sort=(request.query_params.get("sort") or "latest").strip(),
+            )
         )
-        values_queryset = get_post_list_values(queryset)
         paginator = PostListPagination()
         page = paginator.paginate_queryset(values_queryset, request)
-        serializer = PostListSerializer(
+        data = PostListSerializer(
             cast(
                 Any,
                 build_post_list_response(list(values_queryset) if page is None else cast(list[dict[str, Any]], page)),
             ),
             many=True,
-        )
-
+        ).data
         return (
-            paginator.get_paginated_response(serializer.data)
+            paginator.get_paginated_response(data)
             if page is not None
-            else Response({"count": len(serializer.data), "next": None, "previous": None, "results": serializer.data})
+            else Response({"count": len(data), "next": None, "previous": None, "results": data})
         )

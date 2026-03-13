@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -38,11 +40,7 @@ class PostDetailAPIViewTest(TestCase):
             view_count=3,
         )
         cls.hidden_post = Post.objects.create(
-            title="숨김 게시글",
-            content="숨김 본문입니다.",
-            author=cls.user,
-            category=cls.category,
-            is_visible=False,
+            title="숨김 게시글", content="숨김 본문입니다.", author=cls.user, category=cls.category, is_visible=False
         )
         cls.inactive_category_post = Post.objects.create(
             title="비활성 카테고리 게시글",
@@ -55,10 +53,12 @@ class PostDetailAPIViewTest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
-    def test_get_post_detail_success(self) -> None:
-        response = self.client.get(reverse("post-detail", kwargs={"post_id": self.post.id}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    def _get(self, post_id: int) -> Any:
+        return self.client.get(reverse("post-detail", kwargs={"post_id": post_id}))
 
+    def test_get_post_detail_success(self) -> None:
+        response = self._get(self.post.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertEqual(data["id"], self.post.id)
         self.assertEqual(data["title"], self.post.title)
@@ -66,21 +66,20 @@ class PostDetailAPIViewTest(TestCase):
         self.assertEqual(data["author"]["id"], self.user.id)
         self.assertEqual(data["category"]["id"], self.category.id)
         self.assertEqual(data["category"]["name"], self.category.name)
-
         for field in ("view_count", "like_count", "created_at", "updated_at"):
             self.assertIn(field, data)
 
     def test_get_post_detail_not_found(self) -> None:
-        response = self.client.get(reverse("post-detail", kwargs={"post_id": 999999}))
+        response = self._get(999999)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json()["error_detail"], "게시글을 찾을 수 없습니다.")
 
     def test_get_post_detail_returns_404_when_post_is_invisible(self) -> None:
-        response = self.client.get(reverse("post-detail", kwargs={"post_id": self.hidden_post.id}))
+        response = self._get(self.hidden_post.id)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json()["error_detail"], "게시글을 찾을 수 없습니다.")
 
     def test_get_post_detail_returns_404_when_category_is_inactive(self) -> None:
-        response = self.client.get(reverse("post-detail", kwargs={"post_id": self.inactive_category_post.id}))
+        response = self._get(self.inactive_category_post.id)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json()["error_detail"], "게시글을 찾을 수 없습니다.")

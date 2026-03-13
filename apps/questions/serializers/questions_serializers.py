@@ -3,8 +3,8 @@ from typing import Any, Optional
 from rest_framework import serializers
 
 from apps.questions.models import QuestionCategories, QuestionImages, Questions
+from apps.questions.serializers.answers_serializers import AnswersSerializer
 from apps.questions.serializers.common_serializers import AuthorSerializer
-from apps.questions.serializers.questions_answer_serializers import AnswersSerializer
 
 
 # 카테고리 시리얼라이저 (질문 등록시 선택)

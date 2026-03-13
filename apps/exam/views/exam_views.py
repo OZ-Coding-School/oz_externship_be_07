@@ -26,15 +26,31 @@ class ExamListCreateAPIView(APIView):
         responses={200: ExamListSerializer(many=True)},
     )
     def get(self, request):
+        page = int(request.query_params.get("page", 1))
+        size = int(request.query_params.get("size", 10))
+        subject_id = request.query_params.get("subject_id")
+        search_keyword = request.query_params.get("search_keyword")
+        sort = request.query_params.get("sort", "created_at")
+        order = request.query_params.get("order", "desc")
+
         exams = ExamService.get_exam_list(
-            subject_id=request.query_params.get("subject_id"), search_keyword=request.query_params.get("search_keyword")
+            page=page,
+            size=size,
+            subject_id=subject_id,
+            search_keyword=search_keyword,
+            sort=sort,
+            order=order
         )
-        serializer = ExamListSerializer(exams, many=True)
+
+        serializer = ExamListSerializer(exams.object_list, many=True)
 
         # 정의서 요구사항에 따른 공통 응답 구조 유지
-        return Response(
-            {"page": 1, "size": 10, "total_count": exams.count(), "exams": serializer.data}, status=status.HTTP_200_OK
-        )
+        return Response({
+            "page": page,
+            "size": size,
+            "total_count": exams.paginator.count,  # 전체 검색 결과 개수
+            "exams": serializer.data
+        }, status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=["exams"],

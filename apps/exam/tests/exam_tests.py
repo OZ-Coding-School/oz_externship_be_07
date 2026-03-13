@@ -64,19 +64,6 @@ class ExamAPITest(APITestCase):
         # 서비스 로직에 의해 생성된 S3 URL 경로 확인
         self.assertIn("amazonaws.com", response.data["thumbnail_img_url"])
 
-    def test_get_exam_list(self):
-        """쪽지시험 목록 조회 테스트 (GET)"""
-        # 미리 데이터 생성
-        Exam.objects.create(title="시험 1", subject=self.subject)
-        Exam.objects.create(title="시험 2", subject=self.subject)
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # 뷰에서 정의한 공통 응답 구조(page, size, total_count, exams) 검증
-        self.assertEqual(response.data["total_count"], 2)
-        self.assertEqual(len(response.data["exams"]), 2)
-
     def test_create_exam_missing_field_fail(self):
         """필수 필드(title) 누락 시 실패 테스트"""
         data = {
@@ -86,3 +73,36 @@ class ExamAPITest(APITestCase):
         response = self.client.post(self.url, data, format="multipart")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_exam_list(self):
+        """쪽지시험 목록 조회 테스트 (GET)"""
+        # 1. 테스트 데이터 25개 생성 (페이지네이션 확인용)
+        for i in range(25):
+            Exam.objects.create(title=f"시험 {i:02d}", subject=self.subject)
+
+        # 2. 기본 조회 테스트 (1페이지, 기본 사이즈 10개 가정)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["total_count"], 25)  # 전체 개수
+        self.assertEqual(len(response.data["exams"]), 10)  # 한 페이지당 개수
+
+        # 3. 페이지네이션 파라미터 테스트 (2페이지, 사이즈 5개)
+        response = self.client.get(self.url, {"page": 2, "size": 5})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["page"], 2)
+        self.assertEqual(len(response.data["exams"]), 5)
+
+        # 4. 검색 키워드 테스트
+        # "시험 0"으로 시작하는 데이터는 시험 00~09까지 10개여야 함
+        response = self.client.get(self.url, {"search_keyword": "시험 0"})
+        self.assertEqual(response.data["total_count"], 10)
+
+        # 5. 과목 필터링 테스트
+        # subject_id 를 99로 검색했을때 0개가 나와야 함
+        response = self.client.get(self.url, {"subject_id": 99})
+        self.assertEqual(response.data["total_count"], 0)
+
+        # 6. 정렬 테스트 (최신순 - order=desc)
+        response = self.client.get(self.url, {"sort": "created_at", "order": "desc"})
+        self.assertEqual(response.data["exams"][0]["title"], "시험 24")
+

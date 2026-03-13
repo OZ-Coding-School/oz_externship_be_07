@@ -88,14 +88,14 @@ class PostDetailAPIViewTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         url = reverse("post-detail", kwargs={"post_id": self.post.id})
-        data = {"title": "테스트 수정 title", "content": "테스트 수정 content", "category": self.category.id}
+        data = {"title": "테스트 수정 title", "content": "테스트 수정 content", "category": self.category.name}
         response = self.client.put(url, data, content_type="application/json")
         get_data = response.json()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_data["title"], data["title"])
         self.assertEqual(get_data["content"], data["content"])
-        self.assertEqual(get_data["category_id"], self.category.id)
+        self.assertEqual(get_data["category"], self.category.name)
 
     def test_post_update_fail(self) -> None:
         self.client.force_authenticate(user=self.user)

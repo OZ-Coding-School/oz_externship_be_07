@@ -1,5 +1,7 @@
 from typing import Any
+
 from rest_framework import serializers
+
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
@@ -18,7 +20,7 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
     category = serializers.SlugRelatedField(
-        queryset= PostCategory.objects.all(),
+        queryset=PostCategory.objects.all(),
         slug_field="name",
     )
 
@@ -38,7 +40,7 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     category = serializers.SlugRelatedField(
-        queryset= PostCategory.objects.all(),
+        queryset=PostCategory.objects.all(),
         slug_field="name",
     )
 
@@ -51,7 +53,7 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
             "id": instance.pk,
             "title": instance.title,
             "content": instance.content,
-            "category_name": instance.category.name,
+            "category": instance.category.name,
         }
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:

@@ -17,7 +17,6 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
-
     category = serializers.SlugRelatedField(
         queryset= PostCategory.objects.all(),
         slug_field="name",
@@ -38,6 +37,10 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
 
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
+    category = serializers.SlugRelatedField(
+        queryset= PostCategory.objects.all(),
+        slug_field="name",
+    )
 
     class Meta:
         model = Post

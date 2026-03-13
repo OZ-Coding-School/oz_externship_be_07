@@ -12,6 +12,7 @@ class PostComment(TimeStampModel):
 
     class Meta:
         db_table = "post_comments"
+        verbose_name_plural = "게시글 댓글"
         indexes = [
             models.Index(fields=["post", "created_at"], name="idx_post_id_created_at"),
         ]
@@ -25,6 +26,7 @@ class CommentTag(TimeStampModel):
 
     class Meta:
         db_table = "post_comment_tags"
+        verbose_name_plural = "댓글 태그"
         indexes = [
             models.Index(fields=["tagged_user"], name="idx_tagged_user_id"),
         ]

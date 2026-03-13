@@ -16,8 +16,12 @@ class Post(TimeStampModel):
         "community.PostCategory", on_delete=models.PROTECT, null=False, related_name="posts", verbose_name="카테고리"
     )
 
+    def __str__(self) -> str:
+        return self.title
+
     class Meta:
         db_table = "posts"
+        verbose_name_plural = "게시글"
         indexes = [
             models.Index(fields=["author"]),
             models.Index(fields=["created_at"]),
@@ -77,9 +81,13 @@ class PostLike(TimeStampModel):
         verbose_name="게시글",
     )
 
+    def __str__(self) -> str:
+        return f"{self.user} - {self.post}"
+
     class Meta:
         db_table = "post_likes"
         verbose_name = "게시글 좋아요"
+        verbose_name_plural = "게시글 좋아요"
         indexes = [
             models.Index(fields=["post_id"], name="idx_post_like_id"),
         ]

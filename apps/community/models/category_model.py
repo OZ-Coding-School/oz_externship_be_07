@@ -16,6 +16,10 @@ class PostCategory(TimeStampModel):
         default=True, null=False, verbose_name="카테고리 사용 여부", help_text="T: 사용, F: 미사용"
     )
 
+    def __str__(self) -> str:
+        return self.name
+
     class Meta:
         db_table = "post_categories"
         verbose_name = "게시글 카테고리"
+        verbose_name_plural = "게시글 카테고리"

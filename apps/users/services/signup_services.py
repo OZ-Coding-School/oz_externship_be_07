@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from django.core.cache import cache
+from django.db import IntegrityError
 from rest_framework.exceptions import ValidationError
 
 from apps.users.models.models import User
@@ -18,6 +19,14 @@ class UserService:
         phone_number = cache.get(f"sms_token:{sms_token}")
         if not phone_number:
             raise ValidationError("SMS 인증이 만료되었거나 유효하지 않습니다.")
+
+        # 중복 검사
+        if User.objects.filter(email=email).exists():
+            raise IntegrityError("이미 중복된 회원가입 내역이 존재합니다.")
+        if User.objects.filter(phone_number=phone_number).exists():
+            raise IntegrityError("이미 중복된 회원가입 내역이 존재합니다.")
+        if User.objects.filter(nickname=validated_data.get("nickname")).exists():
+            raise IntegrityError("이미 중복된 회원가입 내역이 존재합니다.")
 
         password = validated_data.pop("password")
 

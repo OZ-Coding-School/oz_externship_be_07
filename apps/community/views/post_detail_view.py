@@ -1,19 +1,7 @@
-from drf_spectacular.utils import OpenApiExample, extend_schema
-from rest_framework import serializers, status
-import os
-from typing import Any
-
-from django.conf import settings
-from django.core.files.storage import default_storage
-from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.generics import get_object_or_404
-from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,6 +11,9 @@ from apps.community.serializers.post_detail_serializer import PostDetailSerializ
 from apps.community.services.post_service import (
     build_post_detail_response,
     get_post_detail,
+    post_delete,
+    post_put,
+    value_list,
 )
 
 
@@ -102,10 +93,6 @@ class PostDetailAPIView(APIView):
         },
     )
     def put(self, request: Request, post_id: int) -> Response:
-        if not request.user.is_authenticated:
-            # DB에 있는 유저 중 아무나 한 명을 강제로 할당
-            from apps.users.models.models import User
-            request.user = User.objects.filter(is_superuser=True).first() or User.objects.first()
         return post_put(post_id, self.request, PostUpdateSerializer)
 
     @extend_schema(

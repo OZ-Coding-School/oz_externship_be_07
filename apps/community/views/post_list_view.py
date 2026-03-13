@@ -6,11 +6,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.models.post_model import Post
+from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 
 
 class PostListAPIView(APIView):
     """게시글 목록 조회 API"""
+
+    serializer_class = PostCreateSerializer
 
     def get(self: "PostListAPIView", request: Request) -> Response:
         search = request.query_params.get("search")
@@ -62,3 +65,9 @@ class PostListAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+    def post(self, request: Request) -> Response:
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response({"detail": "게시글이 성공적으로 생성되었습니다.", "pk": 1}, status=status.HTTP_201_CREATED)

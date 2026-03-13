@@ -1,10 +1,8 @@
-from typing import Any, cast
+from typing import Any, Type, cast
 
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework.pagination import PageNumberPagination
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -12,7 +10,14 @@ from rest_framework.views import APIView
 
 from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
-from apps.community.services.post_service import post_create, value_list
+from apps.community.services.post_service import (
+    build_post_list_response,
+    get_post_list_queryset,
+    get_post_list_values,
+    post_create,
+    value_list,
+)
+
 
 class PostListPagination(PageNumberPagination):
     """게시글 목록 페이지네이션"""
@@ -22,12 +27,11 @@ class PostListPagination(PageNumberPagination):
     page_query_param = "page"
     max_page_size = 100
 
+
 class PostListAPIView(APIView):
     """게시글 목록 조회 API"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
-
-    serializer_class = PostCreateSerializer
 
     @extend_schema(
         summary="게시글 조회",

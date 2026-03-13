@@ -2,7 +2,6 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
 

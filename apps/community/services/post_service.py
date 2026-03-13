@@ -1,6 +1,12 @@
-from typing import Any, cast
+from typing import Any, Type, cast
 
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiExample
+from rest_framework import status
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from apps.community.models.post_model import Post, PostImage
 
@@ -122,6 +128,7 @@ def extend_schema(name: str, value: dict[str, Any], status_code: str) -> OpenApi
         response_only=True,
     )
 
+
 value_list = {
     "200": extend_schema(
         "Ok", {"id": 1, "title": "수정된 게시글 본문입니다. 마크다운 허용", "category": "테스트 게시판"}, "200"
@@ -133,6 +140,7 @@ value_list = {
     "403": extend_schema("Forbidden", {"error_detail": "권한이 없습니다."}, "403"),
     "404": extend_schema("Not Found", {"error_detail": "해당 게시글을 찾을 수 없습니다."}, "404"),
 }
+
 
 def post_create(request: Request, serializer_class: Type[Any]) -> Response:
     serializer = serializer_class(data=request.data)

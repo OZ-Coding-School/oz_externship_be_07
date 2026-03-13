@@ -125,6 +125,7 @@ class PostListAPIView(APIView):
         tags=["posts"],
         summary="게시판 등록",
         description="커뮤니 게시글 작성 API",
+        request=PostCreateSerializer,
         examples=[extend_schema_201, extend_schema_400, extend_schema_401],
         responses={
             201: OpenApiTypes.OBJECT,

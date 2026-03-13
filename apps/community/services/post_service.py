@@ -126,6 +126,7 @@ extend_schema_200 = OpenApiExample(
 extend_schema_201 = OpenApiExample(
     "Ok",
     value={"detail": "게시글이 성공적으로 등록되었습니다.", "pk": 1},
+    response_only=True,
     status_codes=["201"],
 )
 extend_schema_400 = OpenApiExample(
@@ -154,9 +155,9 @@ extend_schema_403 = OpenApiExample(
     status_codes=["403"],
 )
 extend_schema_404 = OpenApiExample(
-    "Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}, status_codes=["404"]
+    "Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}, status_codes=["404"], response_only=True,
 )
-extend_schema_200_delete = OpenApiExample("OK", value={"detail": "게시글이 삭제되었습니다."}, status_codes=["200"])
+extend_schema_200_delete = OpenApiExample("OK", value={"detail": "게시글이 삭제되었습니다."}, status_codes=["200"], response_only=True,)
 
 
 def post_create(request: Request, serializer_class: Type[Any]) -> Response:

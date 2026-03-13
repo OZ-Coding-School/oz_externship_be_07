@@ -49,7 +49,10 @@ def get_post_list_queryset(
     elif sort == "most_likes":
         queryset = cast(QuerySet[Post], queryset_any.order_by("-like_count", "-id"))
     elif sort == "most_comments":
-        queryset = cast(QuerySet[Post], queryset_any.order_by("-comment_count", "-id"))
+        queryset = cast(
+            QuerySet[Post],
+            queryset_any.order_by("-comment_count", "-id"),
+        )
     else:
         queryset = cast(QuerySet[Post], queryset_any.order_by("-created_at", "-id"))
 

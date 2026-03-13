@@ -1,13 +1,12 @@
 from typing import Any
 
-from django.db.models import Count, Q
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.community.models.post_model import Post
+from apps.community.serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
 from apps.community.services.post_service import (
     build_post_detail_response,
@@ -56,19 +55,11 @@ class PostDetailAPIView(APIView):
                     "updated_at": "2025-10-30T14:01:57.505250+09:00",
                 },
                 response_only=True,
-            )
-        ],
-    )
-
-    def get(self: "PostDetailAPIView", request: Request, post_id: int) -> Response:
-        post = Post.objects.select_related("author", "category").filter(id=post_id).first()
-                status_codes=["200"],
             ),
             OpenApiExample(
                 name="게시글 상세 조회 실패 예시",
                 value={"error_detail": "게시글을 찾을 수 없습니다."},
                 response_only=True,
-                status_codes=["404"],
             ),
         ],
     )
@@ -81,30 +72,6 @@ class PostDetailAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        mock_response: dict[str, Any] = {
-            "id": post.id,
-            "title": "테스트 게시글 1번",
-            "author": {
-                "id": post.author_id,
-                "nickname": post.author.nickname,
-                "profile_img_url": (
-                    post.author.profile_img_url
-                    if post.author.profile_img_url
-                    else "https://example.com/uploads/images/users/profiles/image.png"
-                ),
-            },
-            "category": {
-                "id": post.category_id,
-                "name": post.category.name,
-            },
-            "content": "게시글 본문입니다.",
-            "view_count": 100,
-            "like_count": 100,
-            "created_at": "2025-10-30T14:01:57.505250+09:00",
-            "updated_at": "2025-10-30T14:01:57.505250+09:00",
-        }
-
-        serializer = PostDetailSerializer(mock_response)
         response_data: dict[str, Any] = build_post_detail_response(post)
         serializer = PostDetailSerializer(response_data)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,6 +1,5 @@
 from typing import Any, cast
 
-from django.db.models import Count, OuterRef, Q, Subquery
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import serializers
 from rest_framework.pagination import PageNumberPagination
@@ -8,7 +7,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.community.models.post_model import Post, PostImage
+from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
     build_post_list_response,
@@ -108,7 +107,7 @@ class PostListAPIView(APIView):
                             "like_count": 100,
                             "created_at": "2025-10-30T14:01:57.505250+09:00",
                             "updated_at": "2025-10-30T14:01:57.505250+09:00",
-                            "category_id": 1,
+                            "category_name": "자유게시판",
                         }
                     ],
                 },
@@ -134,47 +133,6 @@ class PostListAPIView(APIView):
         )
         values_queryset = get_post_list_values(queryset)
 
-        if category_id is not None:
-            queryset = queryset.filter(category_id=category_id)
-
-        if search:
-            if search_filter == "author":
-                queryset = queryset.filter(author__nickname__icontains=search)
-            elif search_filter == "title":
-                queryset = queryset.filter(title__icontains=search)
-            elif search_filter == "content":
-                queryset = queryset.filter(content__icontains=search)
-            else:
-                queryset = queryset.filter(Q(title__icontains=search) | Q(content__icontains=search))
-
-        queryset_any = cast(Any, queryset)
-        if sort == "oldest":
-            queryset = queryset_any.order_by("created_at", "id")
-        elif sort == "most_views":
-            queryset = queryset_any.order_by("-view_count", "-id")
-        elif sort == "most_likes":
-            queryset = queryset_any.order_by("-like_count", "-id")
-        elif sort == "most_comments":
-            queryset = queryset_any.order_by("-comment_count", "-id")
-        else:
-            queryset = queryset_any.order_by("-created_at", "-id")
-
-        values_queryset = queryset.values(
-            "id",
-            "title",
-            "content",
-            "view_count",
-            "created_at",
-            "updated_at",
-            "category_id",
-            "author_id",
-            "author__nickname",
-            "author__profile_img_url",
-            "like_count",
-            "comment_count",
-            "thumbnail_img_url",
-        )
-
         paginator = PostListPagination()
         page = paginator.paginate_queryset(values_queryset, request)
 
@@ -183,27 +141,6 @@ class PostListAPIView(APIView):
             page_items = list(values_queryset)
         else:
             page_items = cast(list[dict[str, Any]], page)
-
-        response_data: list[dict[str, Any]] = [
-            {
-                "id": post["id"],
-                "author": {
-                    "id": post["author_id"],
-                    "nickname": post["author__nickname"],
-                    "profile_img_url": post["author__profile_img_url"],
-                },
-                "title": post["title"],
-                "thumbnail_img_url": post["thumbnail_img_url"],
-                "content_preview": (f"{post['content'][:50]}..." if len(post["content"]) > 50 else post["content"]),
-                "comment_count": post["comment_count"],
-                "view_count": post["view_count"],
-                "like_count": post["like_count"],
-                "created_at": post["created_at"],
-                "updated_at": post["updated_at"],
-                "category_id": post["category_id"],
-            }
-            for post in page_items
-        ]
 
         response_data = build_post_list_response(page_items)
         serializer = PostListSerializer(cast(Any, response_data), many=True)

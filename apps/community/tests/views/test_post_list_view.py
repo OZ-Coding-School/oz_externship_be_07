@@ -24,6 +24,9 @@ class PostListAPIViewTest(TestCase):
         cls.user = User.objects.create(
             email="test@test.com",
             name="testuser",
+            nickname="testuser1",
+            phone_number="01011112222",
+            gender="M",
             password="password123",
             birthday="2000-01-01",
         )
@@ -31,6 +34,9 @@ class PostListAPIViewTest(TestCase):
         cls.other_user = User.objects.create(
             email="other@test.com",
             name="otheruser",
+            nickname="otheruser1",
+            phone_number="01033334444",
+            gender="F",
             password="password123",
             birthday="2000-01-02",
         )
@@ -166,7 +172,7 @@ class PostListAPIViewTest(TestCase):
         response = self.client.get(
             url,
             {
-                "search": self.user.name,
+                "search": self.user.nickname,
                 "search_filter": "author",
             },
         )

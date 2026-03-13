@@ -1,5 +1,18 @@
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
+import os
+from typing import Any
+
+from django.conf import settings
+from django.core.files.storage import default_storage
+from django.http import Http404
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiExample, extend_schema
+from rest_framework import status
+from rest_framework.generics import get_object_or_404
+from rest_framework.parsers import MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -65,3 +78,52 @@ class PostDetailAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
         )
+
+    @extend_schema(
+        tags=["posts"],
+        summary="게시판 수정",
+        request=PostUpdateSerializer,
+        description="커뮤니티 게시글 수정 API",
+        examples=[
+            service.extend_schema_200,
+            service.extend_schema_403,
+            service.extend_schema_404,
+            service.extend_schema_400,
+            service.extend_schema_401,
+        ],
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+            401: OpenApiTypes.OBJECT,
+            403: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
+        },
+    )
+    def put(self, request: Request, post_id: int) -> Response:
+        return service.post_put(post_id, self.request, PostUpdateSerializer)
+
+    @extend_schema(
+        tags=["posts"],
+        summary="게시판 삭제",
+        description="커뮤니티 게시글 삭제 API",
+        examples=[
+            service.extend_schema_200_delete,
+            service.extend_schema_403,
+            service.extend_schema_404,
+        ],
+        responses={
+            200: OpenApiTypes.OBJECT,
+            403: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
+        },
+    )
+    def delete(self, request: Request, post_id: int) -> Response:
+        return service.post_delete(post_id, self.request)
+
+
+class MartorImageUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request: Request) -> Response:
+        return service.markdown(self.request)

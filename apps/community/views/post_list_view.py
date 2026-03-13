@@ -44,24 +44,9 @@ class PostListAPIView(APIView):
         description="게시글 list",
         tags=["posts"],
         parameters=[
-            OpenApiParameter(
-                name="page",
-                description="페이지 번호",
-                required=False,
-                type=int,
-            ),
-            OpenApiParameter(
-                name="page_size",
-                description="페이지 크기",
-                required=False,
-                type=int,
-            ),
-            OpenApiParameter(
-                name="search",
-                description="검색어",
-                required=False,
-                type=str,
-            ),
+            OpenApiParameter(name="page", description="페이지 번호", required=False, type=int),
+            OpenApiParameter(name="page_size", description="페이지 크기", required=False, type=int),
+            OpenApiParameter(name="search", description="검색어", required=False, type=str),
             OpenApiParameter(
                 name="search_filter",
                 description="검색 기준",
@@ -69,12 +54,7 @@ class PostListAPIView(APIView):
                 type=str,
                 enum=["author", "title", "content", "title_or_content"],
             ),
-            OpenApiParameter(
-                name="category_id",
-                description="카테고리 ID",
-                required=False,
-                type=int,
-            ),
+            OpenApiParameter(name="category_id", description="카테고리 ID", required=False, type=int),
             OpenApiParameter(
                 name="sort",
                 description="정렬 기준",
@@ -116,43 +96,26 @@ class PostListAPIView(APIView):
         ],
     )
     def get(self, request: Request) -> Response:
-        search = (request.query_params.get("search") or "").strip()
-        search_filter = (request.query_params.get("search_filter") or "").strip()
-        sort = (request.query_params.get("sort") or "latest").strip()
-
         category_id_param = request.query_params.get("category_id")
-        category_id: int | None = None
-        if category_id_param and category_id_param.isdigit():
-            category_id = int(category_id_param)
-
         queryset = get_post_list_queryset(
-            search=search,
-            search_filter=search_filter,
-            category_id=category_id,
-            sort=sort,
+            search=(request.query_params.get("search") or "").strip(),
+            search_filter=(request.query_params.get("search_filter") or "").strip(),
+            category_id=int(category_id_param) if category_id_param and category_id_param.isdigit() else None,
+            sort=(request.query_params.get("sort") or "latest").strip(),
         )
         values_queryset = get_post_list_values(queryset)
-
         paginator = PostListPagination()
         page = paginator.paginate_queryset(values_queryset, request)
+        serializer = PostListSerializer(
+            cast(
+                Any,
+                build_post_list_response(list(values_queryset) if page is None else cast(list[dict[str, Any]], page)),
+            ),
+            many=True,
+        )
 
-        page_items: list[dict[str, Any]]
-        if page is None:
-            page_items = list(values_queryset)
-        else:
-            page_items = cast(list[dict[str, Any]], page)
-
-        response_data = build_post_list_response(page_items)
-        serializer = PostListSerializer(cast(Any, response_data), many=True)
-
-        if page is not None:
-            return paginator.get_paginated_response(serializer.data)
-
-        return Response(
-            {
-                "count": len(serializer.data),
-                "next": None,
-                "previous": None,
-                "results": serializer.data,
-            }
+        return (
+            paginator.get_paginated_response(serializer.data)
+            if page is not None
+            else Response({"count": len(serializer.data), "next": None, "previous": None, "results": serializer.data})
         )

@@ -12,16 +12,11 @@ def get_post_list_queryset(
     sort: str,
 ) -> QuerySet[Post]:
     thumbnail_subquery = PostImage.objects.filter(post_id=OuterRef("pk")).order_by("id").values("img_url")[:1]
-
     queryset: QuerySet[Post] = (
         Post.objects.select_related("author", "category")
         .filter(is_visible=True, category__status=True)
         .annotate(
-            like_count=Count(
-                "likes",
-                filter=Q(likes__is_liked=True),
-                distinct=True,
-            ),
+            like_count=Count("likes", filter=Q(likes__is_liked=True), distinct=True),
             comment_count=Count("postcomment", distinct=True),
             thumbnail_img_url=Subquery(thumbnail_subquery),
         )
@@ -31,38 +26,27 @@ def get_post_list_queryset(
         queryset = queryset.filter(category_id=category_id)
 
     if search:
-        if search_filter == "author":
-            queryset = queryset.filter(author__nickname__icontains=search)
-        elif search_filter == "title":
-            queryset = queryset.filter(title__icontains=search)
-        elif search_filter == "content":
-            queryset = queryset.filter(content__icontains=search)
-        else:
-            queryset = queryset.filter(Q(title__icontains=search) | Q(content__icontains=search))
+        filters = {
+            "author": Q(author__nickname__icontains=search),
+            "title": Q(title__icontains=search),
+            "content": Q(content__icontains=search),
+        }
+        queryset = queryset.filter(
+            filters.get(search_filter, Q(title__icontains=search) | Q(content__icontains=search))
+        )
 
     queryset_any = cast(Any, queryset)
-
-    if sort == "oldest":
-        queryset = cast(QuerySet[Post], queryset_any.order_by("created_at", "id"))
-    elif sort == "most_views":
-        queryset = cast(QuerySet[Post], queryset_any.order_by("-view_count", "-id"))
-    elif sort == "most_likes":
-        queryset = cast(QuerySet[Post], queryset_any.order_by("-like_count", "-id"))
-    elif sort == "most_comments":
-        queryset = cast(
-            QuerySet[Post],
-            queryset_any.order_by("-comment_count", "-id"),
-        )
-    else:
-        queryset = cast(QuerySet[Post], queryset_any.order_by("-created_at", "-id"))
-
-    return queryset
+    order_by_map = {
+        "oldest": ("created_at", "id"),
+        "most_views": ("-view_count", "-id"),
+        "most_likes": ("-like_count", "-id"),
+        "most_comments": ("-comment_count", "-id"),
+    }
+    return cast(QuerySet[Post], queryset_any.order_by(*order_by_map.get(sort, ("-created_at", "-id"))))
 
 
 def get_post_list_values(queryset: QuerySet[Post]) -> Any:
-    queryset_any = cast(Any, queryset)
-
-    return queryset_any.values(
+    return cast(Any, queryset).values(
         "id",
         "title",
         "content",
@@ -90,7 +74,7 @@ def build_post_list_response(page_items: list[dict[str, Any]]) -> list[dict[str,
             },
             "title": post["title"],
             "thumbnail_img_url": post["thumbnail_img_url"],
-            "content_preview": (f"{post['content'][:50]}..." if len(post["content"]) > 50 else post["content"]),
+            "content_preview": f"{post['content'][:50]}..." if len(post["content"]) > 50 else post["content"],
             "comment_count": post["comment_count"],
             "view_count": post["view_count"],
             "like_count": post["like_count"],
@@ -103,19 +87,12 @@ def build_post_list_response(page_items: list[dict[str, Any]]) -> list[dict[str,
 
 
 def get_post_detail(post_id: int) -> Post | None:
-    queryset = (
+    return (
         Post.objects.select_related("author", "category")
         .filter(id=post_id, is_visible=True, category__status=True)
-        .annotate(
-            like_count=Count(
-                "likes",
-                filter=Q(likes__is_liked=True),
-                distinct=True,
-            )
-        )
+        .annotate(like_count=Count("likes", filter=Q(likes__is_liked=True), distinct=True))
+        .first()
     )
-
-    return queryset.first()
 
 
 def build_post_detail_response(post: Any) -> dict[str, Any]:
@@ -127,10 +104,7 @@ def build_post_detail_response(post: Any) -> dict[str, Any]:
             "nickname": post.author.nickname,
             "profile_img_url": post.author.profile_img_url,
         },
-        "category": {
-            "id": post.category.id,
-            "name": post.category.name,
-        },
+        "category": {"id": post.category.id, "name": post.category.name},
         "content": post.content,
         "view_count": post.view_count,
         "like_count": post.like_count,

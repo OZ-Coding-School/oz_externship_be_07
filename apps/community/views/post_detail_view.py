@@ -29,10 +29,7 @@ class PostDetailAPIView(APIView):
         summary="게시글 상세 조회",
         description="게시글에 대한 상세한 정보 조회",
         tags=["posts"],
-        responses={
-            200: PostDetailSerializer,
-            404: PostDetailNotFoundSerializer,
-        },
+        responses={200: PostDetailSerializer, 404: PostDetailNotFoundSerializer},
         examples=[
             OpenApiExample(
                 name="게시글 상세 조회 성공 예시",
@@ -44,10 +41,7 @@ class PostDetailAPIView(APIView):
                         "nickname": "testuser",
                         "profile_img_url": "https://example.com/uploads/images/users/profiles/profile.png",
                     },
-                    "category": {
-                        "id": 1,
-                        "name": "자유게시판",
-                    },
+                    "category": {"id": 1, "name": "자유게시판"},
                     "content": "게시글 내용입니다.",
                     "view_count": 100,
                     "like_count": 10,
@@ -65,13 +59,11 @@ class PostDetailAPIView(APIView):
     )
     def get(self, request: Request, post_id: int) -> Response:
         post = get_post_detail(post_id)
-
-        if post is None:
-            return Response(
-                {"error_detail": "게시글을 찾을 수 없습니다."},
-                status=status.HTTP_404_NOT_FOUND,
+        return (
+            Response({"error_detail": "게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            if post is None
+            else Response(
+                PostDetailSerializer(build_post_detail_response(post)).data,
+                status=status.HTTP_200_OK,
             )
-
-        response_data: dict[str, Any] = build_post_detail_response(post)
-        serializer = PostDetailSerializer(response_data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        )

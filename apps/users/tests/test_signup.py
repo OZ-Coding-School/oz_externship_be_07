@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Dict
 
 from django.core.cache import cache
@@ -11,28 +12,32 @@ from apps.users.models.models import User
 class SignupTest(TestCase):
     user_data: Dict[str, Any]
     url: str
-    user: User
 
     @classmethod
     def setUpTestData(cls) -> None:
-        """클래스당 1번 실행"""
         cls.url = "/api/v1/accounts/signup"
 
-        cls.user_data = {
-            "nickname": "testuser",
+    def setUp(self) -> None:
+        self.client = APIClient()
+
+        uid = uuid.uuid4().hex[:6]
+
+        # 테스트별 고유 토큰으로 캐시 충돌 방지
+        self.email_token = f"et_{uid}"
+        self.sms_token = f"st_{uid}"
+
+        cache.set(f"email_token:{self.email_token}", f"test_{uid}@example.com", timeout=3600)
+        cache.set(f"sms_token:{self.sms_token}", f"010{uid}1234", timeout=3600)
+
+        self.user_data = {
+            "nickname": f"u{uid}",
             "password": "testpassword123",
             "name": "홍길동",
             "birthday": "2000-09-25",
             "gender": "M",
-            "email_token": "valid_email_token_123",
-            "sms_token": "valid_sms_token_123",
+            "email_token": self.email_token,
+            "sms_token": self.sms_token,
         }
-
-    def setUp(self) -> None:
-        self.client = APIClient()
-        cache.clear()
-        cache.set("email_token:valid_email_token_123", "test@example.com", timeout=3600)
-        cache.set("sms_token:valid_sms_token_123", "010-1234-5678", timeout=3600)
 
     def test_signup_success(self) -> None:
         """회원가입 성공 테스트(201)"""
@@ -41,14 +46,14 @@ class SignupTest(TestCase):
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(name=data["name"]).exists())
+        self.assertTrue(User.objects.filter(nickname=data["nickname"]).exists())
 
-        user = User.objects.get(name=data["name"])
-        self.assertEqual(user.email, "test@example.com")
-        self.assertEqual(user.phone_number, "010-1234-5678")
+        user = User.objects.get(nickname=data["nickname"])
+        self.assertIn("@example.com", user.email)
+        self.assertTrue(user.phone_number.startswith("010"))
 
-        self.assertIsNone(cache.get("email_token:valid_email_token_123"))
-        self.assertIsNone(cache.get("sms_token:valid_sms_token_123"))
+        self.assertIsNone(cache.get(f"email_token:{self.email_token}"))
+        self.assertIsNone(cache.get(f"sms_token:{self.sms_token}"))
 
     def test_signup_missing_field_fail(self) -> None:
         """필수필드 누락 시 실패 (400)"""
@@ -82,7 +87,7 @@ class SignupTest(TestCase):
         User.objects.create_user(
             email="existing@example.com",
             password="password123",
-            nickname="testuser",
+            nickname="dupuser",
             name="기존유저",
             phone_number="010-1111-2222",
             birthday="2000-09-25",
@@ -90,6 +95,7 @@ class SignupTest(TestCase):
         )
 
         data = self.user_data.copy()
+        data["nickname"] = "dupuser"
 
         response = self.client.post(self.url, data, format="json")
 

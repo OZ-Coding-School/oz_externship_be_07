@@ -1,9 +1,10 @@
 import os
 from typing import Optional
 
-import google.generativeai as genai  # type: ignore
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from google import genai
+from google.genai import types
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from apps.users.models.models import User
@@ -78,13 +79,17 @@ class AnswerService:
             raise ValidationError("이미 AI가 답변을 생성했습니다.")
 
         # AI API 연동
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         model_name = "gemini-2.5-pro"
-        model = genai.GenerativeModel(model_name)
 
         prompt = f"질문 제목: {question.title}\n내용: {question.content}\n전문가로서 답변해줘."
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+        )
 
         # DB 저장
-        ai_answer = QuestionAiAnswers.objects.create(questions=question, output=response.text, using_model=model_name)
+        ai_answer = QuestionAiAnswers.objects.create(
+            questions=question, output=response.text or "", using_model=model_name
+        )
         return ai_answer

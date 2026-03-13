@@ -161,7 +161,7 @@ extend_schema_200_delete = OpenApiExample(
 )
 
 
-def post_create(request: Request, serializer_class: Type[Serializer]) -> Response:
+def post_create(request: Request, serializer_class: Type[Any]) -> Response:
     serializer = serializer_class(data=request.data)
     serializer.is_valid(raise_exception=True)
     instance = serializer.save(author=request.user)
@@ -173,7 +173,7 @@ def post_create(request: Request, serializer_class: Type[Serializer]) -> Respons
     return Response(data, status=status.HTTP_201_CREATED)
 
 
-def post_put(post_id: int, request: Request, serializer_class: Type[Serializer]) -> Response:
+def post_put(post_id: int, request: Request, serializer_class: Type[Any]) -> Response:
     try:
         instance = get_object_or_404(Post, pk=post_id)
     except Http404:

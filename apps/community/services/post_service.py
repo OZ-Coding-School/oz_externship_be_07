@@ -154,11 +154,9 @@ extend_schema_403 = OpenApiExample(
     status_codes=["403"],
 )
 extend_schema_404 = OpenApiExample(
-    "Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}, response_only=True, status_codes=["404"]
+    "Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}, status_codes=["404"]
 )
-extend_schema_200_delete = OpenApiExample(
-    "OK", value={"detail": "게시글이 삭제되었습니다."}, response_only=True, status_codes=["200"]
-)
+extend_schema_200_delete = OpenApiExample("OK", value={"detail": "게시글이 삭제되었습니다."}, status_codes=["200"])
 
 
 def post_create(request: Request, serializer_class: Type[Any]) -> Response:
@@ -209,20 +207,3 @@ def post_delete(post_id: int, request: Request) -> Response:
     instance.delete()
     data = {"detail": "게시글이 삭제되었습니다."}
     return Response(data, status=status.HTTP_200_OK)
-
-
-def markdown(request: Request) -> Response:
-    if "markdown-image-upload" not in request.FILES:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    image = request.FILES["markdown-image-upload"]
-
-    path = default_storage.save(f"mark/{image.name}", image)
-    url = os.path.join(settings.MEDIA_URL, str(path))
-
-    data = {
-        "link": url,
-        "name": image.name,
-    }
-
-    return Response(data)

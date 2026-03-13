@@ -3,8 +3,9 @@ from typing import Any, cast
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework.pagination import PageNumberPagination
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiExample, extend_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -28,6 +29,8 @@ class PostListPagination(PageNumberPagination):
 
 class PostListAPIView(APIView):
     """게시글 목록 조회 API"""
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     serializer_class = PostCreateSerializer
 
@@ -111,6 +114,12 @@ class PostListAPIView(APIView):
             if page is not None
             else Response({"count": len(data), "next": None, "previous": None, "results": data})
         )
+
+    def get_serializer_class(self) -> Type[Any]:
+        if self.request.method == "GET":
+            return PostListSerializer
+        else:
+            return PostCreateSerializer
 
     @extend_schema(
         tags=["posts"],

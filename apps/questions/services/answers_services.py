@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-import google.generativeai as genai  # type: ignore[import-not-found]
+import google.generativeai as genai  # type: ignore
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied, ValidationError

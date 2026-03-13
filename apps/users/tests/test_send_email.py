@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
@@ -20,11 +22,13 @@ class SendEmailTest(APITestCase):
         cache.clear()
 
     # 인증코드 발급 성공
-    def test_send_email_success(self) -> None:
+    @patch("apps.users.services.send_email_services.send_mail")
+    def test_send_email_success(self, mock_send_email: MagicMock) -> None:
         response = self.client.post(self.url, {"email": self.valid_email}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["detail"], "이메일 인증 코드가 전송되었습니다.")
+        self.assertTrue(mock_send_email.called)
         self.assertIsNotNone(cache.get(f"verify:{self.valid_email}"))
 
     # 인증코드 발급 실패 (이메일누락)

@@ -18,7 +18,7 @@ class PostCommentAPIViewTest(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.user = User.objects.create(
+        cls.user = User.objects.create_user(
             email="test@test.com",
             name="test",
             nickname="test",

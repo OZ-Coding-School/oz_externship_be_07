@@ -58,7 +58,7 @@ class CommentViewSet(
         queryset = PostComment.objects.filter(post_id=post_id).select_related("author").all()
         page = self.paginate_queryset(queryset)
 
-        if page is not None:
+        if isinstance(page, list):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
@@ -90,6 +90,48 @@ class CommentViewSet(
         serializer.save(author=request.user, post_id=post_id)
 
         return Response({"detail": "댓글이 등록되었습니다."}, status=status.HTTP_201_CREATED)
+
+    def create2(self, request: Request, post_id: int) -> Response:
+        # 1. 데이터 검증 (형식 확인)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 2. 검증된 데이터 직접 추출
+        content = serializer.validated_data.get('content')
+        tagged_nicknames = request.data.get('tagged_nicknames', []) # Todo: 태그된 닉네임 목록
+
+        # 3. 직접 모델 생성 (로직 직접 넣기)
+        comment = Comment.objects.create(
+            author=request.user,
+            post_id=post_id,
+            content=content
+        )
+
+        # 4. 추가 로직 수행 (예: 태그된 닉네임 테이블 등록)
+        for nickname in tagged_nicknames:
+            TaggedUser.objects.create(comment=comment, nickname=nickname)
+
+        return Response({"detail": "댓글이 등록되었습니다."}, status=status.HTTP_201_CREATED)
+
+    def create(self, request: Request, post_id: int) -> Response:
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 직접 로직을 제어하기 위해 atomic 트랜잭션 사용
+        with transaction.atomic():
+            # 1. 댓글 모델 직접 생성
+            comment = Comment.objects.create(
+                author=request.user,
+                post_id=post_id,
+                content=serializer.validated_data.get('content')
+            )
+
+            # 2. 추가 비즈니스 로직 직접 수행 (태그 저장)
+            tagged_nicknames = request.data.get('tagged_nicknames', [])
+            for nickname in tagged_nicknames:
+                TaggedUser.objects.create(comment=comment, nickname=nickname)
+
+        return Response({"detail": "댓글과 태그가 등록되었습니다."}, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="댓글 수정",

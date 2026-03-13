@@ -1,7 +1,6 @@
 from typing import Any
 
 from drf_spectacular.utils import extend_schema_field
-from martor.utils import markdownify  # type: ignore
 from rest_framework import serializers
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -25,20 +24,10 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
     class Meta:
         model = Post
         fields = ["title", "content", "content_html", "category"]
-        extra_kwargs = {"content": {"help_text": "Markdown format supported."}}
-
-    def get_content_html(self, obj: Post) -> Any:
-        return markdownify(obj.content)
 
     @extend_schema_field(serializers.CharField())
     def get_content(self, obj: Post) -> str:
         return obj.content
-
-    def to_representation(self, instance: Post) -> dict[str, Any]:
-        return {
-            "detail": "게시글이 성공적으로 생성되었습니다.",
-            "pk": instance.pk,
-        }
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
@@ -55,7 +44,6 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     class Meta:
         model = Post
         fields = ["title", "content", "category"]
-        extra_kwargs = {"content": {"help_text": "Markdown format supported."}}
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {
@@ -77,9 +65,6 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     @extend_schema_field(serializers.CharField())
     def get_content(self, obj: Post) -> str:
         return obj.content
-
-    def get_content_html(self, obj: Post) -> Any:
-        return markdownify(obj.content)
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")

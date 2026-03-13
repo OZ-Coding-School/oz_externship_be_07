@@ -9,6 +9,7 @@ from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -32,6 +33,7 @@ class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, str]]):
 
 
 class PostDetailAPIView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
     """게시글 상세 조회 API"""
 
     serializer_class = PostUpdateSerializer
@@ -119,11 +121,3 @@ class PostDetailAPIView(APIView):
     )
     def delete(self, request: Request, post_id: int) -> Response:
         return service.post_delete(post_id, self.request)
-
-
-class MartorImageUploadView(APIView):
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser]
-
-    def post(self, request: Request) -> Response:
-        return service.markdown(self.request)

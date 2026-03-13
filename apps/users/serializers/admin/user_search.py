@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 from apps.subject.models import Cohort, Course
 from apps.users.models.models import User
-from apps.users.services.admin.user_search import get_user_course_data
 
 
 # Course

@@ -15,9 +15,9 @@ class PostCreateUpdateDeleteViewTest(TestCase):
     post: Post
 
     def setUp(self) -> None:
-        self.user = User.objects.create_user(
+        self.user = User.objects.create(
             email="test@test.com",
-            password="password123",
+            hashed_password="password123",
             name="testuser",
             nickname="testuser",
             phone_number="01000000000",

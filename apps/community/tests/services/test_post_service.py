@@ -26,14 +26,14 @@ class PostServiceTest(TestCase):
         cls.user = User.objects.create(
             email="test@test.com",
             name="testuser",
-            hashed_password="password123",
+            password="password123",
             birthday="2000-01-01",
         )
 
         cls.other_user = User.objects.create(
             email="other@test.com",
             name="otheruser",
-            hashed_password="password123",
+            password="password123",
             birthday="2000-01-02",
         )
 

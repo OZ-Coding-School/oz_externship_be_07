@@ -16,7 +16,7 @@ class PostDetailAPIViewTest(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.user = User.objects.create_user(
+        cls.user = User.objects.create(
             email="test@test.com",
             password="password123",
             name="testuser",

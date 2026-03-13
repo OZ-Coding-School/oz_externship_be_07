@@ -155,9 +155,17 @@ extend_schema_403 = OpenApiExample(
     status_codes=["403"],
 )
 extend_schema_404 = OpenApiExample(
-    "Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}, status_codes=["404"], response_only=True,
+    "Not Found",
+    value={"error_detail": "해당 게시글을 찾을 수 없습니다."},
+    status_codes=["404"],
+    response_only=True,
 )
-extend_schema_200_delete = OpenApiExample("OK", value={"detail": "게시글이 삭제되었습니다."}, status_codes=["200"], response_only=True,)
+extend_schema_200_delete = OpenApiExample(
+    "OK",
+    value={"detail": "게시글이 삭제되었습니다."},
+    status_codes=["200"],
+    response_only=True,
+)
 
 
 def post_create(request: Request, serializer_class: Type[Any]) -> Response:
@@ -189,7 +197,7 @@ def post_put(post_id: int, request: Request, serializer_class: Type[Any]) -> Res
     data = {
         "title": request.data["title"],
         "content": request.data["content"],
-        "category_id": request.data["category"],
+        "category": request.data["category"],
     }
     return Response(data, status=status.HTTP_200_OK)
 

@@ -1,5 +1,6 @@
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -65,6 +66,9 @@ class SignUpView(APIView):
             user_service = UserService()
             user_service.create_user(serializer.validated_data)
             return Response({"detail": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
+
+        except ValidationError as e:
+            return Response({"error_detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
 
         # 중복 가입 에러 처리
         except Exception:

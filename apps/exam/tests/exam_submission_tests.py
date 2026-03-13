@@ -2,20 +2,19 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
-
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.choices import DeploymentStatus
-from apps.subject.models.choices import CohortStatus
+from apps.exam.models.exam_deployment_models import ExamDeployment
+from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_submission_models import ExamSubmission
+from apps.subject.models.choices import CohortStatus, SubjectStatus
 from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.course_models import Course
-from apps.users.models.models import User
-from apps.exam.models.exam_models import Exam
 from apps.subject.models.subject_models import Subject
-from apps.subject.models.choices import SubjectStatus
+from apps.users.models.models import User
+
 
 class ExamSubmissionTests(TestCase):
     @classmethod
@@ -91,8 +90,3 @@ class ExamSubmissionTests(TestCase):
         data = self.exam_submission_data.copy()
 
         data["submitter"] = self.user
-
-
-
-
-

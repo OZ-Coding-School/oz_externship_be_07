@@ -1,5 +1,3 @@
-import json
-
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
@@ -15,8 +13,8 @@ from apps.exam.serializers.exam_question_serializers import (
     ExamQuestionDeleteResponseSerializer,
     ExamQuestionResponseSerializer,
     ExamQuestionUpdateSerializer,
-    serialize_question_response,
 )
+from apps.exam.servieces.exam_question_services import ExamQuestionService
 
 
 class ExamQuestionListCreateAPIView(APIView):
@@ -29,8 +27,7 @@ class ExamQuestionListCreateAPIView(APIView):
     )
     def get(self, request, exam_id):
         exam = get_object_or_404(Exam, pk=exam_id)
-        questions = ExamQuestion.objects.filter(exam=exam).order_by("id")
-        results = [serialize_question_response(q) for q in questions]
+        results = ExamQuestionService.list_by_exam(exam)
         return Response(results, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -79,30 +76,15 @@ class ExamQuestionListCreateAPIView(APIView):
         ],
     )
     def post(self, request, exam_id):
-        exam = get_object_or_404(Exam, id=exam_id)
 
         serializer = ExamQuestionCreateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error_detail": "요청 값이 올바르지 않습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        data = serializer.validated_data
-        options_json = None
-        if data.get("options") is not None:
-            options_json = json.dumps(data["options"], ensure_ascii=False)
+        exam = get_object_or_404(Exam, id=exam_id)
+        question = ExamQuestionService.create_question(exam, serializer.validated_data)
 
-        question = ExamQuestion.objects.create(
-            exam=exam,
-            type=data["type"],
-            question=data["question"],
-            prompt=data.get("prompt"),
-            options_json=options_json,
-            blank_count=data.get("blank_count"),
-            answer=data["correct_answer"],
-            point=data["point"],
-            explanation=data["explanation"],
-        )
-
-        return Response(serialize_question_response(question), status=status.HTTP_201_CREATED)
+        return Response(ExamQuestionService.serialize(question), status=status.HTTP_201_CREATED)
 
 
 class ExamQuestionDetailAPIView(APIView):
@@ -115,7 +97,7 @@ class ExamQuestionDetailAPIView(APIView):
     )
     def get(self, request, question_id):
         question = get_object_or_404(ExamQuestion, id=question_id)
-        return Response(serialize_question_response(question), status=status.HTTP_200_OK)
+        return Response(ExamQuestionService.serialize(question), status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=["exams"],
@@ -162,29 +144,8 @@ class ExamQuestionDetailAPIView(APIView):
         if not serializer.is_valid():
             return Response({"error_detail": "요청 값이 올바르지 않음."}, status=status.HTTP_400_BAD_REQUEST)
 
-        data = serializer.validated_data
-        if "options" in data:
-            question.options_json = (
-                json.dumps(data["options"], ensure_ascii=False) if data["options"] is not None else None
-            )
-        if "type" in data:
-            question.type = data["type"]
-        if "question" in data:
-            question.question = data["question"]
-        if "prompt" in data:
-            question.prompt = data["prompt"]
-        if "blank_count" in data:
-            question.blank_count = data["blank_count"]
-        if "correct_answer" in data:
-            question.answer = data["correct_answer"]
-        if "point" in data:
-            question.point = data["point"]
-        if "explanation" in data:
-            question.explanation = data["explanation"]
-
-        question.save()
-
-        return Response(serialize_question_response(question), status=status.HTTP_200_OK)
+        question = ExamQuestionService.update_question(question, serializer.validated_data)
+        return Response(ExamQuestionService.serialize(question), status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=["exams"],
@@ -232,9 +193,8 @@ class ExamQuestionDetailAPIView(APIView):
     )
     def delete(self, request, question_id):
         question = get_object_or_404(ExamQuestion, id=question_id)
-        exam_id = question.exam_id
-        question.delete()
+        result = ExamQuestionService.delete_question(question)
         return Response(
-            {"exam_id": exam_id, "question_id": question_id},
+            result,
             status=status.HTTP_200_OK,
         )

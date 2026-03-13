@@ -212,7 +212,8 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
 
 class ExamDeploymentStatusUpdateAPIView(ExamDeploymentBaseAPIView):
     @extend_schema(
-        tags=["exams"],       summary="쪽지시험 배포 on/off API",
+        tags=["exams"],
+        summary="쪽지시험 배포 on/off API",
         request=ExamDeploymentStatusUpdateSerializer,
         responses={200: ExamDeploymentStatusUpdateResponseSerializer},
     )

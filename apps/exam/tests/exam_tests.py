@@ -1,12 +1,15 @@
 import tempfile
-from PIL import Image
+
 from django.urls import reverse
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
-from apps.subject.models.subject_models import Subject
-from apps.subject.models.choices import SubjectStatus
+
 from apps.exam.models.exam_models import Exam
+from apps.subject.models.choices import SubjectStatus
 from apps.subject.models.course_models import Course
+from apps.subject.models.subject_models import Subject
+
 
 class ExamAPITest(APITestCase):
     @classmethod

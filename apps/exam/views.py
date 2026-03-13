@@ -60,4 +60,5 @@ class ExamDetailAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = ExamDetailSerializer
 
+
 # Create your views here.

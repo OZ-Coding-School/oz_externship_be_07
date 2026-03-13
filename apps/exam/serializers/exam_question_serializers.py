@@ -1,9 +1,6 @@
-import json
-
 from rest_framework import serializers
 
 from apps.exam.models.choices import QuestionType
-from apps.exam.models.exam_question_models import ExamQuestion
 
 
 class ExamQuestionCreateSerializer(serializers.Serializer):
@@ -32,7 +29,7 @@ class ExamQuestionUpdateSerializer(ExamQuestionCreateSerializer):
 
 
 class ExamQuestionResponseSerializer(serializers.Serializer):
-    question = serializers.IntegerField()
+    question_id = serializers.IntegerField()
     type = serializers.CharField()
     question = serializers.CharField()
     prompt = serializers.CharField(allow_null=True, allow_blank=True)
@@ -43,27 +40,6 @@ class ExamQuestionResponseSerializer(serializers.Serializer):
     explanation = serializers.CharField()
 
 
-def serialize_question_response(question: ExamQuestion) -> dict:
-    options = None
-    if question.options_json:
-        try:
-            options = json.loads(question.options_json)
-        except (ValueError, TypeError, json.JSONDecodeError):
-            options = None
-
-    return {
-        "question": question.id,
-        "type": question.type.lower(),
-        "question": question.question,
-        "options": options,
-        "prompt": question.prompt,
-        "blank_count": question.blank_count,
-        "correct_answer": question.answer,
-        "point": question.point,
-        "explanation": question.explanation,
-    }
-
-
 class ExamQuestionDeleteResponseSerializer(serializers.Serializer):
-    exam = serializers.IntegerField()
-    question = serializers.IntegerField()
+    exam_id = serializers.IntegerField()
+    question_id = serializers.IntegerField()

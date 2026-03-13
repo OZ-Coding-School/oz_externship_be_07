@@ -9,10 +9,10 @@ class ExamSubmissionListSerializer(serializers.ModelSerializer):
 
     submission = serializers.IntegerField(source="id")
     student_name = serializers.CharField(source="submitter.name", read_only=True)
-    course_name = serializers.CharField(source="deployment.cohort.subject.name", default="N/A")  # 예시 경로
+    course_name = serializers.CharField(source="deployment.cohort.course.name", default="N/A")  # 예시 경로
     cohort_number = serializers.IntegerField(source="deployment.cohort.number", read_only=True)
     exam_title = serializers.CharField(source="deployment.exam.title", read_only=True)
-    subject_name = serializers.CharField(source="deployment.exam.subject.name", read_only=True)
+    subject_name = serializers.CharField(source="deployment.exam.subject.title", read_only=True)
     finished_at = serializers.DateTimeField(source="created_at")  # TimeStampModel 기준
 
     class Meta:

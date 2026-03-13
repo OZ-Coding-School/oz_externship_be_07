@@ -118,7 +118,7 @@ extend_schema_200 = OpenApiExample(
         "id": 1,
         "title": "게시글 1번 수정",
         "content": "수정된 게시글 본문입니다. 마크다운 허용",
-        "category_id": 2,
+        "category": "테스트 게시판",
     },
     response_only=True,
     status_codes=["200"],

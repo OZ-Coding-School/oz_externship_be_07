@@ -164,7 +164,7 @@ class PostListAPIViewTest(TestCase):
         data = {
             "title": "테스트2 title",
             "content": "테스트2 content",
-            "category": self.category.pk,
+            "category": self.category.name,
             "author": self.user.pk,
         }
         response = self.client.post(url, data, content_type="application/json")
@@ -188,7 +188,7 @@ class PostListAPIViewTest(TestCase):
         data = {
             "title": "테스트2 title",
             "content": "테스트2 content",
-            "category": self.category.pk,
+            "category": self.category.name,
             "author": self.user.pk,
         }
         response = self.client.post(url, data, content_type="application/json")

@@ -1,6 +1,7 @@
+from typing import Any
+
 from apps.subject.models import CohortStudent
 from apps.users.models.models import User
-from typing import Any
 
 
 def get_user_course_data(user: User) -> dict[str, Any] | None:

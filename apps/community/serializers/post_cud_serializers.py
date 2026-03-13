@@ -1,8 +1,6 @@
 from typing import Any
-
-from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
-
+from apps.community.models import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
 
@@ -19,22 +17,22 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
-    content_html = serializers.SerializerMethodField()
+
+    category = serializers.SlugRelatedField(
+        queryset= PostCategory.objects.all(),
+        slug_field="name",
+    )
 
     class Meta:
         model = Post
         fields = ["title", "content", "category"]
 
-    @extend_schema_field(serializers.CharField())
-    def get_content(self, obj: Post) -> str:
-        return obj.content
-
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
         content = data.get("content")
-        category_id = data.get("category")
+        category = data.get("category")
 
-        if not title or not content or not category_id:
+        if not title or not content or not category:
             raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
         return data
 
@@ -50,18 +48,14 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
             "id": instance.pk,
             "title": instance.title,
             "content": instance.content,
-            "category_id": instance.category.id,
+            "category_name": instance.category.name,
         }
-
-    @extend_schema_field(serializers.CharField())
-    def get_content(self, obj: Post) -> str:
-        return obj.content
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
         content = data.get("content")
-        category_id = data.get("category")
+        category = data.get("category")
 
-        if not title or not content or not category_id:
+        if not title or not content or not category:
             raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
         return data

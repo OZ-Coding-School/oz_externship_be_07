@@ -11,38 +11,38 @@ def get_post_list_queryset(
     category_id: int | None,
     sort: str,
 ) -> QuerySet[Post]:
-    thumbnail_subquery = PostImage.objects.filter(post_id=OuterRef("pk")).order_by("id").values("img_url")[:1]
     queryset: QuerySet[Post] = (
         Post.objects.select_related("author", "category")
         .filter(is_visible=True, category__status=True)
         .annotate(
             like_count=Count("likes", filter=Q(likes__is_liked=True), distinct=True),
             comment_count=Count("postcomment", distinct=True),
-            thumbnail_img_url=Subquery(thumbnail_subquery),
+            thumbnail_img_url=Subquery(
+                PostImage.objects.filter(post_id=OuterRef("pk")).order_by("id").values("img_url")[:1]
+            ),
         )
     )
-
     if category_id is not None:
         queryset = queryset.filter(category_id=category_id)
-
     if search:
-        filters = {
-            "author": Q(author__nickname__icontains=search),
-            "title": Q(title__icontains=search),
-            "content": Q(content__icontains=search),
-        }
         queryset = queryset.filter(
-            filters.get(search_filter, Q(title__icontains=search) | Q(content__icontains=search))
+            {
+                "author": Q(author__nickname__icontains=search),
+                "title": Q(title__icontains=search),
+                "content": Q(content__icontains=search),
+            }.get(search_filter, Q(title__icontains=search) | Q(content__icontains=search))
         )
-
-    queryset_any = cast(Any, queryset)
-    order_by_map = {
-        "oldest": ("created_at", "id"),
-        "most_views": ("-view_count", "-id"),
-        "most_likes": ("-like_count", "-id"),
-        "most_comments": ("-comment_count", "-id"),
-    }
-    return cast(QuerySet[Post], queryset_any.order_by(*order_by_map.get(sort, ("-created_at", "-id"))))
+    return cast(
+        QuerySet[Post],
+        cast(Any, queryset).order_by(
+            *{
+                "oldest": ("created_at", "id"),
+                "most_views": ("-view_count", "-id"),
+                "most_likes": ("-like_count", "-id"),
+                "most_comments": ("-comment_count", "-id"),
+            }.get(sort, ("-created_at", "-id"))
+        ),
+    )
 
 
 def get_post_list_values(queryset: QuerySet[Post]) -> Any:

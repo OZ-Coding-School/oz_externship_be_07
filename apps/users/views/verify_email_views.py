@@ -28,7 +28,7 @@ class EmailVerifyView(APIView):
         examples=[
             OpenApiExample(
                 name="인증번호 확인 성공 예시",
-                value={"detail": "이메일 인증이 완료되었습니다.", "email_token": "daechungbase32word"},
+                value={"detail": "이메일 인증이 완료되었습니다.", "email_token": "base32word"},
                 response_only=True,
                 status_codes=["200"],
             ),

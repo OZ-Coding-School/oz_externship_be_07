@@ -1,10 +1,13 @@
 from typing import Any, Dict
 
 from django.core.cache import cache
-from django.db import IntegrityError
 from rest_framework.exceptions import ValidationError
 
 from apps.users.models.models import User
+
+
+class DuplicateUserError(Exception):
+    pass
 
 
 class UserService:
@@ -22,11 +25,11 @@ class UserService:
 
         # 중복 검사
         if User.objects.filter(email=email).exists():
-            raise IntegrityError("이미 중복된 회원가입 내역이 존재합니다.")
+            raise DuplicateUserError()
         if User.objects.filter(phone_number=phone_number).exists():
-            raise IntegrityError("이미 중복된 회원가입 내역이 존재합니다.")
+            raise DuplicateUserError()
         if User.objects.filter(nickname=validated_data.get("nickname")).exists():
-            raise IntegrityError("이미 중복된 회원가입 내역이 존재합니다.")
+            raise DuplicateUserError()
 
         password = validated_data.pop("password")
 

@@ -1,4 +1,3 @@
-from django.db import IntegrityError
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -8,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.users.serializers.signup_serializers import SignUpSerializer
-from apps.users.services.signup_services import UserService
+from apps.users.services.signup_services import DuplicateUserError, UserService
 
 
 class SignUpView(APIView):
@@ -68,7 +67,7 @@ class SignUpView(APIView):
             user_service.create_user(serializer.validated_data)
             return Response({"detail": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
 
-        except IntegrityError:
+        except DuplicateUserError:
             return Response(
                 {"error_detail": "이미 중복된 회원가입 내역이 존재합니다."}, status=status.HTTP_409_CONFLICT
             )

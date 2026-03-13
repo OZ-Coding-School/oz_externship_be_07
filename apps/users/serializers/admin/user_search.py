@@ -48,7 +48,14 @@ class StudentManagerSerializer(serializers.ModelSerializer[User]):
 
     @extend_schema_field(InProgressCourseSerializer(allow_null=True))
     def get_in_progress_course(self, obj: User) -> Optional[Dict[str, Any]]:
-        data = get_user_course_data(obj)
-        if not data:
+        all_enrollments = list(obj.cohortstudent_set.all())
+
+        if not all_enrollments:
             return None
-        return InProgressCourseSerializer(data).data
+
+        # 가장 최근 기수 정보
+        last_enrollment = all_enrollments[-1]
+
+        return InProgressCourseSerializer(
+            {"cohort": last_enrollment.cohort, "course": last_enrollment.cohort.course}
+        ).data

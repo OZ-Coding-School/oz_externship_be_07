@@ -83,3 +83,46 @@ class PostDetailAPIViewTest(TestCase):
         response = self._get(self.inactive_category_post.id)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json()["error_detail"], "게시글을 찾을 수 없습니다.")
+
+    def test_post_update_success(self) -> None:
+        self.client.force_authenticate(user=self.user)
+
+        url = reverse("post-detail", kwargs={"post_id": self.post.id})
+        data = {"title": "테스트 수정 title", "content": "테스트 수정 content", "category": self.category.id}
+        response = self.client.put(url, data, content_type="application/json")
+        get_data = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_data["title"], data["title"])
+        self.assertEqual(get_data["content"], data["content"])
+        self.assertEqual(get_data["category_id"], self.category.id)
+
+    def test_post_update_fail(self) -> None:
+        self.client.force_authenticate(user=self.user)
+
+        url = reverse("post-detail", kwargs={"post_id": self.post.id})
+        data = {
+            "title": "테스트 수정 title",
+            "content": "테스트 수정 content",
+        }
+        response = self.client.put(url, data, content_type="application/json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_delete_success(self) -> None:
+        self.client.force_authenticate(user=self.user)
+
+        url = reverse("post-detail", kwargs={"post_id": self.post.id})
+        response = self.client.delete(url)
+        get_data = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(get_data["detail"], "게시글이 삭제되었습니다.")
+
+    def test_post_delete_fail(self) -> None:
+        self.client.force_authenticate(user=self.user)
+
+        url = reverse("post-detail", kwargs={"post_id": 99})
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

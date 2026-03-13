@@ -12,6 +12,10 @@ from apps.subject.views.subject_views import (
     AdminSubjectScatterAPIView,
 )
 
+from apps.subject.views.student_enrollment_request_views import (
+    AdminStudentEnrollmentAcceptAPIView,
+)
+
 urlpatterns = [  ###################### EXAM ##################################
     path("admin/subjects", AdminSubjectCreateAPIView.as_view(), name="subject-create"),
     path("<int:course_id>/subjects", AdminSubjectListAPIView.as_view(), name="subject-list"),
@@ -23,5 +27,10 @@ urlpatterns = [  ###################### EXAM ##################################
         "admin/cohorts/<int:cohort_id>/students",
         AdminCohortStudentListAPIView.as_view(),
         name="admin-cohort-student-list",
+    ),
+    path(
+        "v1/admin/student-enrollments/accept",
+        AdminStudentEnrollmentAcceptAPIView.as_view(),
+        name="admin-student-enrollment-accept",
     ),
 ]

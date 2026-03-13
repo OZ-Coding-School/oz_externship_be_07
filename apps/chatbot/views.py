@@ -1,17 +1,17 @@
 import json
 import time
-
+from collections.abc import Iterator
 from typing import Any
-from rest_framework.permissions import IsAuthenticated
+
+from django.db.models import QuerySet
+from django.http import StreamingHttpResponse
 from rest_framework import generics, status
-from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from django.http import StreamingHttpResponse
-from django.db.models import QuerySet
-from collections.abc import Iterator
 from rest_framework.serializers import BaseSerializer
+from rest_framework.views import APIView
 
 from .choices import MessageRoleChoices
 from .models import ChatbotCompletions, ChatbotSessions
@@ -90,16 +90,15 @@ class ChatbotCompletionView(APIView):
             raise NotFound(detail=" 해당 세션을 찾을 수 없습니다.")
             # return Response({"error_detail": "챗봇 세션을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
-        completions = ChatbotCompletions.objects.filter(
-            session_id=session_id,
-            session__user=request.user
-        ).order_by("created_at")
-        
+        completions = ChatbotCompletions.objects.filter(session_id=session_id, session__user=request.user).order_by(
+            "created_at"
+        )
+
         serializer = ChatbotCompletionReadSerializer(completions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # 대화 내역 초기화 <DELETE>
-    def delete(self, request: Request, session_id:int) -> Response:
+    def delete(self, request: Request, session_id: int) -> Response:
         assert request.user.is_authenticated
         try:
             session = ChatbotSessions.objects.get(id=session_id, user=request.user)
@@ -134,7 +133,7 @@ class ChatbotCompletionView(APIView):
             self._stream_gemini_response(session, user_message), content_type="text/event-stream"
         )
 
-    def _stream_gemini_response(self, session: ChatbotSessions, user_message: str) ->Iterator[str]:
+    def _stream_gemini_response(self, session: ChatbotSessions, user_message: str) -> Iterator[str]:
         full_response = ""
 
         dummy_text = f" 안녕하세요! AI 답변 스트리밍 테스트입니다. {user_message}"

@@ -64,10 +64,16 @@ class AnswerAPITest(TestCase):
         url = f"/api/v1/qna/questions/{self.question.id}/ai-answer"
 
         # 실제 Gemini API 호출 대신 mock으로 대체
-        with patch("apps.questions.services.answers_services.genai") as mock_genai:
-            mock_model = MagicMock()
-            mock_model.generate_content.return_value.text = "AI 답변 내용"
-            mock_genai.GenerativeModel.return_value = mock_model
+        with patch("apps.questions.services.answers_services.genai.Client") as mock_client:
+
+            mock_client_instance = MagicMock()
+
+            mock_response = MagicMock()
+            mock_response.text = "AI 답변 내용"
+
+            mock_client_instance.models.generate_content.return_value = mock_response
+
+            mock_client.return_value = mock_client_instance
 
             response = self.client.get(url)
 

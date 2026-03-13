@@ -28,7 +28,8 @@ class AdminUserSearchTest(TestCase):
             phone_number="01000000000",
             status="ACTIVATED",
         )
-        setattr(cls.admin_user, "is_staff", True)
+        cls.admin_user.is_staff = True
+        cls.admin_user.save()
 
         cls.target_user = user_manager.create(
             email="user@example.com",

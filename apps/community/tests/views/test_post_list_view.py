@@ -156,3 +156,26 @@ class PostListAPIViewTest(TestCase):
 
     def test_get_post_list_sort_most_comments(self) -> None:
         self.assertEqual(self._json(sort="most_comments")["results"][0]["id"], self.post.id)
+
+    def test_post_create_success(self) -> None:
+        url = reverse("post-create")
+
+        data = {
+            "title": "테스트2 title",
+            "content": "테스트2 content",
+            "category": self.category.id,
+            "author": self.user.id,
+        }
+        response = self.client.post(url, data)
+        get_data = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(get_data["detail"], "게시글이 성공적으로 등록되었습니다.")
+        self.assertIn("pk", get_data)
+
+    def test_post_create_fail(self) -> None:
+        url = reverse("post_create")
+
+        data = {"title": "테스트2 title", "content": "테스트2 content"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

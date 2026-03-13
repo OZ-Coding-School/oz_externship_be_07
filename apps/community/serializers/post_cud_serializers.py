@@ -40,6 +40,15 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
             "pk": instance.pk,
         }
 
+    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
+        title = data.get("title")
+        content = data.get("content")
+        category_id = data.get("category")
+
+        if not title or not content or not category_id:
+            raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
+        return data
+
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
 
@@ -77,6 +86,6 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
         content = data.get("content")
         category_id = data.get("category")
 
-        if title is None and content is None and (category_id is None or category_id != 0):
+        if not title or not content or not category_id:
             raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
         return data

@@ -111,3 +111,118 @@ def build_post_detail_response(post: Any) -> dict[str, Any]:
         "created_at": post.created_at,
         "updated_at": post.updated_at,
     }
+
+extend_schema_200 = OpenApiExample(
+    "Ok",
+    value={
+        "id": 1,
+        "title": "게시글 1번 수정",
+        "content": "수정된 게시글 본문입니다. 마크다운 허용",
+        "category_id": 2,
+    },
+    response_only=True,
+    status_codes=["200"],
+)
+extend_schema_201 = OpenApiExample(
+    "Ok",
+    value={"detail": "게시글이 성공적으로 등록되었습니다.", "pk": 1},
+    status_codes=["201"],
+)
+extend_schema_400 = OpenApiExample(
+    "Bad Request",
+    value={
+        "error_detail": {
+            "title": ["이 필드는 필수 항목입니다."],
+        }
+    },
+    response_only=True,
+    status_codes=["400"],
+)
+extend_schema_401 = OpenApiExample(
+    "Unauthorized",
+    value={
+        "error_detail": "자격 인증 데이터가 제공되 않았습니다.",
+    },
+    response_only=True,
+    status_codes=["401"],
+)
+
+extend_schema_403 = OpenApiExample(
+    "Forbidden",
+    value={"error_detail": "권한이 없습니다."},
+    response_only=True,
+    status_codes=["403"],
+)
+extend_schema_404 = OpenApiExample(
+    "Not Found", value={"error_detail": "해당 게시글을 찾을 수 없습니다."}, response_only=True, status_codes=["404"]
+)
+extend_schema_200_delete = OpenApiExample(
+    "OK", value={"detail": "게시글이 삭제되었습니다."}, response_only=True, status_codes=["200"]
+)
+
+
+def post_create(request: Request, serializer_class: Type[Serializer]) -> Response:
+    serializer = serializer_class(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    instance = serializer.save(author=request.user)
+
+    data = {
+        "detail": "게시글이 성공적으로 등록되었습니다.",
+        "pk": instance.pk,
+    }
+    return Response(data, status=status.HTTP_201_CREATED)
+
+
+def post_put(post_id: int, request: Request, serializer_class: Type[Serializer]) -> Response:
+    try:
+        instance = get_object_or_404(Post, pk=post_id)
+    except Http404:
+        data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    if instance.author.pk != request.user.pk:
+        data = {"error_detail": "권한이 없습니다."}
+        return Response(data, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = serializer_class(instance, data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    data = {
+        "title": request.data["title"],
+        "content": request.data["content"],
+        "category_id": request.data["category"],
+    }
+    return Response(data, status=status.HTTP_200_OK)
+
+
+def post_delete(post_id: int, request: Request) -> Response:
+    try:
+        instance = get_object_or_404(Post, pk=post_id)
+    except Http404:
+        data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    if instance.author.pk != request.user.pk:
+        data = {"error_detail": "권한이 없습니다."}
+        return Response(data, status=status.HTTP_403_FORBIDDEN)
+
+    instance.delete()
+    data = {"detail": "게시글이 삭제되었습니다."}
+    return Response(data, status=status.HTTP_200_OK)
+
+
+def markdown(request: Request) -> Response:
+    if "markdown-image-upload" not in request.FILES:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    image = request.FILES["markdown-image-upload"]
+
+    path = default_storage.save(f"mark/{image.name}", image)
+    url = os.path.join(settings.MEDIA_URL, str(path))
+
+    data = {
+        "link": url,
+        "name": image.name,
+    }
+
+    return Response(data)

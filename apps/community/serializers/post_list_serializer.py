@@ -8,7 +8,7 @@ class PostListAuthorSerializer(serializers.Serializer[dict[str, Any]]):
 
     id = serializers.IntegerField()
     nickname = serializers.CharField()
-    profile_img_url = serializers.CharField()
+    profile_img_url = serializers.CharField(allow_null=True)
 
 
 class PostListSerializer(serializers.Serializer[dict[str, Any]]):
@@ -24,4 +24,4 @@ class PostListSerializer(serializers.Serializer[dict[str, Any]]):
     like_count = serializers.IntegerField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
-    category_id = serializers.IntegerField()
+    category_name = serializers.CharField()

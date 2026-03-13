@@ -8,7 +8,7 @@ class PostDetailAuthorSerializer(serializers.Serializer[dict[str, Any]]):
 
     id = serializers.IntegerField()
     nickname = serializers.CharField()
-    profile_img_url = serializers.CharField()
+    profile_img_url = serializers.CharField(allow_null=True)
 
 
 class PostDetailCategorySerializer(serializers.Serializer[dict[str, Any]]):

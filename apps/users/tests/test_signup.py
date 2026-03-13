@@ -1,5 +1,6 @@
 import uuid
 from typing import Any, Dict
+from unittest.mock import patch
 
 from django.core.cache import cache
 from django.test import TestCase
@@ -82,8 +83,14 @@ class SignupTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_signup_duplicate_nickname_fail(self) -> None:
+    @patch("apps.users.services.signup_services.cache")
+    def test_signup_duplicate_nickname_fail(self, mock_cache: Any) -> None:
         """닉네임 중복 시 (409)"""
+        mock_cache.get.side_effect = lambda key: {
+            "email_token:dup_et": "dup@example.com",
+            "sms_token:dup_st": "01099998888",
+        }.get(key)
+
         User.objects.create_user(
             email="existing@example.com",
             password="password123",
@@ -96,6 +103,8 @@ class SignupTest(TestCase):
 
         data = self.user_data.copy()
         data["nickname"] = "dupuser"
+        data["email_token"] = "dup_et"
+        data["sms_token"] = "dup_st"
 
         response = self.client.post(self.url, data, format="json")
 

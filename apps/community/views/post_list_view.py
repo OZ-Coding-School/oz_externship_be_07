@@ -12,12 +12,7 @@ from rest_framework.views import APIView
 
 from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
-from apps.community.services.post_service import (
-    extend_schema_201,
-    extend_schema_400,
-    extend_schema_401,
-    post_create,
-)
+from apps.community.services.post_service import post_create, value_list
 
 class PostListPagination(PageNumberPagination):
     """게시글 목록 페이지네이션"""
@@ -126,7 +121,7 @@ class PostListAPIView(APIView):
         summary="게시판 등록",
         description="커뮤니 게시글 작성 API",
         request=PostCreateSerializer,
-        examples=[extend_schema_201, extend_schema_400, extend_schema_401],
+        examples=[value_list["201"], value_list["400"], value_list["401"]],
         responses={
             201: OpenApiTypes.OBJECT,
             400: OpenApiTypes.OBJECT,

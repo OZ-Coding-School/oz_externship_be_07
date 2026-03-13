@@ -19,10 +19,6 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
-    category = serializers.SlugRelatedField(
-        queryset=PostCategory.objects.all(),
-        slug_field="name",
-    )
 
     class Meta:
         model = Post
@@ -39,10 +35,6 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
 
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
-    category = serializers.SlugRelatedField(
-        queryset=PostCategory.objects.all(),
-        slug_field="name",
-    )
 
     class Meta:
         model = Post
@@ -53,7 +45,7 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
             "id": instance.pk,
             "title": instance.title,
             "content": instance.content,
-            "category": instance.category.name,
+            "category_name": instance.category.name,
         }
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:

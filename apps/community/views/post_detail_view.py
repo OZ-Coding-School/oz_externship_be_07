@@ -1,5 +1,7 @@
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,6 +11,9 @@ from apps.community.serializers.post_detail_serializer import PostDetailSerializ
 from apps.community.services.post_service import (
     build_post_detail_response,
     get_post_detail,
+    post_delete,
+    post_put,
+    value_list,
 )
 
 
@@ -19,6 +24,7 @@ class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, str]]):
 
 
 class PostDetailAPIView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
     """게시글 상세 조회 API"""
 
     serializer_class = PostUpdateSerializer
@@ -65,3 +71,44 @@ class PostDetailAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
         )
+
+    @extend_schema(
+        tags=["posts"],
+        summary="게시판 수정",
+        request=PostUpdateSerializer,
+        description="커뮤니티 게시글 수정 API",
+        examples=[
+            value_list["200"],
+            value_list["403"],
+            value_list["404"],
+            value_list["400"],
+            value_list["401"],
+        ],
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+            401: OpenApiTypes.OBJECT,
+            403: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
+        },
+    )
+    def put(self, request: Request, post_id: int) -> Response:
+        return post_put(post_id, self.request, PostUpdateSerializer)
+
+    @extend_schema(
+        tags=["posts"],
+        summary="게시판 삭제",
+        description="커뮤니티 게시글 삭제 API",
+        examples=[
+            value_list["200_delete"],
+            value_list["403"],
+            value_list["404"],
+        ],
+        responses={
+            200: OpenApiTypes.OBJECT,
+            403: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
+        },
+    )
+    def delete(self, request: Request, post_id: int) -> Response:
+        return post_delete(post_id, self.request)

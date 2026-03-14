@@ -18,41 +18,40 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
-    images = PostImageSerializer(many=True, read_only=True)
-    attachments = PostAttachmentsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["title", "content", "category", "images", "attachments"]
+        fields = ["title", "content", "category"]
 
-    def to_representation(self, instance: Post) -> dict[str, Any]:
-        return {
-            "detail": "게시글이 성공적으로 생성되었습니다.",
-            "pk": instance.pk,
-        }
+    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
+        title = data.get("title")
+        content = data.get("content")
+        category = data.get("category")
+
+        if not title or not content or not category:
+            raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
+        return data
 
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
-    images = PostImageSerializer(many=True, read_only=True)
-    attachments = PostAttachmentsSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = ["title", "content", "category", "images", "attachments"]
+        fields = ["title", "content", "category"]
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {
             "id": instance.pk,
             "title": instance.title,
             "content": instance.content,
-            "category_id": instance.category.id,
+            "category_name": instance.category.name,
         }
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
         content = data.get("content")
-        category_id = data.get("category")
+        category = data.get("category")
 
-        if not title or not content or category_id is None:
+        if not title or not content or not category:
             raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
         return data

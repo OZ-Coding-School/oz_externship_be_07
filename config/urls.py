@@ -11,6 +11,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/posts/", include("apps.community.urls")),
     path("api/v1/accounts/", include("apps.users.urls.urls")),
     path("api/v1/admin/", include("apps.users.urls.admin_urls")),
+    # qna
+    path("api/v1/questions/", include("apps.questions.urls")),
 ]
 
 if settings.DEBUG:

@@ -45,6 +45,8 @@ class ExamAPITest(APITestCase):
 
         cls.url = reverse("exam-list-create")
 
+
+
     def _get_test_image(self) -> IO[Any]:  # 리턴 타입 명시 (파일 객체)
         """테스트용 가짜 이미지 파일 생성"""
         file = tempfile.NamedTemporaryFile(suffix=".jpg")
@@ -100,3 +102,49 @@ class ExamAPITest(APITestCase):
 
         response = self.client.get(self.url, {"sort": "created_at", "order": "desc"})
         self.assertEqual(response.data["exams"][0]["title"], "시험 24")
+
+    def test_get_exam_detail_success(self) -> None:
+        """쪽지시험 상세 조회 성공 테스트"""
+        exam = Exam.objects.create(title="시험 1", subject=self.subject)
+        url = reverse("exam-detail", kwargs={"exam_id": exam.pk})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], exam.pk)
+        self.assertEqual(response.data["title"], "시험 1")
+
+    def test_put_exam_detail_success(self) -> None:
+        """쪽지시험 수정 성공 테스트 (제목 및 이미지 변경)"""
+        exam = Exam.objects.create(title="test시험", subject=self.subject)
+
+        url = reverse("exam-detail", kwargs={"exam_id": exam.pk})
+        img = self._get_test_image()
+
+        data = {
+            "title": "updated title",
+            "thumbnail_img": img
+        }
+
+        response = self.client.put(url, data, format="multipart")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "updated title")
+        self.assertIn("amazonaws.com", response.data["thumbnail_img_url"])
+
+    def test_delete_exam_success(self) -> None:
+        """쪽지시험 삭제 성공 테스트"""
+        exam = Exam.objects.create(title="delete_test시험", subject=self.subject)
+        url = reverse("exam-detail", kwargs={"exam_id": exam.pk})
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], exam.pk)
+        # 삭제 후 데이터베이스 확인
+        self.assertFalse(Exam.objects.filter(pk=exam.pk).exists())
+
+    def test_get_exam_detail_not_found(self) -> None:
+        """존재하지 않는 ID 조회 시 404 확인 (커버리지 확보용)"""
+        url = reverse("exam-detail", kwargs={"exam_id": 9999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

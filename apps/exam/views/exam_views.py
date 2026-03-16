@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 from apps.exam.models.exam_models import Exam
 from apps.exam.serializers.exam_serializers import (
     ExamCreateSerializer,
-    ExamDeleteRequestSerializer,
     ExamDetailSerializer,
     ExamListSerializer,
     ExamUpdateSerializer,
@@ -70,6 +69,7 @@ class ExamListCreateAPIView(APIView):
 
 
 class ExamDetailAPIView(APIView):
+    permission_classes = [AllowAny]
     parser_classes = (MultiPartParser, FormParser)
 
     @extend_schema(
@@ -103,7 +103,7 @@ class ExamDetailAPIView(APIView):
         tags=["exams"],
         summary="쪽지시험 삭제",
         description="특정 쪽지시험을 삭제합니다. 성공 시 삭제된 시험의 ID를 반환합니다.",
-        responses={200: ExamDeleteRequestSerializer},
+        responses={200: int},
     )
     def delete(self, request: Request, exam_id: int) -> Response:
         deleted_id = ExamService.delete_exam(exam_id)

@@ -2,6 +2,7 @@ from typing import Any
 
 from django.core.paginator import Page, Paginator
 from django.db.models import QuerySet
+from django.shortcuts import get_object_or_404
 
 from apps.exam.models.exam_models import Exam
 
@@ -33,7 +34,7 @@ class ExamService:
 
     @staticmethod
     def get_exam_by_id(exam_id: int) -> Exam:
-        return Exam.objects.get(id=exam_id)
+        return get_object_or_404(Exam, pk=exam_id)
 
     @staticmethod
     def create_exam(validated_data: dict[str, Any]) -> Exam:

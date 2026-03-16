@@ -15,13 +15,6 @@ class ExamCreateSerializer(serializers.ModelSerializer[Exam]):
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def create(self, validated_data: dict[str, Any]) -> Exam:
-        thumbnail_img = validated_data.pop("thumbnail_img")
-        # S3 업로드 경로 예시 (요구사항 반영)
-        validated_data["thumbnail_img_url"] = (
-            f"https://oz-externship.s3.ap-northeast-2.amazonaws.com/exams/{thumbnail_img.name}"
-        )
-        return super().create(validated_data)
 
 
 # 2. 목록 조회용 (GET List)
@@ -42,8 +35,12 @@ class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
         fields = ["id", "title", "subject", "thumbnail_img_url", "created_at", "updated_at"]
 
     def get_subject(self, obj: Exam) -> dict[str, Any]:
-        return {"id": obj.subject.id, "title": obj.subject.title}
-
+        if not obj.subject:
+            return {}
+        return {
+            "id": obj.subject.id,
+            "title": obj.subject.title
+        }
 
 # 4. 수정용 (PUT)
 class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
@@ -54,16 +51,4 @@ class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def update(self, instance: Exam, validated_data: dict[str, Any]) -> Exam:
-        thumbnail_img = validated_data.pop("thumbnail_img", None)
-        if thumbnail_img:
-            instance.thumbnail_img_url = (
-                f"https://oz-externship.s3.ap-northeast-2.amazonaws.com/exams/{thumbnail_img.name}"
-            )
-        return super().update(instance, validated_data)
 
-
-class ExamDeleteRequestSerializer(serializers.ModelSerializer[Exam]):
-    class Meta:
-        model = Exam
-        fields = ["id"]

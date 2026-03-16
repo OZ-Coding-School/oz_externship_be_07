@@ -1,5 +1,7 @@
+from typing import Any
+
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandParser
 
 from apps.community.models.post_model import Post, PostLike
 
@@ -7,12 +9,12 @@ from apps.community.models.post_model import Post, PostLike
 class Command(BaseCommand):
     help = "PostLike admin 테스트 데이터 생성(중복 생성 방지)"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument("--users", type=int, default=5, help="사용할 유저 수 (기본: 5)")
         parser.add_argument("--posts", type=int, default=5, help="사용할 게시글 수 (기본: 5)")
         parser.add_argument("--max-create", type=int, default=30, help="최대 생성 건수 (기본: 30)")
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         num_users = max(1, options["users"])
         num_posts = max(1, options["posts"])
         max_create = max(1, options["max_create"])
@@ -51,8 +53,4 @@ class Command(BaseCommand):
                 break
 
         total_count = PostLike.objects.count()
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"생성 {created_count}건 / 건너뜀 {skipped_count}건 / 총 {total_count}건"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"생성 {created_count}건 / 건너뜀 {skipped_count}건 / 총 {total_count}건"))

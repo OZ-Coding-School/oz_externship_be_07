@@ -1,3 +1,4 @@
+from typing import Any
 from django.contrib import admin
 from django.http import HttpRequest
 from django.utils.html import format_html
@@ -64,12 +65,23 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     raw_id_fields = ("author",)
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
+    readonly_fields = ("created_at", "updated_at")
     fieldsets = (
         ("기본 정보", {"fields": ("title", "author", "category")}),
         ("내용", {"fields": ("content",)}),
         ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
         ("일시", {"fields": ("created_at", "updated_at")}),
     )
+
+    def get_fieldsets(self, request: HttpRequest, obj: Post | None = None) -> Any:
+        if obj is None:
+            return (
+                ("기본 정보", {"fields": ("title", "author", "category")}),
+                ("내용", {"fields": ("content",)}),
+                ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
+            )
+        return self.fieldsets
+
     inlines = [PostAttachmentInline, PostImageInline]
 
 
@@ -91,11 +103,21 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     raw_id_fields = ("author", "post")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
+    readonly_fields = ("created_at", "updated_at")
     fieldsets = (
         ("기본 정보", {"fields": ("author", "post")}),
         ("내용", {"fields": ("content",)}),
         ("일시", {"fields": ("created_at", "updated_at")}),
     )
+
+    def get_fieldsets(self, request: HttpRequest, obj: PostComment | None = None) -> Any:
+        if obj is None:
+            return (
+                ("기본 정보", {"fields": ("author", "post")}),
+                ("내용", {"fields": ("content",)}),
+            )
+        return self.fieldsets
+
     inlines = [CommentTagInline]
 
     @admin.display(description="댓글내용", ordering="content")
@@ -112,10 +134,16 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     search_fields = ("name",)
     list_filter = ("status",)
     ordering = ("id",)
+    readonly_fields = ("created_at", "updated_at")
     fieldsets = (
         ("기본 정보", {"fields": ("name", "status")}),
         ("일시", {"fields": ("created_at", "updated_at")}),
     )
+
+    def get_fieldsets(self, request: HttpRequest, obj: PostCategory | None = None) -> Any:
+        if obj is None:
+            return (("기본 정보", {"fields": ("name", "status")}),)
+        return self.fieldsets
 
 
 @admin.register(PostLike)
@@ -126,7 +154,7 @@ class PostLikeAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_select_related = ("user", "post")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
-    readonly_fields = ("id", "user", "post", "is_liked", "created_at")
+    readonly_fields = ("id", "user", "post", "is_liked", "created_at", "updated_at")
     fieldsets = (
         ("기본 정보", {"fields": ("id", "user", "post", "is_liked")}),
         ("일시", {"fields": ("created_at", "updated_at")}),

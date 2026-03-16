@@ -1,4 +1,6 @@
-from django.core.management.base import BaseCommand
+from typing import Any
+
+from django.core.management.base import BaseCommand, CommandParser
 
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
@@ -6,12 +8,12 @@ from apps.community.models.post_model import Post, PostAttachment, PostImage
 class Command(BaseCommand):
     help = "PostImage/PostAttachment admin 테스트 데이터 생성"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument("--posts", type=int, default=5, help="대상 게시글 수 (기본: 5)")
         parser.add_argument("--images-per-post", type=int, default=2, help="게시글당 이미지 수 (기본: 2)")
         parser.add_argument("--attachments-per-post", type=int, default=2, help="게시글당 첨부파일 수 (기본: 2)")
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         num_posts = max(1, options["posts"])
         images_per_post = max(0, options["images_per_post"])
         attachments_per_post = max(0, options["attachments_per_post"])

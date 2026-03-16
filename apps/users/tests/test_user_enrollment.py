@@ -15,6 +15,7 @@ class AdminUserEnrollmentTest(TestCase):
     admin_user: User
     target_user: User
     enrollment: EnrollmentRequest
+    cohort: Cohort
     client: APIClient
     url: str
 

@@ -4,7 +4,7 @@ from apps.subject.models import Cohort, Course, EnrollmentRequest
 from apps.users.models.models import User
 
 
-class EnrollmentUserSerializer(serializers.ModelSerializer):
+class EnrollmentUserSerializer(serializers.ModelSerializer[User]):
     """수강생 등록 요청한 유저 데이터"""
 
     class Meta:
@@ -12,7 +12,7 @@ class EnrollmentUserSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "name", "birthday", "gender"]
 
 
-class EnrollmentCohortSerializer(serializers.ModelSerializer):
+class EnrollmentCohortSerializer(serializers.ModelSerializer[Cohort]):
     """수강생 등록 요청한 기수 데이터"""
 
     class Meta:
@@ -20,7 +20,7 @@ class EnrollmentCohortSerializer(serializers.ModelSerializer):
         fields = ["id", "number"]
 
 
-class EnrollmentCourseSerializer(serializers.ModelSerializer):
+class EnrollmentCourseSerializer(serializers.ModelSerializer[Course]):
     """수강생 등록 요청한 강의 데이터"""
 
     class Meta:
@@ -28,7 +28,7 @@ class EnrollmentCourseSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "tag"]
 
 
-class AdminUserEnrollmentSerializer(serializers.ModelSerializer):
+class AdminUserEnrollmentSerializer(serializers.ModelSerializer[EnrollmentRequest]):
     """어드민 수강생 등록 요청 목록 조회 API용"""
 
     user = EnrollmentUserSerializer(read_only=True)

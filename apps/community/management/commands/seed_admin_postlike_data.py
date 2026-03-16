@@ -25,7 +25,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR("유저 데이터가 없습니다."))
             return
         if not posts:
-            self.stdout.write(self.style.ERROR("게시글 데이터가 없습니다."))
+            self.stdout.write(self.style.ERROR("생성 실패: 게시글 데이터가 없습니다."))
             return
 
         created_count = 0

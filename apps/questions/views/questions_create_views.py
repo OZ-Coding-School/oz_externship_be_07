@@ -29,4 +29,3 @@ class QuestionCreateView(APIView):
 
         # 실패 테스트를 하고 싶을때는 아래 주석풀고 성공 리턴에 주석달기!
         # return Response(error["400"], status=status.HTTP_400_BAD_REQUEST])
-

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.http import HttpRequest
+from django.utils.html import format_html
 from django.utils.text import Truncator
 
 from apps.community.models.category_model import PostCategory
@@ -10,17 +11,46 @@ from apps.community.models.post_model import Post, PostAttachment, PostImage, Po
 class PostImageInline(admin.TabularInline):  # type: ignore[type-arg]
     model = PostImage
     extra = 0
-    fields = ("id", "img_url", "created_at", "updated_at")
-    readonly_fields = ("id", "created_at", "updated_at")
+    fields = ("id", "image_thumbnail", "img_url", "created_at", "updated_at")
+    readonly_fields = ("id", "image_thumbnail", "created_at", "updated_at")
     show_change_link = True
+
+    @admin.display(description="미리보기")
+    def image_thumbnail(self, obj: PostImage) -> str:
+        if not obj.img_url:
+            return "-"
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener noreferrer">'
+            '<img src="{}" alt="preview" loading="lazy" '
+            'style="max-width:90px;max-height:90px;object-fit:cover;border:1px solid #ddd;border-radius:4px;" />'
+            "</a>",
+            obj.img_url,
+            obj.img_url,
+        )
 
 
 class PostAttachmentInline(admin.TabularInline):  # type: ignore[type-arg]
     model = PostAttachment
     extra = 0
-    fields = ("id", "file_name", "file_url")
-    readonly_fields = ("id",)
+    fields = ("id", "file_name", "file_download", "file_url")
+    readonly_fields = ("id", "file_download")
     show_change_link = True
+
+    @admin.display(description="다운로드")
+    def file_download(self, obj: PostAttachment) -> str:
+        if not obj.file_url:
+            return "-"
+        extension = obj.file_name.rsplit(".", 1)[-1].upper() if "." in obj.file_name else "FILE"
+        display_name = Truncator(obj.file_name).chars(26)
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener noreferrer" download>'
+            '<span style="background:#334155;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;">{}</span> '
+            "{}"
+            "</a>",
+            obj.file_url,
+            extension,
+            display_name,
+        )
 
 
 @admin.register(Post)
@@ -52,19 +82,11 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     raw_id_fields = ("author", "post")
     ordering = ("-created_at",)
     inlines = [CommentTagInline]
-    @admin.register(PostComment)
-    class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
-        list_display = ("id", "author", "post", "content_preview", "created_at")
-        search_fields = ("content", "author__nickname")
-        list_filter = ("post",)
-        list_select_related = ("author", "post")
-        ordering = ("-created_at",)
-        inlines = [CommentTagInline]
 
-        @admin.display(description="댓글내용", ordering="content")
-        def content_preview(self, obj: PostComment) -> str:
-            text = (obj.content or "").replace("\n", " ")
-            return Truncator(text).chars(16)
+    @admin.display(description="댓글내용", ordering="content")
+    def content_preview(self, obj: PostComment) -> str:
+        text = (obj.content or "").replace("\n", " ")
+        return Truncator(text).chars(16)
 
 
 @admin.register(PostCategory)

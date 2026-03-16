@@ -1,8 +1,9 @@
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.request import Request
 
 from apps.subject.serializers.student_enrollment_request_serializers import (
     StudentEnrollmentAcceptErrorResponseSerializer,
@@ -14,8 +15,8 @@ from apps.subject.services.student_enrollment_request_services import (
 )
 
 
-class IsAdminUserLike:
-    def has_permission(self, request, view):
+class IsAdminUserLike(BasePermission):
+    def has_permission(self, request:Request, view: APIView) -> bool:
         return bool(request.user and request.user.is_authenticated and request.user.is_staff)
 
 
@@ -74,7 +75,7 @@ class AdminStudentEnrollmentAcceptAPIView(APIView):
             ),
         ],
     )
-    def post(self, request):
+    def post(self, request:Request) -> Response:
         serializer = StudentEnrollmentAcceptRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(

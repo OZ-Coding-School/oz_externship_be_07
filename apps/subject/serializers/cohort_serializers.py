@@ -3,8 +3,7 @@ from typing import Any
 from rest_framework import serializers
 
 from apps.subject.models.cohort_models import Cohort
-
-COHORT_STATUS_CHOICES = ("PREPARING", "IN_PROGRESS", "FINISHED")
+from apps.subject.models.choices import CohortStatus
 
 
 class CohortCreateRequestSerializer(serializers.Serializer[Any]):
@@ -22,7 +21,7 @@ class CohortCreateRequestSerializer(serializers.Serializer[Any]):
         input_formats=["%Y-%m-%d"],
     )
     status = serializers.ChoiceField(
-        choices=COHORT_STATUS_CHOICES,
+        choices=CohortStatus.choices,
         required=False,
     )
 
@@ -52,7 +51,7 @@ class CohortUpdateRequestSerializer(serializers.Serializer[Any]):
         input_formats=["%Y-%m-%d"],
     )
     status = serializers.ChoiceField(
-        choices=COHORT_STATUS_CHOICES,
+        choices=CohortStatus.choices,
         required=False,
     )
 
@@ -60,8 +59,11 @@ class CohortUpdateRequestSerializer(serializers.Serializer[Any]):
         instance_obj = getattr(self, "instance", None)
         instance = instance_obj if isinstance(instance_obj, Cohort) else None
 
-        start_date = attrs.get("start_date", instance.start_date if instance else None)
-        end_date = attrs.get("end_date", instance.end_date if instance else None)
+        instance_start = instance.start_date if instance else None
+        instance_end = instance.end_date if instance else None
+
+        start_date = attrs.get("start_date", instance_start)
+        end_date = attrs.get("end_date", instance_end)
 
         if start_date and end_date and end_date <= start_date:
             raise serializers.ValidationError(
@@ -96,7 +98,7 @@ class CohortUpdateResponseSerializer(serializers.Serializer[Any]):
 
 class CohortStudentItemSerializer(serializers.Serializer[Any]):
     value = serializers.CharField()
-    label = serializers.CharField()
+    label: serializers.CharField = serializers.CharField()
 
 
 class ErrorDetailStringSerializer(serializers.Serializer[Any]):

@@ -29,6 +29,10 @@ class ExamService:
         return paginator.get_page(page)
 
     @staticmethod
+    def get_exam_by_id(exam_id: int) -> Exam:
+        return Exam.objects.get(id=exam_id)
+
+    @staticmethod
     def create_exam(validated_data: dict[str, Any]) -> Exam:
         """시험 생성"""
         thumbnail_img = validated_data.pop("thumbnail_img", None)

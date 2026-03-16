@@ -3,7 +3,9 @@ from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework.views import APIView
+from typing import Sequence, cast
 
 from apps.exam.serializers.exam_serializers import (
     ExamCreateSerializer,
@@ -13,7 +15,7 @@ from apps.exam.serializers.exam_serializers import (
     ExamUpdateSerializer,
 )
 from apps.exam.servieces.exam_services import ExamService
-
+from apps.exam.models.exam_models import Exam
 
 class ExamListCreateAPIView(APIView):
     permission_classes = [AllowAny]
@@ -25,7 +27,7 @@ class ExamListCreateAPIView(APIView):
         description="관리자용 쪽지시험 목록을 조회합니다. 과목 필터 및 키워드 검색이 가능합니다.",
         responses={200: ExamListSerializer(many=True)},
     )
-    def get(self, request):
+    def get(self, request:Request) -> Response:
         page = int(request.query_params.get("page", 1))
         size = int(request.query_params.get("size", 10))
         subject_id = request.query_params.get("subject_id")
@@ -42,8 +44,10 @@ class ExamListCreateAPIView(APIView):
             order=order
         )
 
-        serializer = ExamListSerializer(exams.object_list, many=True)
-
+        serializer = ExamListSerializer(
+            cast(Sequence[Exam], exams.object_list),
+            many=True
+        )
         # 정의서 요구사항에 따른 공통 응답 구조 유지
         return Response({
             "page": page,
@@ -59,7 +63,7 @@ class ExamListCreateAPIView(APIView):
         request=ExamCreateSerializer,
         responses={201: ExamCreateSerializer},
     )
-    def post(self, request):
+    def post(self, request:Request) -> Response:
         serializer = ExamCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -77,9 +81,9 @@ class ExamDetailAPIView(APIView):
         description="특정 ID의 쪽지시험 상세 정보와 질문 목록을 조회합니다.",
         responses={200: ExamDetailSerializer},
     )
-    def get(self, request, exam_id):
+    def get(self, request:Request, exam_id:int) -> Response:
         # Service를 통해 객체 조회
-        exam = ExamService.get_exam_list().get(id=exam_id)
+        exam = ExamService.get_exam_by_id(exam_id=exam_id)
         serializer = ExamDetailSerializer(exam)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -90,7 +94,7 @@ class ExamDetailAPIView(APIView):
         request=ExamUpdateSerializer,
         responses={200: ExamUpdateSerializer},
     )
-    def put(self, request, exam_id):
+    def put(self, request:Request, exam_id:int) -> Response:
         serializer = ExamUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
@@ -104,6 +108,6 @@ class ExamDetailAPIView(APIView):
         description="특정 쪽지시험을 삭제합니다. 성공 시 삭제된 시험의 ID를 반환합니다.",
         responses={200: ExamDeleteRequestSerializer},
     )
-    def delete(self, request, exam_id):
+    def delete(self, request:Request, exam_id:int) -> Response:
         deleted_id = ExamService.delete_exam(exam_id)
         return Response({"id": deleted_id}, status=status.HTTP_200_OK)

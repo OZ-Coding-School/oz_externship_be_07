@@ -1,4 +1,7 @@
+from typing import Any
+
 from django.db import IntegrityError, transaction
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound, ValidationError
 
@@ -10,21 +13,27 @@ from apps.subject.models.subject_models import Subject
 class SubjectService:
     @staticmethod
     @transaction.atomic
-    def create_subject(*, data: dict) -> Subject:
-        course_id = data.get("course_id")
-        title = data.get("title")
+    def create_subject(*, data: dict[str, Any]) -> Subject:
+        course_id_obj = data.get("course_id", data.get("course"))
+        title_obj = data.get("title")
 
-        course = Course.objects.filter(id=course_id).first()
+        if not isinstance(course_id_obj, int):
+            raise ValidationError(detail="유효하지 않은 course_id 입니다.")
+
+        if not isinstance(title_obj, str):
+            raise ValidationError(detail="유효하지 않은 과목 생성 요청입니다.")
+
+        course = Course.objects.filter(id=course_id_obj).first()
         if not course:
             raise NotFound(detail="해당 과정을 찾을 수 없습니다.")
 
-        if Subject.objects.filter(course=course, title=title).exists():
+        if Subject.objects.filter(course=course, title=title_obj).exists():
             raise ValidationError(detail="동일한 이름의 과목이 이미 존재합니다.")
 
         try:
             subject = Subject.objects.create(
                 course=course,
-                title=title,
+                title=title_obj,
                 number_of_days=data["number_of_days"],
                 number_of_hours=data["number_of_hours"],
                 thumbnail_img_url=data.get("thumbnail_img_url"),
@@ -35,7 +44,7 @@ class SubjectService:
         return subject
 
     @staticmethod
-    def list_subjects_by_course(*, course_id: int):
+    def list_subjects_by_course(*, course_id: int) -> QuerySet[Subject]:
         return Subject.objects.filter(course_id=course_id).order_by("id")
 
     @staticmethod
@@ -47,22 +56,22 @@ class SubjectService:
 
     @staticmethod
     @transaction.atomic
-    def update_subject(*, subject_id: int, data: dict) -> Subject:
+    def update_subject(*, subject_id: int, data: dict[str, Any]) -> Subject:
         subject = SubjectService.get_subject(subject_id=subject_id)
 
-        new_title = data.get("title")
-        if new_title and new_title != subject.title:
+        new_title_obj = data.get("title")
+        if isinstance(new_title_obj, str) and new_title_obj != subject.title:
             duplicated = (
                 Subject.objects.filter(
                     course=subject.course,
-                    title=new_title,
+                    title=new_title_obj,
                 )
-                .exclude(id=subject.id)
+                .exclude(pk=subject.pk)
                 .exists()
             )
             if duplicated:
                 raise ValidationError(detail="동일한 이름의 과목이 이미 존재합니다.")
-            subject.title = new_title
+            subject.title = new_title_obj
 
         if "number_of_days" in data:
             subject.number_of_days = data["number_of_days"]
@@ -90,8 +99,8 @@ class SubjectService:
         subject.delete()
 
     @staticmethod
-    def get_subject_scatter_queryset(subject_id: int):
-        subject = SubjectService.get_subject(subject_id)
+    def get_subject_scatter_queryset(*, subject_id: int) -> QuerySet[ExamSubmission]:
+        subject = SubjectService.get_subject(subject_id=subject_id)
 
         return (
             ExamSubmission.objects.filter(exam__subject=subject)

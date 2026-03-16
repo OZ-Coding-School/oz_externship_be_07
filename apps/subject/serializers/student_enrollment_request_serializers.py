@@ -1,6 +1,7 @@
 from rest_framework import serializers
+from typing import Any
 
-class StudentEnrollmentAcceptRequestSerializer(serializers.Serializer):
+class StudentEnrollmentAcceptRequestSerializer(serializers.Serializer[Any]):
     enrollments = serializers.ListField(
         child=serializers.IntegerField(min_value=1),
         required=True,
@@ -8,9 +9,9 @@ class StudentEnrollmentAcceptRequestSerializer(serializers.Serializer):
     )
 
 
-class StudentEnrollmentAcceptResponseSerializer(serializers.Serializer):
+class StudentEnrollmentAcceptResponseSerializer(serializers.Serializer[Any]):
     detail = serializers.CharField()
 
 
-class StudentEnrollmentAcceptErrorResponseSerializer(serializers.Serializer):
+class StudentEnrollmentAcceptErrorResponseSerializer(serializers.Serializer[Any]):
     error_detail = serializers.DictField(required=False)

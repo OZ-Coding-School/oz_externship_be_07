@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -5,7 +7,7 @@ from apps.exam.models.exam_models import Exam
 
 
 # 1. 생성용 (POST)
-class ExamCreateSerializer(serializers.ModelSerializer):
+class ExamCreateSerializer(serializers.ModelSerializer[Exam]):
     thumbnail_img = serializers.ImageField(write_only=True)
 
     class Meta:
@@ -13,7 +15,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> Exam:
         thumbnail_img = validated_data.pop("thumbnail_img")
         # S3 업로드 경로 예시 (요구사항 반영)
         validated_data["thumbnail_img_url"] = (
@@ -23,7 +25,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
 
 
 # 2. 목록 조회용 (GET List)
-class ExamListSerializer(serializers.ModelSerializer):
+class ExamListSerializer(serializers.ModelSerializer[Exam]):
     subject_name = serializers.CharField(source="subject.title", read_only=True)
 
     class Meta:
@@ -32,19 +34,19 @@ class ExamListSerializer(serializers.ModelSerializer):
 
 
 # 3. 상세 조회용 (GET Detail)
-class ExamDetailSerializer(serializers.ModelSerializer):
+class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
     subject = serializers.SerializerMethodField()
 
     class Meta:
         model = Exam
         fields = ["id", "title", "subject", "thumbnail_img_url", "created_at", "updated_at"]
 
-    def get_subject(self, obj):
+    def get_subject(self, obj:Exam) -> dict[str, Any]:
         return {"id": obj.subject.id, "title": obj.subject.title}
 
 
 # 4. 수정용 (PUT)
-class ExamUpdateSerializer(serializers.ModelSerializer):
+class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
     thumbnail_img = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
@@ -52,7 +54,7 @@ class ExamUpdateSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def update(self, instance, validated_data):
+    def update(self, instance:Exam, validated_data:dict[str, Any]) -> Exam:
         thumbnail_img = validated_data.pop("thumbnail_img", None)
         if thumbnail_img:
             instance.thumbnail_img_url = (
@@ -61,7 +63,7 @@ class ExamUpdateSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class ExamDeleteRequestSerializer(serializers.ModelSerializer):
+class ExamDeleteRequestSerializer(serializers.ModelSerializer[Exam]):
     class Meta:
         model = Exam
         fields = ["id"]

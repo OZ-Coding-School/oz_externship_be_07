@@ -6,7 +6,8 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -22,7 +23,7 @@ from apps.subject.serializers.subject_serializers import (
 from apps.subject.services.subject_services import SubjectService
 
 
-class IsAdminUserLike:
+class IsAdminUserLike(BasePermission):
     """
     프로젝트에 맞는 실제 권한 클래스로 교체하세요.
     예:
@@ -30,7 +31,7 @@ class IsAdminUserLike:
     - 커스텀 관리자 권한
     """
 
-    def has_permission(self, request, view):
+    def has_permission(self, request: Request, view: APIView) -> bool:
         return bool(request.user and request.user.is_authenticated and request.user.is_staff)
 
 
@@ -95,7 +96,7 @@ class AdminSubjectCreateAPIView(APIView):
             ),
         ],
     )
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         serializer = SubjectCreateRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -176,7 +177,7 @@ class AdminSubjectListAPIView(APIView):
             ),
         ],
     )
-    def get(self, request, course_id: int):
+    def get(self, request: Request, course_id: int) -> Response:
         subjects = SubjectService.list_subjects_by_course(course_id=course_id)
         serializer = SubjectListItemSerializer(subjects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -204,7 +205,7 @@ class AdminSubjectDetailAPIView(APIView):
             404: ErrorResponseSerializer,
         },
     )
-    def get(self, request, subject_id: int):
+    def get(self, request: Request, subject_id: int) -> Response:
         try:
             subject = SubjectService.get_subject(subject_id=subject_id)
         except Http404:
@@ -229,7 +230,7 @@ class AdminSubjectDetailAPIView(APIView):
             409: ErrorResponseSerializer,
         },
     )
-    def patch(self, request, subject_id: int):
+    def patch(self, request: Request, subject_id: int) -> Response:
         serializer = SubjectUpdateRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -270,7 +271,7 @@ class AdminSubjectDetailAPIView(APIView):
             404: ErrorResponseSerializer,
         },
     )
-    def delete(self, request, subject_id: int):
+    def delete(self, request: Request, subject_id: int) -> Response:
         try:
             SubjectService.delete_subject(subject_id=subject_id)
         except Http404:
@@ -330,7 +331,7 @@ class AdminSubjectScatterAPIView(APIView):
             ),
         ],
     )
-    def get(self, request, subject_id: int):
+    def get(self, request: Request, subject_id: int) -> Response:
         try:
             submissions = SubjectService.get_subject_scatter_queryset(subject_id=subject_id)
         except Http404:

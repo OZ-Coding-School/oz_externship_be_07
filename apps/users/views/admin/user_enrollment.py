@@ -1,11 +1,13 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, permissions, viewsets
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from apps.subject.models import EnrollmentRequest
-from apps.users.serializers.admin.user_enrollement import AdminUserEnrollmentSerializer
+from apps.users.serializers.admin.user_enrollment import AdminUserEnrollmentSerializer
 
 
 class IsStaffUser(permissions.BasePermission):
@@ -34,4 +36,9 @@ class AdminUserEnrollmentViewSet(
     queryset = EnrollmentRequest.objects.select_related("user", "cohort", "cohort__course").all()
     serializer_class = AdminUserEnrollmentSerializer
     permission_classes = [IsAuthenticated, IsStaffUser]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+
+    # 필터/검색 필드 설정
+    filterset_fields = ["status"]
+    search_fields = ["user__name", "user__email"]
     ordering = ["-created_at"]

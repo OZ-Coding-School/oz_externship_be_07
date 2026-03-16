@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.http import HttpRequest
+from django.utils.text import Truncator
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.comment_model import CommentTag, PostComment
@@ -43,12 +44,25 @@ class CommentTagInline(admin.TabularInline):  # type: ignore[type-arg]
 
 @admin.register(PostComment)
 class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
-    list_display = ("id", "author", "post", "content", "created_at")
+    list_display = ("id", "author", "post", "content_preview", "created_at")
     search_fields = ("content", "author__nickname")
     list_filter = ("post",)
     list_select_related = ("author", "post")
     ordering = ("-created_at",)
     inlines = [CommentTagInline]
+    @admin.register(PostComment)
+    class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+        list_display = ("id", "author", "post", "content_preview", "created_at")
+        search_fields = ("content", "author__nickname")
+        list_filter = ("post",)
+        list_select_related = ("author", "post")
+        ordering = ("-created_at",)
+        inlines = [CommentTagInline]
+
+        @admin.display(description="댓글내용", ordering="content")
+        def content_preview(self, obj: PostComment) -> str:
+            text = (obj.content or "").replace("\n", " ")
+            return Truncator(text).chars(16)
 
 
 @admin.register(PostCategory)

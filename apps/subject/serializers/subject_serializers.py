@@ -1,10 +1,12 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.subject.models.subject_models import Subject
 
 
-class SubjectCreateRequestSerializer(serializers.Serializer):
+class SubjectCreateRequestSerializer(serializers.Serializer[Any]):
     course = serializers.IntegerField()
     title = serializers.CharField(max_length=30)
     number_of_days = serializers.IntegerField(min_value=1)
@@ -17,7 +19,7 @@ class SubjectCreateRequestSerializer(serializers.Serializer):
     )
 
 
-class SubjectCreateResponseSerializer(serializers.ModelSerializer):
+class SubjectCreateResponseSerializer(serializers.ModelSerializer[Subject]):
     class Meta:
         model = Subject
         fields = (
@@ -31,7 +33,7 @@ class SubjectCreateResponseSerializer(serializers.ModelSerializer):
         )
 
 
-class SubjectListItemSerializer(serializers.ModelSerializer):
+class SubjectListItemSerializer(serializers.ModelSerializer[Subject]):
     course = serializers.IntegerField(source="course.id", read_only=True)
 
     class Meta:
@@ -45,7 +47,7 @@ class SubjectListItemSerializer(serializers.ModelSerializer):
         )
 
 
-class SubjectUpdateRequestSerializer(serializers.Serializer):
+class SubjectUpdateRequestSerializer(serializers.Serializer[Any]):
     title = serializers.CharField(max_length=30, required=False)
     number_of_days = serializers.IntegerField(min_value=1, required=False)
     number_of_hours = serializers.IntegerField(min_value=1, required=False)
@@ -57,13 +59,13 @@ class SubjectUpdateRequestSerializer(serializers.Serializer):
     )
     status = serializers.BooleanField(required=False)
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         if not attrs:
             raise serializers.ValidationError("수정할 데이터가 없습니다.")
         return attrs
 
 
-class SubjectDetailResponseSerializer(serializers.ModelSerializer):
+class SubjectDetailResponseSerializer(serializers.ModelSerializer[Subject]):
     class Meta:
         model = Subject
         fields = (
@@ -77,7 +79,7 @@ class SubjectDetailResponseSerializer(serializers.ModelSerializer):
         )
 
 
-class SubjectScatterPointSerializer(serializers.ModelSerializer):
+class SubjectScatterPointSerializer(serializers.ModelSerializer[ExamSubmission]):
     time = serializers.SerializerMethodField()
 
     class Meta:
@@ -87,7 +89,7 @@ class SubjectScatterPointSerializer(serializers.ModelSerializer):
             "score",
         ]
 
-    def get_time(self, obj):
+    def get_time(self, obj: ExamSubmission) -> float:
         if obj.created_at and obj.started_at:
             duration = obj.created_at - obj.started_at
             hours = duration.total_seconds() / 3600
@@ -95,5 +97,5 @@ class SubjectScatterPointSerializer(serializers.ModelSerializer):
         return 0.0
 
 
-class ErrorResponseSerializer(serializers.Serializer):
+class ErrorResponseSerializer(serializers.Serializer[Any]):
     error_detail = serializers.CharField()

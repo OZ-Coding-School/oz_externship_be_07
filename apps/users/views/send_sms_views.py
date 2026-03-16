@@ -1,6 +1,7 @@
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from redis.commands.search.querystring import tags
 from rest_framework import status
+from rest_framework.exceptions import APIException, Throttled
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -13,6 +14,7 @@ from apps.users.services.send_sms_services import SendSmsService
 class SmsSendView(APIView):
     permission_classes = [AllowAny]
     serializer_class = SmsSendSerializer
+    sms_service = SendSmsService()
 
     @extend_schema(
         summary="SMS 인증번호 발송 API",
@@ -38,7 +40,12 @@ class SmsSendView(APIView):
 
         phone_number = serializer.validated_data["phone_number"]
 
-        send_sms_service = SendSmsService()
-        send_sms_service.send_sms_code(phone_number)
+        try:
+            self.sms_service.send_sms_code(phone_number)
+            return Response({"detail": "인증 코드가 전송 되었습니다."}, status=status.HTTP_200_OK)
 
-        return Response({"detail": "인증 코드가 전송 되었습니다."}, status=status.HTTP_200_OK)
+        except ValueError as e:
+            raise Throttled(detail=str(e))
+
+        except Exception as e:
+            raise APIException(detail=str(e))

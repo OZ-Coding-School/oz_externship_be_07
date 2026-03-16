@@ -60,7 +60,7 @@ class ExamSubmissionDetailSerializer(serializers.ModelSerializer[ExamSubmission]
     def get_student(self, obj: ExamSubmission) -> dict[str, Any]:
         user = obj.submitter
         return {
-            "nickname": getattr(user, "nickname", user.username),
+            "nickname": getattr(user, "nickname", user.email),
             "name": user.name if hasattr(user, "name") else user.username,
             "course_name": obj.deployment.cohort.course.name,
             "cohort_number": obj.deployment.cohort.number,

@@ -1,3 +1,4 @@
+from typing import Any
 from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
@@ -9,8 +10,11 @@ from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.exam.servieces.exam_submission_services import ExamSubmissionService
+from rest_framework import status
+from django.urls import reverse
+from rest_framework.test import APITestCase, APIClient
 
-class ExamSubmissionServiceTest(TestCase):
+class ExamSubmissionServiceTest(APITestCase):
     # 속성 타입 선언 (mypy 에러 방지)
     user: User
     course: Course
@@ -22,6 +26,8 @@ class ExamSubmissionServiceTest(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
+        # self.client = APIClient()  <-- 이 줄을 삭제했습니다. (mypy 에러 원인)
+
         """모든 위계 데이터를 순서대로 생성하여 AttributeError를 방지합니다."""
         now = timezone.now()
 
@@ -32,7 +38,7 @@ class ExamSubmissionServiceTest(TestCase):
             birthday="2000-01-01"
         )
 
-        # 2. Course & Cohort (필수: max_student, start_date, end_date)
+        # ... 이하 데이터 생성 로직 동일 ...
         cls.course = Course.objects.create(name="테스트코스", tag="TTC")
         cls.cohort = Cohort.objects.create(
             number=1,
@@ -41,19 +47,13 @@ class ExamSubmissionServiceTest(TestCase):
             start_date=now.date(),
             end_date=(now + timedelta(days=90)).date()
         )
-
-        # 3. Subject (필수: number_of_days, number_of_hours)
         cls.subject = Subject.objects.create(
             title="테스트과목",
             course=cls.course,
             number_of_days=5,
             number_of_hours=40
         )
-
-        # 4. Exam
         cls.exam = Exam.objects.create(title="테스트시험", subject=cls.subject)
-
-        # 5. ExamDeployment (필수: open_at, close_at)
         cls.deployment = ExamDeployment.objects.create(
             exam=cls.exam,
             cohort=cls.cohort,
@@ -62,18 +62,16 @@ class ExamSubmissionServiceTest(TestCase):
             open_at=now,
             close_at=now + timedelta(days=1),
             access_code="TEST12",
-            questions_snapshot_json="[]"  # 빈 리스트를 JSON 형태로 추가
+            questions_snapshot_json="[]"
         )
-
-        # 6. ExamSubmission
         cls.submission = ExamSubmission.objects.create(
             submitter=cls.user,
             deployment=cls.deployment,
             started_at=now,
             cheating_count=0,
             answers_json="[]",
-            correct_answer_count=0,  # 이번에 에러 난 필드!
-            score=0                  # Failing row의 마지막 null 자리를 채우기 위한 필드
+            correct_answer_count=0,
+            score=0
         )
 
     def test_get_submission_list_success(self) -> None:
@@ -95,3 +93,30 @@ class ExamSubmissionServiceTest(TestCase):
         # 서비스 로직에서 search_keyword=None 일 때의 분기를 체크합니다.
         queryset = ExamSubmissionService.get_submission_list(search_keyword=None)
         self.assertEqual(queryset.count(), 1)
+
+
+        ## --- View 테스트 (config 기반 최종 교정본) ---
+
+    def test_list_view_success(self: Any) -> None:
+        self.client.force_authenticate(user=self.user) # 인증 추가
+        url: str = "/api/v1/admin/exams/submissions"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_detail_view_success(self: Any) -> None:
+        self.client.force_authenticate(user=self.user) # 인증 추가
+        url: str = f"/api/v1/admin/exams/submissions/{self.submission.pk}"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_delete_view_success(self: Any) -> None:
+        self.client.force_authenticate(user=self.user) # 인증 추가
+        url: str = f"/api/v1/admin/exams/submissions/{self.submission.pk}"
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_delete_view_404(self: Any) -> None:
+        self.client.force_authenticate(user=self.user) # 인증 추가
+        url: str = "/api/v1/admin/exams/submissions/9999"
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 404)

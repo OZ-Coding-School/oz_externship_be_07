@@ -1,5 +1,7 @@
 from django.db import transaction
-from django.db.models import Q
+from typing import cast, Optional
+from django.db.models import Manager
+from django.db.models import Q, QuerySet
 from django.core.paginator import Paginator
 
 from apps.exam.models.exam_models import Exam
@@ -7,12 +9,14 @@ from apps.exam.models.exam_models import Exam
 
 class ExamService:
     @staticmethod
-    def get_exam_list(page=1, size=10, search_keyword=None, subject_id=None, sort="created_at", order="desc"):
+    def get_exam_list(page:int =1, size:int =10, search_keyword:Optional[str]=None, subject_id:Optional[str]|None=None, sort:str="created_at", order:str="desc") -> QuerySet[Exam, Exam]:
         """
         시험 목록 조회, 필터링, 정렬 및 페이지네이션
         """
+        objects: Manager[Exam] = Manager()
+
         # 1. 초기 쿼리셋 (N+1 방지를 위해 select_related 추가)
-        exams = Exam.objects.select_related('subject').all()
+        exams = objects.select_related('subject').all()
 
         # 2. 필터링 (과목 ID)
         if subject_id:

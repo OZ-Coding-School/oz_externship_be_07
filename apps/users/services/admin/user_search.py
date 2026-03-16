@@ -1,6 +1,6 @@
 from typing import Any
 
-from apps.subject.models import CohortStudent
+from apps.subject.models.cohort_student_models import CohortStudent
 from apps.users.models.models import User
 
 

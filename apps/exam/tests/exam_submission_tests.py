@@ -13,23 +13,11 @@ from apps.subject.models.choices import CohortStatus, SubjectStatus
 from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.course_models import Course
 from apps.subject.models.subject_models import Subject
-from apps.users.models.models import User
 
 
 class ExamSubmissionTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create(
-            email="test@example.com",
-            nickname="testuser",
-            password="testpassword123",
-            name="홍길동",
-            phone_number="010-1234-5678",
-            birthday="2000-09-25",
-            gender="M",
-            email_token="valid_email_token_123",
-            sms_token="valid_sms_token_123",
-        )
 
         cls.course = Course.objects.create(
             name="testcourse",

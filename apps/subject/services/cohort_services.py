@@ -1,15 +1,17 @@
 from django.db import IntegrityError, transaction
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 
 from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.cohort_student_models import CohortStudent
 from apps.subject.models.course_models import Course
 
+from typing import Any
 
 class CohortService:
     @staticmethod
     @transaction.atomic
-    def create_cohort(*, validated_data: dict) -> Cohort:
+    def create_cohort(*, validated_data: dict[str, Any]) -> Cohort:
         course = get_object_or_404(Course, pk=validated_data["course_id"])
 
         cohort = Cohort.objects.create(
@@ -23,12 +25,12 @@ class CohortService:
         return cohort
 
     @staticmethod
-    def get_cohorts_by_course_id(*, course_id: int):
+    def get_cohorts_by_course_id(*, course_id: int) -> QuerySet[Cohort]:
         return Cohort.objects.filter(course_id=course_id).order_by("id")
 
     @staticmethod
     @transaction.atomic
-    def update_cohort(*, cohort_id: int, validated_data: dict) -> Cohort:
+    def update_cohort(*, cohort_id: int, validated_data: dict[str, Any]) -> Cohort:
         cohort = get_object_or_404(Cohort, pk=cohort_id)
 
         for field, value in validated_data.items():
@@ -40,7 +42,7 @@ class CohortService:
         return cohort
 
     @staticmethod
-    def get_cohort_students(*, cohort_id: int):
+    def get_cohort_students(*, cohort_id: int) -> QuerySet[CohortStudent, CohortStudent]:
         cohort = get_object_or_404(Cohort, pk=cohort_id)
 
         return CohortStudent.objects.filter(cohort=cohort).select_related("user").order_by("id")

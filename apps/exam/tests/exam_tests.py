@@ -134,6 +134,5 @@ class ExamDetailAPITest(APITestCase):
 
         cls.url = reverse("exam-detail")
 
-    def test_get_detail_exam_success(self):
 
 

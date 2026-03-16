@@ -2,7 +2,7 @@ from django.db import models
 
 
 class CohortStatus(models.TextChoices):
-    PENNDING = "PENNDING"
+    PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
 

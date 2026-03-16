@@ -17,7 +17,7 @@ class PostCategory(TimeStampModel):
     )
 
     def __str__(self) -> str:
-        return self.name
+        return f"{self.name} (#{self.pk})"
 
     class Meta:
         db_table = "post_categories"

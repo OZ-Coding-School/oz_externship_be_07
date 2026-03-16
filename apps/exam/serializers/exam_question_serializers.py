@@ -1,5 +1,7 @@
-from rest_framework import serializers
 from typing import Any, Dict
+
+from rest_framework import serializers
+
 from apps.exam.models.choices import QuestionType
 
 

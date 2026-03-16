@@ -1,13 +1,14 @@
 import json
-from typing import List, Dict, Any, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 
+
 class ExamQuestionService:
     @staticmethod
     def serialize(question: ExamQuestion) -> Dict[str, Any]:
-        options: Any = None # 명시적 타입 지정
+        options: Any = None  # 명시적 타입 지정
         if question.options_json:
             try:
                 options = json.loads(question.options_json)

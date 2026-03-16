@@ -26,9 +26,7 @@ class ExamSubmissionListAPIView(APIView):
         responses={200: ExamSubmissionListSerializer(many=True)},
     )
     def get(self, request: Request) -> Response:
-        queryset = ExamSubmissionService.get_submission_list(
-            search_keyword=request.query_params.get("search_keyword")
-        )
+        queryset = ExamSubmissionService.get_submission_list(search_keyword=request.query_params.get("search_keyword"))
 
         serializer = ExamSubmissionListSerializer(queryset, many=True)
         return Response(
@@ -62,9 +60,7 @@ class ExamSubmissionDetailAPIView(APIView):
     )
     def delete(self, request: Request, submission_id: int) -> Response:
         try:
-            deleted_id = ExamSubmissionService.delete_submission(
-                submission_id=submission_id
-            )
+            deleted_id = ExamSubmissionService.delete_submission(submission_id=submission_id)
             return Response(
                 {"submission_id": deleted_id},
                 status=status.HTTP_200_OK,

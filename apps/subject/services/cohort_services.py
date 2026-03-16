@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
@@ -6,7 +8,6 @@ from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.cohort_student_models import CohortStudent
 from apps.subject.models.course_models import Course
 
-from typing import Any
 
 class CohortService:
     @staticmethod

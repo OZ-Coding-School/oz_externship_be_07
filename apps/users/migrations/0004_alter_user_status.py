@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0003_remove_user_hashed_password_user_groups_and_more'),
+        ("users", "0003_remove_user_hashed_password_user_groups_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='status',
-            field=models.CharField(choices=[('ACTIVATED', 'Activated'), ('DEACTIVATED', 'Deactivated'), ('WITHDREW', 'Withdrew')], default='ACTIVATED'),
+            model_name="user",
+            name="status",
+            field=models.CharField(
+                choices=[("ACTIVATED", "Activated"), ("DEACTIVATED", "Deactivated"), ("WITHDREW", "Withdrew")],
+                default="ACTIVATED",
+            ),
         ),
     ]

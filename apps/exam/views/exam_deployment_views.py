@@ -1,15 +1,15 @@
+from typing import Any, Dict, Optional
+
 from django.core.paginator import EmptyPage, Paginator
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.request import Request
-from typing import Any, Dict, Optional
 
 # 파일 최상단에 모아주세요
 from apps.exam.models.exam_deployment_models import ExamDeployment
-
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.exam.serializers.exam_deployment_serializers import (
     ErrorDetailSerializer,
@@ -29,8 +29,7 @@ from apps.exam.servieces.exam_deployment_services import ExamDeploymentService
 
 class ExamDeploymentBaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    #permission_classes = [AllowAny] #test용 완료되면 제거
-
+    # permission_classes = [AllowAny] #test용 완료되면 제거
 
     def _build_list_item(self, deployment: ExamDeployment) -> Dict[str, Any]:
         """목록 조회를 위한 데이터 포맷팅 (View 전용 가공)"""
@@ -123,12 +122,17 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
             "count": paginator.count,
             "previous": (
                 # page_obj.previous_page_number()의 결과값(int)을 str()로 변환
-                request.build_absolute_uri(str(page_obj.previous_page_number())) if page_obj.has_previous() else None
+                request.build_absolute_uri(str(page_obj.previous_page_number()))
+                if page_obj.has_previous()
+                else None
             ),
             "next": (
                 # page_obj.next_page_number()의 결과값(int)을 str()로 변환
-                request.build_absolute_uri(str(page_obj.next_page_number())) if page_obj.has_next() else None
-            ),            "results": results,
+                request.build_absolute_uri(str(page_obj.next_page_number()))
+                if page_obj.has_next()
+                else None
+            ),
+            "results": results,
         }
 
         return Response(ExamDeploymentListResponseSerializer(response_data).data, status=status.HTTP_200_OK)

@@ -6,14 +6,13 @@ from apps.subject.views.cohort_views import (
     AdminCohortUpdateAPIView,
     CohortListAPIView,
 )
+from apps.subject.views.student_enrollment_request_views import (
+    AdminStudentEnrollmentAcceptAPIView,
+)
 from apps.subject.views.subject_views import (
     AdminSubjectCreateAPIView,
     AdminSubjectListAPIView,
     AdminSubjectScatterAPIView,
-)
-
-from apps.subject.views.student_enrollment_request_views import (
-    AdminStudentEnrollmentAcceptAPIView,
 )
 
 urlpatterns = [  ###################### EXAM ##################################

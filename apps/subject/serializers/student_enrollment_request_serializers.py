@@ -1,6 +1,9 @@
-from rest_framework import serializers
 from typing import Any
+
+from rest_framework import serializers
+
 from apps.subject.models.enrollment_request_models import EnrollmentRequest
+
 
 class StudentEnrollmentAcceptRequestSerializer(serializers.Serializer[EnrollmentRequest]):
     enrollments = serializers.ListField(

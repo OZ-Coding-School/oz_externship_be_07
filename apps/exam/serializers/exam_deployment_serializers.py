@@ -1,6 +1,8 @@
+from typing import Any, Dict, Optional
+
 from django.utils import timezone
 from rest_framework import serializers
-from typing import Any, Dict, Optional
+
 from apps.exam.models.exam_models import Exam
 
 
@@ -76,7 +78,7 @@ from apps.subject.models.cohort_models import Cohort
 # 쪽지시험 배포 생성 API
 # POST /api/v1/admin/exams/deployments
 # =========================================================
-class ExamDeploymentCreateSerializer(serializers.ModelSerializer[ExamDeployment]): # [수정] 이름 및 [ExamDeployment]
+class ExamDeploymentCreateSerializer(serializers.ModelSerializer[ExamDeployment]):  # [수정] 이름 및 [ExamDeployment]
     exam = serializers.PrimaryKeyRelatedField(
         queryset=Exam.objects.all(),
         write_only=True,
@@ -144,7 +146,7 @@ class ExamDeploymentListQuerySerializer(serializers.Serializer[Dict[str, Any]]):
     )
 
 
-class ExamDeploymentListSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ExamDeploymentListSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     id = serializers.IntegerField()
     submit_count = serializers.IntegerField()
     avg_score = serializers.FloatField()
@@ -155,7 +157,7 @@ class ExamDeploymentListSerializer(serializers.Serializer[Dict[str, Any]]): # [�
     created_at = serializers.CharField()
 
 
-class ExamDeploymentListResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ExamDeploymentListResponseSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     count = serializers.IntegerField()
     previous = serializers.CharField(allow_null=True)
     next = serializers.CharField(allow_null=True)
@@ -166,7 +168,7 @@ class ExamDeploymentListResponseSerializer(serializers.Serializer[Dict[str, Any]
 # 쪽지시험 배포 상세 조회 API
 # GET /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
-class ExamDeploymentDetailSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ExamDeploymentDetailSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     id = serializers.IntegerField()
     exam_access_url = serializers.CharField()
     access_code = serializers.CharField()
@@ -185,7 +187,7 @@ class ExamDeploymentDetailSerializer(serializers.Serializer[Dict[str, Any]]): # 
 # 쪽지시험 배포 정보 수정 API
 # PATCH /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
-class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]): # [수정] [ExamDeployment]
+class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]):  # [수정] [ExamDeployment]
     duration_time = serializers.IntegerField(
         required=False,
         min_value=1,
@@ -210,7 +212,7 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]
         return data
 
 
-class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     deployment = serializers.IntegerField()
     duration_time = serializers.IntegerField()
     open_at = serializers.CharField()
@@ -222,11 +224,11 @@ class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[Dict[str, An
 # 쪽지시험 배포 on/off API
 # PATCH /api/v1/admin/exams/deployments/{deployment}/status
 # =========================================================
-class ExamDeploymentStatusUpdateSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ExamDeploymentStatusUpdateSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     status = serializers.ChoiceField(choices=["Activated", "Deactivated"])
 
 
-class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     deployment = serializers.IntegerField()
     status = serializers.CharField()
 
@@ -235,12 +237,12 @@ class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[Dict[s
 # 쪽지시험 배포 삭제 API
 # DELETE /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
-class ExamDeploymentDeleteResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ExamDeploymentDeleteResponseSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     detail = serializers.CharField()
 
 
 # =========================================================
 # 공통 에러 응답
 # =========================================================
-class ErrorDetailSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
+class ErrorDetailSerializer(serializers.Serializer[Dict[str, Any]]):  # [수정]
     error_detail = serializers.CharField()

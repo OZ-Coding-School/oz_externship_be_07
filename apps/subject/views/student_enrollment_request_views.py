@@ -1,9 +1,9 @@
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.request import Request
 
 from apps.subject.serializers.student_enrollment_request_serializers import (
     StudentEnrollmentAcceptErrorResponseSerializer,
@@ -16,7 +16,7 @@ from apps.subject.services.student_enrollment_request_services import (
 
 
 class IsAdminUserLike(BasePermission):
-    def has_permission(self, request:Request, view: APIView) -> bool:
+    def has_permission(self, request: Request, view: APIView) -> bool:
         return bool(request.user and request.user.is_authenticated and request.user.is_staff)
 
 
@@ -48,34 +48,24 @@ class AdminStudentEnrollmentAcceptAPIView(APIView):
         examples=[
             OpenApiExample(
                 "Request Example",
-                value={
-                    "enrollments": [1, 2, 3, 4]
-                },
+                value={"enrollments": [1, 2, 3, 4]},
                 request_only=True,
             ),
             OpenApiExample(
                 "Response Example",
-                value={
-                    "detail": "수강생 등록 신청들에 대한 승인 요청이 처리되었습니다."
-                },
+                value={"detail": "수강생 등록 신청들에 대한 승인 요청이 처리되었습니다."},
                 response_only=True,
                 status_codes=["200"],
             ),
             OpenApiExample(
                 "Bad Request Example",
-                value={
-                    "error_detail": {
-                        "enrollments": [
-                            "이 필드는 필수 항목입니다."
-                        ]
-                    }
-                },
+                value={"error_detail": {"enrollments": ["이 필드는 필수 항목입니다."]}},
                 response_only=True,
                 status_codes=["400"],
             ),
         ],
     )
-    def post(self, request:Request) -> Response:
+    def post(self, request: Request) -> Response:
         serializer = StudentEnrollmentAcceptRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -84,9 +74,7 @@ class AdminStudentEnrollmentAcceptAPIView(APIView):
             )
 
         try:
-            StudentEnrollmentRequestService.accept_enrollments(
-                enrollment_ids=serializer.validated_data["enrollments"]
-            )
+            StudentEnrollmentRequestService.accept_enrollments(enrollment_ids=serializer.validated_data["enrollments"])
         except Exception as exc:
             detail = getattr(exc, "detail", None)
 
@@ -102,8 +90,6 @@ class AdminStudentEnrollmentAcceptAPIView(APIView):
             )
 
         return Response(
-            {
-                "detail": "수강생 등록 신청들에 대한 승인 요청이 처리되었습니다."
-            },
+            {"detail": "수강생 등록 신청들에 대한 승인 요청이 처리되었습니다."},
             status=status.HTTP_200_OK,
         )

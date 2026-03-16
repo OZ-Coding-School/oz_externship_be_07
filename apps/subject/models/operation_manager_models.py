@@ -1,8 +1,9 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.users.models.models import User
 from apps.subject.models.course_models import Course
+from apps.users.models.models import User
+
 
 class OperationManager(TimeStampModel):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)

@@ -1,7 +1,10 @@
 from typing import Any
+
+from django.core.paginator import Page, Paginator
 from django.db.models import QuerySet
-from django.core.paginator import Paginator, Page
+
 from apps.exam.models.exam_models import Exam
+
 
 class ExamService:
     @staticmethod
@@ -11,10 +14,10 @@ class ExamService:
         search_keyword: str | None = None,
         subject_id: str | None = None,
         sort: str = "created_at",
-        order: str = "desc"
+        order: str = "desc",
     ) -> Page[Exam]:
         """시험 목록 조회 (Paginator의 Page 객체 반환)"""
-        exams = Exam.objects.select_related('subject').all()
+        exams = Exam.objects.select_related("subject").all()
 
         if subject_id:
             exams = exams.filter(subject_id=subject_id)

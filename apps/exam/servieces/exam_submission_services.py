@@ -8,7 +8,7 @@ from apps.exam.models.exam_submission_models import ExamSubmission
 
 class ExamSubmissionService:
     @staticmethod
-    def get_submission_list(search_keyword:Optional[str]=None) -> QuerySet[ExamSubmission]:
+    def get_submission_list(search_keyword: Optional[str] = None) -> QuerySet[ExamSubmission]:
         """응시 내역 조회 및 검색"""
         queryset = ExamSubmission.objects.all().select_related(
             "submitter", "deployment__exam__subject", "deployment__cohort"

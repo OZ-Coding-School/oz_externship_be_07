@@ -6,9 +6,9 @@ from django.db import transaction
 from django.db.models import Avg, Count, QuerySet
 
 from apps.exam.models.exam_deployment_models import ExamDeployment
+from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 from apps.subject.models.cohort_models import Cohort
-from apps.exam.models.exam_models import Exam
 
 
 class ExamDeploymentService:

@@ -41,7 +41,7 @@ class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
         model = Exam
         fields = ["id", "title", "subject", "thumbnail_img_url", "created_at", "updated_at"]
 
-    def get_subject(self, obj:Exam) -> dict[str, Any]:
+    def get_subject(self, obj: Exam) -> dict[str, Any]:
         return {"id": obj.subject.id, "title": obj.subject.title}
 
 
@@ -54,7 +54,7 @@ class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def update(self, instance:Exam, validated_data:dict[str, Any]) -> Exam:
+    def update(self, instance: Exam, validated_data: dict[str, Any]) -> Exam:
         thumbnail_img = validated_data.pop("thumbnail_img", None)
         if thumbnail_img:
             instance.thumbnail_img_url = (

@@ -96,7 +96,6 @@ class PostDetailAPIViewTest(TestCase):
         self.assertEqual(get_data["title"], data["title"])
         self.assertEqual(get_data["content"], data["content"])
         self.assertEqual(get_data["category_name"], self.category.name)
-        print(get_data)
 
     def test_post_update_fail(self) -> None:
         self.client.force_authenticate(user=self.user)

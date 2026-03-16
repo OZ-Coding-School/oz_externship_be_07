@@ -9,7 +9,6 @@ urlpatterns = [
     ###################### EXAM ##################################
     path("admin/exams", exam_views.ExamListCreateAPIView.as_view(), name="exam-list-create"),
     path("admin/exams/<int:exam_id>", exam_views.ExamDetailAPIView.as_view(), name="exam-detail"),
-
     ###################### EXAM_SUBMISSION ##########################
     path("admin/exams/submissions", exam_submission_views.ExamSubmissionListAPIView.as_view(), name="exam-submission"),
     path(

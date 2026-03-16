@@ -6,7 +6,7 @@ from twilio.rest import Client  # type: ignore
 
 class SendSmsService:
     def send_sms_code(self, phone_number: str) -> None:
-        clean_number = "".join(filter(str.isdigit, phone_number))
+        clear_number = "".join(filter(str.isdigit, phone_number))
         limit_key = f"limit_sms:{phone_number}"
 
         if cache.get(limit_key):
@@ -14,7 +14,7 @@ class SendSmsService:
 
         try:
             client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-            formatted_number = f"+82{clean_number[1:]}"
+            formatted_number = f"+82{clear_number[1:]}"
 
             client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verifications.create(
                 to=formatted_number, channel="sms"

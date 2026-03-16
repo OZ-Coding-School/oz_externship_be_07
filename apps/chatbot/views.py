@@ -9,6 +9,7 @@ from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
+from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -29,6 +30,9 @@ from .serializers import (
 )
 
 
+class ChatbotCursorPagination(CursorPagination):
+    ordering = "-created_at"
+
 class ChatbotSessionListCreateView(generics.ListCreateAPIView[Any]):
     """
     <GET> /api/v1/chatbot/sessions : 로그인한 사용자의 챗봇 세션 목록 조회
@@ -36,19 +40,17 @@ class ChatbotSessionListCreateView(generics.ListCreateAPIView[Any]):
     """
 
     permission_classes = [IsAuthenticated]
-
-    def get_queryset(self) -> QuerySet[ChatbotSessions]:
-        assert self.request.user.is_authenticated
-        return ChatbotSessions.objects.filter(user=self.request.user).order_by("-created_at")
-
+    pagination_class = ChatbotCursorPagination
+        
     def get_serializer_class(self) -> type[BaseSerializer[Any]]:
         if self.request.method == "POST":
             return ChatbotSessionCreateSerializer
         return ChatbotSessionReadSerializer
 
-    def perform_create(self, serializer: BaseSerializer[Any]) -> None:
-        assert self.request.user.is_authenticated
-        serializer.save(user=self.request.user)
+    def get_queryset(self) -> QuerySet[ChatbotSessions]:
+        user_id = self.request.user.id
+        assert user_id is not None
+        return ChatbotSessions.objects.filter(user_id=user_id).order_by("-created_at")
 
 
 class ChatbotSupportCreateView(generics.CreateAPIView[Any]):
@@ -82,7 +84,7 @@ class ChatbotCompletionView(APIView):
     <POST> /api/v1/chatbot/sessions/{session_id}/completions : AI 답변 생성, 스트리밍 방식
     """
 
-    # todo: <GET> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 조회
+    # <GET> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 조회
     # todo: <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 삭제 (초기화)
     # 페이지네이션 할 때 수정
 
@@ -92,17 +94,17 @@ class ChatbotCompletionView(APIView):
     def get(self, request: Request, session_id: int) -> Response:
         assert request.user.is_authenticated
         try:
-            session = ChatbotSessions.objects.get(id=session_id, user=request.user)
-        except ChatbotSessions.DoesNotExist:
-            raise NotFound(detail=" 해당 세션을 찾을 수 없습니다.")
-            # return Response({"error_detail": "챗봇 세션을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            session = ChatbotService.get_user_sessions(session_id, request.user)
+        except SessionNotFoundError as e:
+            return Response({"error_detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
-        completions = ChatbotCompletions.objects.filter(session_id=session_id, session__user=request.user).order_by(
-            "created_at"
-        )
+        messages = ChatbotCompletions.objects.filter(session=session).order_by("created_at")
 
-        serializer = ChatbotCompletionReadSerializer(completions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        paginator = ChatbotCursorPagination()
+        paginated_messages = paginator.paginate_queryset(messages, request, view=self)
+
+        serializer = ChatbotCompletionReadSerializer(paginated_messages, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     # 대화 내역 초기화 <DELETE>
     def delete(self, request: Request, session_id: int) -> Response:

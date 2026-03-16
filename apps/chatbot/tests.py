@@ -102,11 +102,11 @@ class ChatbotViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_post_completion_streaming_success(self) -> None:
-        """AI 스트리밍 답변 생성 POST (200 OK 확인)"""
+        """AI 스트리밍 답변 생성 POST (201 Created 확인)"""
         url = reverse("chatbot:session-completions", kwargs={"session_id": self.session.id})
         response = self.client.post(url, {"message": "반가워"})
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         streaming_content = b"".join(cast(Any, response).streaming_content).decode()
         self.assertIn("[DONE]", streaming_content)

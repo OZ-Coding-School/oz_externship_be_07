@@ -28,7 +28,8 @@ from apps.exam.servieces.exam_deployment_services import ExamDeploymentService
 
 
 class ExamDeploymentBaseAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     # permission_classes = [AllowAny] #test용 완료되면 제거
 
     def _build_list_item(self, deployment: ExamDeployment) -> Dict[str, Any]:
@@ -67,6 +68,8 @@ class ExamDeploymentBaseAPIView(APIView):
 
 
 class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
+    permission_classes = [AllowAny]
+
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 배포 생성 API",
@@ -139,6 +142,8 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
 
 
 class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
+    permission_classes = [AllowAny]
+
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 배포 상세 조회 API",
@@ -226,6 +231,8 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
 
 
 class ExamDeploymentStatusUpdateAPIView(ExamDeploymentBaseAPIView):
+    permission_classes = [AllowAny]
+
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 배포 on/off API",

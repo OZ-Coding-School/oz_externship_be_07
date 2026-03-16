@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+from django.contrib.auth import get_user_model
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 
 from apps.community.models.post_model import Post, PostImage
@@ -111,3 +112,22 @@ def build_post_detail_response(post: Any) -> dict[str, Any]:
         "created_at": post.created_at,
         "updated_at": post.updated_at,
     }
+
+
+User = get_user_model()
+
+
+def create_post(author: Any, validated_data: dict[str, Any]) -> Post:
+    return Post.objects.create(author=author, **validated_data)
+
+
+def update_post(instance: Post, validated_data: dict[str, Any]) -> Post:
+    for key, value in validated_data.items():
+        setattr(instance, key, value)
+
+    instance.save()
+    return instance
+
+
+def delete_post(instance: Post) -> None:
+    instance.delete()

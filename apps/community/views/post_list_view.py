@@ -1,15 +1,20 @@
 from typing import Any, cast
 
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.community.core.extend_schema import value_list
 from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
     build_post_list_response,
+    create_post,
     get_post_list_queryset,
     get_post_list_values,
 )
@@ -27,7 +32,7 @@ class PostListPagination(PageNumberPagination):
 class PostListAPIView(APIView):
     """게시글 목록 조회 API"""
 
-    serializer_class = PostCreateSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     @extend_schema(
         summary="게시글 조회",
@@ -109,3 +114,27 @@ class PostListAPIView(APIView):
             if page is not None
             else Response({"count": len(data), "next": None, "previous": None, "results": data})
         )
+
+    @extend_schema(
+        tags=["posts"],
+        summary="게시판 등록",
+        description="커뮤니 게시글 작성 API",
+        request=PostCreateSerializer,
+        examples=[value_list["201"], value_list["400"], value_list["401"]],
+        responses={
+            201: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+            401: OpenApiTypes.OBJECT,
+        },
+    )
+    def post(self, request: Request) -> Response:
+        serializer = PostCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = create_post(request.user, serializer.validated_data)
+
+        data = {
+            "detail": "게시글이 성공적으로 등록되었습니다.",
+            "pk": instance.pk,
+        }
+        return Response(data, status=status.HTTP_201_CREATED)

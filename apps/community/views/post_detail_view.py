@@ -110,13 +110,9 @@ class PostDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         request_data = update_post(instance, serializer.validated_data)
+        out_data = self.serializer_class(request_data).data
 
-        data = {
-            "title": request_data.title,
-            "content": request_data.content,
-            "category_name": request_data.category.name,
-        }
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(out_data, status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=["posts"],

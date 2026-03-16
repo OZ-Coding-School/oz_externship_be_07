@@ -1,4 +1,5 @@
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from redis.commands.search.querystring import tags
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -15,6 +16,7 @@ class SmsSendView(APIView):
 
     @extend_schema(
         summary="SMS 인증번호 발송 API",
+        tags=["Accounts"],
         description="사용자로부터 휴대폰번호를 받아 Twilio를 통해 인증 코드를 발송합니다.",
         examples=[
             OpenApiExample(
@@ -25,7 +27,7 @@ class SmsSendView(APIView):
             )
         ],
         responses={
-            200: OpenApiResponse(description="인증코드가 발송되었습니다."),
+            200: OpenApiResponse(description="인증 코드가 전송 되었습니다."),
             400: OpenApiResponse(description="필수필드 누락/휴대폰 형식이 아닙니다."),
         },
     )

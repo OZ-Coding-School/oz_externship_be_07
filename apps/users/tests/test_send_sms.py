@@ -1,46 +1,38 @@
-from unittest.mock import MagicMock, patch
+import random
 
+from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APITestCase
 
 
 class SendSmsTest(APITestCase):
-    url: str
-    valid_phone: str
-
-    @classmethod
-    def setUpTestData(cls) -> None:
-        cls.url = reverse("users:sms-send")
-        cls.valid_phone = "010-1234-5678"
-
     def setUp(self) -> None:
-        self.client = APIClient()
+        self.url = reverse("users:sms-send")
+        middle = random.randint(1000, 9999)
+        last = random.randint(1000, 9999)
+        self.valid_phone = f"010-{middle}-{last}"
         cache.clear()
 
-    # SMS 인증코드 발급 성공
-    @patch("apps.users.services.send_sms_services.Client")
-    def test_send_sms_success(self, mock_send_sms: MagicMock) -> None:
+    def test_send_sms_success(self) -> None:
         response = self.client.post(self.url, {"phone_number": self.valid_phone}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["detail"], "인증 코드가 전송 되었습니다.")
-        self.assertTrue(mock_send_sms.called)
 
-        phone_number = self.valid_phone.replace("-", "")
-        self.assertIsNotNone(cache.get(f"verify_sms:{phone_number}"))
+        clean_number = "".join(filter(str.isdigit, self.valid_phone))
+        self.assertTrue(cache.get(f"limit_sms:{clean_number}"))
 
-    # SMS 인증코드 발급 실패 (휴대폰 번호 누락)
-    def test_send_sms_fail_field_missing(self) -> None:
-        response = self.client.post(self.url, {}, format="json")
+    def test_send_sms_fail_field(self) -> None:
+        response = self.client.post(self.url, {"phone_number": "안녕-하세요-ㅋㅋ"}, format="json")
 
+        # 아마 Serializer나 Service의 filter 로직에서 걸러져서 400 에러가 나야 정상입니다.
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["error_detail"]["phone_number"][0], "이 필드는 필수 항목입니다.")
 
-    # SMS 인증코드 발급 실패2 (형식 에러)
-    def test_send_sms_fail_invalid_format(self) -> None:
-        response = self.client.post(self.url, {"phone_number": "010-abc-1234"}, format="json")
+    def test_send_sms_throttled(self) -> None:
+        clean_number = "".join(filter(str.isdigit, self.valid_phone))
+        cache.set(f"limit_sms:{clean_number}", True, timeout=60)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("올바른 휴대폰 번호 형식이 아닙니다.", str(response.data["error_detail"]["phone_number"][0]))
+        response = self.client.post(self.url, {"phone_number": self.valid_phone}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)

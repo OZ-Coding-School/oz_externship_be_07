@@ -1,10 +1,10 @@
 from rest_framework import serializers
-
+from typing import Any, Dict
 from apps.exam.models.choices import QuestionType
 
 
-class ExamQuestionCreateSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=QuestionType)
+class ExamQuestionCreateSerializer(serializers.Serializer[Dict[str, Any]]):
+    type = serializers.ChoiceField(choices=QuestionType.choices)
     question = serializers.CharField(max_length=255)
     prompt = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     options = serializers.ListField(
@@ -17,10 +17,10 @@ class ExamQuestionCreateSerializer(serializers.Serializer):
     point = serializers.IntegerField(min_value=0, max_value=100)
     explanation = serializers.CharField()
 
-    def validate(self, data):
+    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         return data
 
-    def validate_type(self, value):
+    def validate_type(self, value: str) -> str:
         return value.upper()
 
 
@@ -28,7 +28,7 @@ class ExamQuestionUpdateSerializer(ExamQuestionCreateSerializer):
     pass
 
 
-class ExamQuestionResponseSerializer(serializers.Serializer):
+class ExamQuestionResponseSerializer(serializers.Serializer[Dict[str, Any]]):
     question_id = serializers.IntegerField()
     type = serializers.CharField()
     question = serializers.CharField()
@@ -40,6 +40,6 @@ class ExamQuestionResponseSerializer(serializers.Serializer):
     explanation = serializers.CharField()
 
 
-class ExamQuestionDeleteResponseSerializer(serializers.Serializer):
+class ExamQuestionDeleteResponseSerializer(serializers.Serializer[Dict[str, Any]]):
     exam_id = serializers.IntegerField()
     question_id = serializers.IntegerField()

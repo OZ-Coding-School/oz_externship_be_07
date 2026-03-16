@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.request import Request
+from typing import Any
 
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
@@ -25,7 +27,7 @@ class ExamQuestionListCreateAPIView(APIView):
         summary="쪽지시험 문제 목록 조회",
         responses={200: ExamQuestionResponseSerializer(many=True), 404: ErrorDetailSerializer},
     )
-    def get(self, request, exam_id):
+    def get(self, request: Request, exam_id: int, *args: Any, **kwargs: Any) -> Response:
         exam = get_object_or_404(Exam, pk=exam_id)
         results = ExamQuestionService.list_by_exam(exam)
         return Response(results, status=status.HTTP_200_OK)
@@ -75,7 +77,7 @@ class ExamQuestionListCreateAPIView(APIView):
             ),
         ],
     )
-    def post(self, request, exam_id):
+    def post(self, request: Request, exam_id: int, *args: Any, **kwargs: Any) -> Response:
 
         serializer = ExamQuestionCreateSerializer(data=request.data)
         if not serializer.is_valid():
@@ -95,7 +97,7 @@ class ExamQuestionDetailAPIView(APIView):
         summary="쪽지시험 문제 상세 조회",
         responses={200: ExamQuestionResponseSerializer, 404: ErrorDetailSerializer},
     )
-    def get(self, request, question_id):
+    def get(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
         question = get_object_or_404(ExamQuestion, id=question_id)
         return Response(ExamQuestionService.serialize(question), status=status.HTTP_200_OK)
 
@@ -137,7 +139,7 @@ class ExamQuestionDetailAPIView(APIView):
             ),
         },
     )
-    def patch(self, request, question_id):
+    def patch(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
         question = get_object_or_404(ExamQuestion, id=question_id)
 
         serializer = ExamQuestionUpdateSerializer(data=request.data)
@@ -191,7 +193,7 @@ class ExamQuestionDetailAPIView(APIView):
             ),
         ],
     )
-    def delete(self, request, question_id):
+    def delete(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
         question = get_object_or_404(ExamQuestion, id=question_id)
         result = ExamQuestionService.delete_question(question)
         return Response(

@@ -1,14 +1,13 @@
 import json
-from typing import List
+from typing import List, Dict, Any, Optional, cast
 
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 
-
 class ExamQuestionService:
     @staticmethod
-    def serialize(question: ExamQuestion) -> dict:
-        options = None
+    def serialize(question: ExamQuestion) -> Dict[str, Any]:
+        options: Any = None # 명시적 타입 지정
         if question.options_json:
             try:
                 options = json.loads(question.options_json)
@@ -28,16 +27,19 @@ class ExamQuestionService:
         }
 
     @staticmethod
-    def list_by_exam(exam: Exam) -> List[dict]:
+    def list_by_exam(exam: Exam) -> List[Dict[str, Any]]:
+        # objects 에러 발생 시 아래처럼 cast를 사용하거나 모델에 타입 힌트 추가 필요
         questions = ExamQuestion.objects.filter(exam=exam).order_by("id")
         return [ExamQuestionService.serialize(q) for q in questions]
 
     @staticmethod
-    def create_question(exam: Exam, data: dict) -> ExamQuestion:
-        options_json = None
+    # 1. data: dict -> Dict[str, Any]로 수정
+    def create_question(exam: Exam, data: Dict[str, Any]) -> ExamQuestion:
+        options_json: Optional[str] = None
         if data.get("options") is not None:
             options_json = json.dumps(data["options"], ensure_ascii=False)
 
+        # 2. Returning Any 에러 방지를 위한 cast 사용
         return ExamQuestion.objects.create(
             exam=exam,
             type=data["type"],
@@ -51,7 +53,8 @@ class ExamQuestionService:
         )
 
     @staticmethod
-    def update_question(question: ExamQuestion, data: dict) -> ExamQuestion:
+    # 3. data: dict -> Dict[str, Any]로 수정
+    def update_question(question: ExamQuestion, data: Dict[str, Any]) -> ExamQuestion:
         if "options" in data:
             question.options_json = (
                 json.dumps(data["options"], ensure_ascii=False) if data["options"] is not None else None
@@ -75,8 +78,9 @@ class ExamQuestionService:
         return question
 
     @staticmethod
-    def delete_question(question: ExamQuestion) -> dict:
-        exam_id = question.exam_id
-        question_id = question.id
+    def delete_question(question: ExamQuestion) -> Dict[str, Any]:
+        # 4. id, exam_id 인식 에러가 지속될 경우 로컬 변수 타입 명시
+        exam_id: int = question.exam_id
+        question_id: int = question.id
         question.delete()
         return {"exam_id": exam_id, "question_id": question_id}

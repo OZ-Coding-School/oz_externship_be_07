@@ -30,11 +30,3 @@ class QuestionCreateView(APIView):
         # 실패 테스트를 하고 싶을때는 아래 주석풀고 성공 리턴에 주석달기!
         # return Response(error["400"], status=status.HTTP_400_BAD_REQUEST])
 
-
-# 만약 추가하게 된다면 파일 하나 만들어서 이동시키기
-# 삭제 일단 주석처리 해놓을 예정 프론트와 소통 후 살릴지 말지 결정
-# @extend_schema(tags=["qna"])
-# class QuestionDeleteView(APIView):
-#     def delete(self, request):
-#         """질문 삭제 API에는 없지만 일단 구현은 해놓음"""
-#         return Response({"message": "질문이 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)

@@ -37,6 +37,7 @@ class QuestionCreateTest(TestCase):
             role=UserRole.TA,
         )
 
+    # 질문 등록 성공 코드
     def test_create_question_success(self) -> None:
         image_urls: List[str] = ["http://test.com/img1.png"]
 

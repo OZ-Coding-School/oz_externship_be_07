@@ -27,7 +27,6 @@ class SendSmsTest(APITestCase):
     def test_send_sms_fail_field(self) -> None:
         response = self.client.post(self.url, {"phone_number": "안녕-하세요-ㅋㅋ"}, format="json")
 
-        # 아마 Serializer나 Service의 filter 로직에서 걸러져서 400 에러가 나야 정상입니다.
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_send_sms_throttled(self) -> None:

@@ -1,11 +1,11 @@
 from django.utils import timezone
 from rest_framework import serializers
-
+from typing import Any, Dict, Optional
 from apps.exam.models.exam_models import Exam
 
 
 # 1. 생성용 (POST)
-class ExamCreateSerializer(serializers.ModelSerializer):
+class ExamCreateSerializer(serializers.ModelSerializer[Exam]):
     thumbnail_img = serializers.ImageField(write_only=True)
 
     class Meta:
@@ -13,7 +13,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> Exam:
         thumbnail_img = validated_data.pop("thumbnail_img")
         # S3 업로드 경로 예시 (요구사항 반영)
         validated_data["thumbnail_img_url"] = (
@@ -23,7 +23,7 @@ class ExamCreateSerializer(serializers.ModelSerializer):
 
 
 # 2. 목록 조회용 (GET List)
-class ExamListSerializer(serializers.ModelSerializer):
+class ExamListSerializer(serializers.ModelSerializer[Exam]):
     subject_name = serializers.CharField(source="subject.title", read_only=True)
 
     class Meta:
@@ -32,19 +32,19 @@ class ExamListSerializer(serializers.ModelSerializer):
 
 
 # 3. 상세 조회용 (GET Detail)
-class ExamDetailSerializer(serializers.ModelSerializer):
+class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
     subject = serializers.SerializerMethodField()
 
     class Meta:
         model = Exam
         fields = ["id", "title", "subject", "thumbnail_img_url", "created_at", "updated_at"]
 
-    def get_subject(self, obj):
+    def get_subject(self, obj: Exam) -> Dict[str, Any]:
         return {"id": obj.subject.id, "title": obj.subject.title}
 
 
 # 4. 수정용 (PUT)
-class ExamUpdateSerializer(serializers.ModelSerializer):
+class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
     thumbnail_img = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
@@ -52,7 +52,7 @@ class ExamUpdateSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Exam, validated_data: Dict[str, Any]) -> Exam:
         thumbnail_img = validated_data.pop("thumbnail_img", None)
         if thumbnail_img:
             instance.thumbnail_img_url = (
@@ -61,7 +61,7 @@ class ExamUpdateSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class ExamDeleteRequestSerializer(serializers.ModelSerializer):
+class ExamDeleteRequestSerializer(serializers.ModelSerializer[Exam]):
     class Meta:
         model = Exam
         fields = ["id"]
@@ -76,7 +76,7 @@ from apps.subject.models.cohort_models import Cohort
 # 쪽지시험 배포 생성 API
 # POST /api/v1/admin/exams/deployments
 # =========================================================
-class ExamDeploymentCreateSerializer(serializers.ModelSerializer):
+class ExamDeploymentCreateSerializer(serializers.ModelSerializer[ExamDeployment]): # [수정] 이름 및 [ExamDeployment]
     exam = serializers.PrimaryKeyRelatedField(
         queryset=Exam.objects.all(),
         write_only=True,
@@ -102,7 +102,7 @@ class ExamDeploymentCreateSerializer(serializers.ModelSerializer):
             "close_at",
         ]
 
-    def validate(self, data):
+    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         open_at = data.get("open_at")
         close_at = data.get("close_at")
         now = timezone.now()
@@ -123,7 +123,7 @@ class ExamDeploymentCreateSerializer(serializers.ModelSerializer):
         return data
 
 
-class ExamDeploymentCreateResponseSerializer(serializers.Serializer):
+class ExamDeploymentCreateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
     pk = serializers.IntegerField()
 
 
@@ -131,7 +131,7 @@ class ExamDeploymentCreateResponseSerializer(serializers.Serializer):
 # 쪽지시험 배포 목록 조회 API
 # GET /api/v1/admin/exams/deployments
 # =========================================================
-class ExamDeploymentListQuerySerializer(serializers.Serializer):
+class ExamDeploymentListQuerySerializer(serializers.Serializer[Dict[str, Any]]):
     page = serializers.IntegerField(required=False, default=1, min_value=1)
     size = serializers.IntegerField(required=False, default=10, min_value=1)
     search_keyword = serializers.CharField(required=False, allow_blank=True)
@@ -144,7 +144,7 @@ class ExamDeploymentListQuerySerializer(serializers.Serializer):
     )
 
 
-class ExamDeploymentListSerializer(serializers.Serializer):
+class ExamDeploymentListSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     id = serializers.IntegerField()
     submit_count = serializers.IntegerField()
     avg_score = serializers.FloatField()
@@ -155,7 +155,7 @@ class ExamDeploymentListSerializer(serializers.Serializer):
     created_at = serializers.CharField()
 
 
-class ExamDeploymentListResponseSerializer(serializers.Serializer):
+class ExamDeploymentListResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     count = serializers.IntegerField()
     previous = serializers.CharField(allow_null=True)
     next = serializers.CharField(allow_null=True)
@@ -166,7 +166,7 @@ class ExamDeploymentListResponseSerializer(serializers.Serializer):
 # 쪽지시험 배포 상세 조회 API
 # GET /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
-class ExamDeploymentDetailSerializer(serializers.Serializer):
+class ExamDeploymentDetailSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     id = serializers.IntegerField()
     exam_access_url = serializers.CharField()
     access_code = serializers.CharField()
@@ -185,7 +185,7 @@ class ExamDeploymentDetailSerializer(serializers.Serializer):
 # 쪽지시험 배포 정보 수정 API
 # PATCH /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
-class ExamDeploymentUpdateSerializer(serializers.ModelSerializer):
+class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]): # [수정] [ExamDeployment]
     duration_time = serializers.IntegerField(
         required=False,
         min_value=1,
@@ -200,7 +200,7 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer):
             "close_at",
         ]
 
-    def validate(self, data):
+    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         open_at = data.get("open_at", getattr(self.instance, "open_at", None))
         close_at = data.get("close_at", getattr(self.instance, "close_at", None))
 
@@ -210,7 +210,7 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer):
         return data
 
 
-class ExamDeploymentUpdateResponseSerializer(serializers.Serializer):
+class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     deployment = serializers.IntegerField()
     duration_time = serializers.IntegerField()
     open_at = serializers.CharField()
@@ -222,11 +222,11 @@ class ExamDeploymentUpdateResponseSerializer(serializers.Serializer):
 # 쪽지시험 배포 on/off API
 # PATCH /api/v1/admin/exams/deployments/{deployment}/status
 # =========================================================
-class ExamDeploymentStatusUpdateSerializer(serializers.Serializer):
+class ExamDeploymentStatusUpdateSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     status = serializers.ChoiceField(choices=["Activated", "Deactivated"])
 
 
-class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer):
+class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     deployment = serializers.IntegerField()
     status = serializers.CharField()
 
@@ -235,12 +235,12 @@ class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer):
 # 쪽지시험 배포 삭제 API
 # DELETE /api/v1/admin/exams/deployments/{deployment}
 # =========================================================
-class ExamDeploymentDeleteResponseSerializer(serializers.Serializer):
+class ExamDeploymentDeleteResponseSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     detail = serializers.CharField()
 
 
 # =========================================================
 # 공통 에러 응답
 # =========================================================
-class ErrorDetailSerializer(serializers.Serializer):
+class ErrorDetailSerializer(serializers.Serializer[Dict[str, Any]]): # [수정]
     error_detail = serializers.CharField()

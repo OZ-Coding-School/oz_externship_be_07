@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db import IntegrityError
 from django.http import Http404
 from drf_spectacular.utils import (
@@ -7,6 +9,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,15 +28,23 @@ from apps.subject.services.cohort_services import CohortService
 ALLOWED_ADMIN_ROLES = {"TA", "LC", "OM", "ADMIN"}
 
 
-def error_response(*, message, http_status=status.HTTP_400_BAD_REQUEST):
+def error_response(
+    *,
+    message: str,
+    http_status: int = status.HTTP_400_BAD_REQUEST,
+) -> Response:
     return Response({"error_detail": message}, status=http_status)
 
 
-def field_error_response(*, errors, http_status=status.HTTP_400_BAD_REQUEST):
+def field_error_response(
+    *,
+    errors: dict[str, Any],
+    http_status: int = status.HTTP_400_BAD_REQUEST,
+) -> Response:
     return Response({"error_detail": errors}, status=http_status)
 
 
-def check_authenticated(request):
+def check_authenticated(request: Request) -> Response | None:
     if not request.user or not request.user.is_authenticated:
         return error_response(
             message="자격 인증 데이터가 제공되지 않았습니다.",
@@ -42,7 +53,7 @@ def check_authenticated(request):
     return None
 
 
-def check_admin_role(request):
+def check_admin_role(request: Request) -> Response | None:
     auth_error = check_authenticated(request)
     if auth_error:
         return auth_error
@@ -93,14 +104,14 @@ class AdminCohortCreateAPIView(APIView):
             ),
         ],
     )
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         permission_error = check_admin_role(request)
         if permission_error:
             return permission_error
 
         serializer = CohortCreateRequestSerializer(data=request.data)
         if not serializer.is_valid():
-            return field_error_response(errors=serializer.errors)
+            return field_error_response(errors=dict(serializer.errors))
 
         try:
             cohort = CohortService.create_cohort(validated_data=serializer.validated_data)
@@ -136,7 +147,7 @@ class CohortListAPIView(APIView):
             403: OpenApiResponse(response=ErrorDetailStringSerializer, description="Forbidden"),
         },
     )
-    def get(self, request, course_id: int):
+    def get(self, request: Request, course_id: int) -> Response:
         auth_error = check_authenticated(request)
         if auth_error:
             return auth_error
@@ -153,7 +164,7 @@ class CohortListAPIView(APIView):
         data = [
             {
                 "id": cohort.id,
-                "course_id": cohort.course_id,
+                "course": cohort.course_id,
                 "number": cohort.number,
                 "status": cohort.status,
             }
@@ -177,14 +188,14 @@ class AdminCohortUpdateAPIView(APIView):
             404: OpenApiResponse(response=ErrorDetailStringSerializer, description="Not Found"),
         },
     )
-    def patch(self, request, cohort_id: int):
+    def patch(self, request: Request, cohort_id: int) -> Response:
         permission_error = check_admin_role(request)
         if permission_error:
             return permission_error
 
-        try:
-            from apps.subject.models.cohort_models import Cohort
+        from apps.subject.models.cohort_models import Cohort
 
+        try:
             cohort = Cohort.objects.get(pk=cohort_id)
         except Cohort.DoesNotExist:
             return error_response(
@@ -192,9 +203,13 @@ class AdminCohortUpdateAPIView(APIView):
                 http_status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = CohortUpdateRequestSerializer(instance=cohort, data=request.data, partial=True)
+        serializer = CohortUpdateRequestSerializer(
+            instance=cohort,
+            data=request.data,
+            partial=True,
+        )
         if not serializer.is_valid():
-            return field_error_response(errors=serializer.errors)
+            return field_error_response(errors=dict(serializer.errors))
 
         try:
             updated_cohort = CohortService.update_cohort(
@@ -210,7 +225,7 @@ class AdminCohortUpdateAPIView(APIView):
         response_serializer = CohortUpdateResponseSerializer(
             {
                 "id": updated_cohort.id,
-                "course_id": updated_cohort.course_id,
+                "course": updated_cohort.course_id,
                 "number": updated_cohort.number,
                 "max_student": updated_cohort.max_student,
                 "start_date": updated_cohort.start_date,
@@ -235,7 +250,7 @@ class AdminCohortStudentListAPIView(APIView):
             404: OpenApiResponse(response=ErrorDetailStringSerializer, description="Not Found"),
         },
     )
-    def get(self, request, cohort_id: int):
+    def get(self, request: Request, cohort_id: int) -> Response:
         permission_error = check_admin_role(request)
         if permission_error:
             return permission_error

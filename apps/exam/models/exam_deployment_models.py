@@ -7,6 +7,7 @@ from apps.subject.models.cohort_models import Cohort
 
 
 class ExamDeployment(TimeStampModel):
+    id: int
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
     duration_time = models.SmallIntegerField(default=60)

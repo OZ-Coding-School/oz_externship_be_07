@@ -4,6 +4,11 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.request import Request
+from typing import Any, Dict, Optional
+
+# 파일 최상단에 모아주세요
+from apps.exam.models.exam_deployment_models import ExamDeployment
 
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.exam.serializers.exam_deployment_serializers import (
@@ -23,11 +28,13 @@ from apps.exam.servieces.exam_deployment_services import ExamDeploymentService
 
 
 class ExamDeploymentBaseAPIView(APIView):
-#    permission_classes = [IsAuthenticated]
-    permission_classes = [AllowAny] #test용 완료되면 제거
+    permission_classes = [IsAuthenticated]
+    #permission_classes = [AllowAny] #test용 완료되면 제거
 
-    def _build_list_item(self, deployment):
+
+    def _build_list_item(self, deployment: ExamDeployment) -> Dict[str, Any]:
         """목록 조회를 위한 데이터 포맷팅 (View 전용 가공)"""
+        _ = self  # [추가] self를 사용한 것으로 간주되어 노란 줄이 사라집니다.
         subject = deployment.exam.subject
         cohort = deployment.cohort
         course = cohort.course
@@ -67,7 +74,7 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
         request=ExamDeploymentCreateSerializer,
         responses={201: ExamDeploymentCreateResponseSerializer, 400: ErrorDetailSerializer},
     )
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """배포 생성 로직을 Service로 위임합니다."""
         serializer = ExamDeploymentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -83,7 +90,7 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
         summary="쪽지시험 배포 목록 조회 API",
         responses={200: ExamDeploymentListResponseSerializer},
     )
-    def get(self, request, *args, **kwargs):
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """통계 정보가 포함된 Queryset을 Service로부터 받아와 필터링 및 페이징을 수행합니다."""
         query_serializer = ExamDeploymentListQuerySerializer(data=request.query_params)
         query_serializer.is_valid(raise_exception=True)
@@ -115,10 +122,13 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
         response_data = {
             "count": paginator.count,
             "previous": (
-                request.build_absolute_uri(page_obj.previous_page_number()) if page_obj.has_previous() else None
+                # page_obj.previous_page_number()의 결과값(int)을 str()로 변환
+                request.build_absolute_uri(str(page_obj.previous_page_number())) if page_obj.has_previous() else None
             ),
-            "next": request.build_absolute_uri(page_obj.next_page_number()) if page_obj.has_next() else None,
-            "results": results,
+            "next": (
+                # page_obj.next_page_number()의 결과값(int)을 str()로 변환
+                request.build_absolute_uri(str(page_obj.next_page_number())) if page_obj.has_next() else None
+            ),            "results": results,
         }
 
         return Response(ExamDeploymentListResponseSerializer(response_data).data, status=status.HTTP_200_OK)
@@ -130,7 +140,7 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
         summary="쪽지시험 배포 상세 조회 API",
         responses={200: ExamDeploymentDetailSerializer},
     )
-    def get(self, request, pk=None, *args, **kwargs):
+    def get(self, request: Request, pk: Optional[int] = None, *args: Any, **kwargs: Any) -> Response:
         """상세 정보 조회를 위해 최적화된 Service 쿼리셋을 사용합니다."""
         deployment = ExamDeploymentService.get_deployment_list_queryset().get(pk=pk)
 
@@ -178,7 +188,7 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
         request=ExamDeploymentUpdateSerializer,
         responses={200: ExamDeploymentUpdateResponseSerializer},
     )
-    def patch(self, request, pk=None, *args, **kwargs):
+    def patch(self, request: Request, pk: Optional[int] = None, *args: Any, **kwargs: Any) -> Response:
         """부분 수정을 수행합니다."""
         instance = ExamDeploymentService.get_deployment_list_queryset().get(pk=pk)
         serializer = ExamDeploymentUpdateSerializer(instance=instance, data=request.data, partial=True)
@@ -203,7 +213,7 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
         summary="쪽지시험 배포 삭제 API",
         responses={200: ExamDeploymentDeleteResponseSerializer},
     )
-    def delete(self, request, pk=None, *args, **kwargs):
+    def delete(self, request: Request, pk: Optional[int] = None, *args: Any, **kwargs: Any) -> Response:
         """배포 삭제를 처리합니다."""
         deployment = ExamDeploymentService.get_deployment_list_queryset().get(pk=pk)
         deployment.delete()
@@ -218,7 +228,7 @@ class ExamDeploymentStatusUpdateAPIView(ExamDeploymentBaseAPIView):
         request=ExamDeploymentStatusUpdateSerializer,
         responses={200: ExamDeploymentStatusUpdateResponseSerializer},
     )
-    def patch(self, request, pk=None, *args, **kwargs):
+    def patch(self, request: Request, pk: Optional[int] = None, *args: Any, **kwargs: Any) -> Response:
         """상태(Activated/Deactivated) 업데이트를 수행합니다."""
         deployment = ExamDeploymentService.get_deployment_list_queryset().get(pk=pk)
         serializer = ExamDeploymentStatusUpdateSerializer(data=request.data)

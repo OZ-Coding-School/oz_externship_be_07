@@ -89,3 +89,9 @@ class ExamSubmissionServiceTest(TestCase):
         deleted_id = ExamSubmissionService.delete_submission(submission_id)
         self.assertEqual(deleted_id, submission_id)
         self.assertFalse(ExamSubmission.objects.filter(id=submission_id).exists())
+
+    def test_get_submission_list_without_keyword(self) -> None:
+        """검색어가 없을 때 전체 리스트를 반환하는지 검증"""
+        # 서비스 로직에서 search_keyword=None 일 때의 분기를 체크합니다.
+        queryset = ExamSubmissionService.get_submission_list(search_keyword=None)
+        self.assertEqual(queryset.count(), 1)

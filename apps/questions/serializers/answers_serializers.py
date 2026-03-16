@@ -23,7 +23,7 @@ class AnswerCommentSerializer(serializers.ModelSerializer[AnswerComments]):
 
 
 # 답변 댓글 입력
-class CommentCreateSerializer(serializers.Serializer):
+class CommentCreateSerializer(serializers.Serializer[None]):
     content = serializers.CharField(min_length=1, max_length=500)
 
 

@@ -8,14 +8,19 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..serializers.answers_serializers import AnswerCreateUpdateSerializer, CommentCreateSerializer
+from apps.users.models.models import User
+
+from ..serializers.answers_serializers import (
+    AnswerCreateUpdateSerializer,
+    CommentCreateSerializer,
+)
 from ..services.answers_services import AnswerService
 
 
-class AnswerViewSet(viewsets.GenericViewSet):
+class AnswerViewSet(viewsets.GenericViewSet[Any]):
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type:
         if self.action == "comment":
             return CommentCreateSerializer
         return AnswerCreateUpdateSerializer
@@ -34,6 +39,7 @@ class AnswerViewSet(viewsets.GenericViewSet):
         },
     )
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        assert isinstance(request.user, User)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         answer = AnswerService.create_answer(
@@ -65,6 +71,7 @@ class AnswerViewSet(viewsets.GenericViewSet):
         },
     )
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        assert isinstance(request.user, User)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -97,12 +104,15 @@ class AnswerViewSet(viewsets.GenericViewSet):
     )
     @action(detail=True, methods=["post"], url_path="accept")
     def accept(self, request: Request, pk: Optional[int] = None) -> Response:
+        assert isinstance(request.user, User)
+        assert pk is not None
         try:
             answer = AnswerService.accept_answer(user=request.user, answer_id=int(pk))
         except PermissionDenied as e:
             return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         except ValidationError as e:
-            return Response({"error_detail": str(e.detail[0])}, status=status.HTTP_409_CONFLICT)
+            error_msg = str(list(e.detail.values())[0]) if isinstance(e.detail, dict) else str(e.detail[0])
+            return Response({"error_detail": error_msg}, status=status.HTTP_409_CONFLICT)
         return Response(
             {
                 "question_id": answer.questions.id,
@@ -127,6 +137,8 @@ class AnswerViewSet(viewsets.GenericViewSet):
     )
     @action(detail=True, methods=["post"], url_path="comments")
     def comment(self, request: Request, pk: Optional[int] = None) -> Response:
+        assert isinstance(request.user, User)
+        assert pk is not None
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         comment = AnswerService.create_comment(
@@ -145,7 +157,7 @@ class AnswerViewSet(viewsets.GenericViewSet):
         )
 
 
-class AIAnswerViewSet(viewsets.GenericViewSet):
+class AIAnswerViewSet(viewsets.GenericViewSet[Any]):
     permission_classes = [IsAuthenticated]
 
     # AI 답변 생성/조회
@@ -159,13 +171,15 @@ class AIAnswerViewSet(viewsets.GenericViewSet):
             409: OpenApiResponse(description="이미 AI가 답변을 생성했습니다."),
         },
     )
-    def retrieve(self, request: Request, question_id: Any = None) -> Response:
+    def retrieve(self, request: Request, question_id: Optional[int] = None) -> Response:
+        assert question_id is not None
         try:
             ai_answer = AnswerService.get_or_create_ai_answer(int(question_id))
         except NotFound as e:
             return Response({"error_detail": str(e.detail)}, status=status.HTTP_404_NOT_FOUND)
         except ValidationError as e:
-            return Response({"error_detail": str(e.detail[0])}, status=status.HTTP_409_CONFLICT)
+            error_msg = str(list(e.detail.values())[0]) if isinstance(e.detail, dict) else str(e.detail[0])
+            return Response({"error_detail": error_msg}, status=status.HTTP_409_CONFLICT)
         return Response(
             {
                 "id": ai_answer.id,

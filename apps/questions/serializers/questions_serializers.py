@@ -3,7 +3,7 @@ from typing import Any, Optional
 from rest_framework import serializers
 
 from apps.questions.models import QuestionCategories, QuestionImages, Questions
-from apps.questions.serializers.answers_serializers import AnswersSerializer
+from apps.questions.serializers.answers_serializers import AnswerResponseSerializer
 from apps.questions.serializers.common_serializers import AuthorSerializer
 
 
@@ -78,7 +78,7 @@ class QuestionListDetailSerializer(serializers.ModelSerializer[Questions]):
     category = CategorySerializer(read_only=True)
     author = AuthorSerializer(read_only=True)
     images = QuestionImagesSerializer(read_only=True, many=True)
-    answers = AnswersSerializer(read_only=True, many=True)
+    answers = AnswerResponseSerializer(read_only=True, many=True)
 
     class Meta:
         model = Questions

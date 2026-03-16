@@ -21,9 +21,7 @@ class AnswerService:
         answer = Answers.objects.create(author=user, questions=question, content=content)
 
         if image_urls:
-            AnswerImages.objects.bulk_create([
-                AnswerImages(answer=answer, img_url=url) for url in image_urls
-            ])
+            AnswerImages.objects.bulk_create([AnswerImages(answer=answer, img_url=url) for url in image_urls])
         return answer
 
     # 답변 수정
@@ -40,9 +38,7 @@ class AnswerService:
 
         if image_urls is not None:
             answer.images.all().delete()
-            AnswerImages.objects.bulk_create([
-                AnswerImages(answer=answer, img_url=url) for url in image_urls
-            ])
+            AnswerImages.objects.bulk_create([AnswerImages(answer=answer, img_url=url) for url in image_urls])
         return answer
 
     # 답변 채택

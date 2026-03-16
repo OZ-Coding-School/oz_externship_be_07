@@ -56,11 +56,20 @@ class PostAttachmentInline(admin.TabularInline):  # type: ignore[type-arg]
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ("id", "title", "author", "view_count", "category", "is_notice", "is_visible", "created_at")
+    list_display_links = ("id", "title")
+    list_editable = ("is_notice", "is_visible")
     search_fields = ("title", "content", "author__nickname")
     list_filter = ("category", "is_notice", "is_visible")
     list_select_related = ("author", "category")
     raw_id_fields = ("author",)
     ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    fieldsets = (
+        ("기본 정보", {"fields": ("title", "author", "category")}),
+        ("내용", {"fields": ("content",)}),
+        ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
     inlines = [PostAttachmentInline, PostImageInline]
 
 
@@ -81,6 +90,12 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_select_related = ("author", "post")
     raw_id_fields = ("author", "post")
     ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    fieldsets = (
+        ("기본 정보", {"fields": ("author", "post")}),
+        ("내용", {"fields": ("content",)}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
     inlines = [CommentTagInline]
 
     @admin.display(description="댓글내용", ordering="content")
@@ -92,9 +107,15 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 @admin.register(PostCategory)
 class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ("id", "name", "status")
+    list_display_links = ("id", "name")
+    list_editable = ("status",)
     search_fields = ("name",)
     list_filter = ("status",)
     ordering = ("id",)
+    fieldsets = (
+        ("기본 정보", {"fields": ("name", "status")}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
 
 
 @admin.register(PostLike)
@@ -104,7 +125,12 @@ class PostLikeAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_filter = ("is_liked",)
     list_select_related = ("user", "post")
     ordering = ("-created_at",)
+    date_hierarchy = "created_at"
     readonly_fields = ("id", "user", "post", "is_liked", "created_at")
+    fieldsets = (
+        ("기본 정보", {"fields": ("id", "user", "post", "is_liked")}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

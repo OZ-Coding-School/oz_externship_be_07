@@ -1,6 +1,8 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -23,12 +25,19 @@ class ExamSubmissionListAPIView(APIView):
         ],
         responses={200: ExamSubmissionListSerializer(many=True)},
     )
-    def get(self, request):
-        # Service에서 필터링된 쿼리셋 획득 (select_related 최적화 포함)
-        queryset = ExamSubmissionService.get_submission_list(search_keyword=request.query_params.get("search_keyword"))
+    def get(self, request: Request) -> Response:
+        queryset = ExamSubmissionService.get_submission_list(
+            search_keyword=request.query_params.get("search_keyword")
+        )
 
         serializer = ExamSubmissionListSerializer(queryset, many=True)
-        return Response({"count": queryset.count(), "results": serializer.data}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "count": queryset.count(),
+                "results": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class ExamSubmissionDetailAPIView(APIView):
@@ -37,8 +46,7 @@ class ExamSubmissionDetailAPIView(APIView):
         summary="쪽지시험 응시 내역 상세 조회",
         responses={200: ExamSubmissionDetailSerializer, 404: "Not Found"},
     )
-    def get(self, request, submission_id):
-        # 상세 조회는 단일 객체이므로 직접 조회 혹은 Service 활용 가능
+    def get(self, request: Request, submission_id: int) -> Response:
         submission = get_object_or_404(ExamSubmission, id=submission_id)
         serializer = ExamSubmissionDetailSerializer(submission)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -52,12 +60,22 @@ class ExamSubmissionDetailAPIView(APIView):
             409: {"error_detail": "삭제 시 충돌이 발생했습니다."},
         },
     )
-    def delete(self, request, submission_id):
+    def delete(self, request: Request, submission_id: int) -> Response:
         try:
-            # Service를 통한 삭제 처리
-            deleted_id = ExamSubmissionService.delete_submission(submission_id)
-            return Response({"submission_id": deleted_id}, status=status.HTTP_200_OK)
+            deleted_id = ExamSubmissionService.delete_submission(
+                submission_id=submission_id
+            )
+            return Response(
+                {"submission_id": deleted_id},
+                status=status.HTTP_200_OK,
+            )
+        except Http404:
+            return Response(
+                {"error_detail": "해당 응시 내역을 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Exception:
             return Response(
-                {"error_detail": "응시 내역 삭제 처리 중 충돌이 발생했습니다."}, status=status.HTTP_409_CONFLICT
+                {"error_detail": "응시 내역 삭제 처리 중 충돌이 발생했습니다."},
+                status=status.HTTP_409_CONFLICT,
             )

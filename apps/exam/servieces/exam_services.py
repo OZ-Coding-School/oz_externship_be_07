@@ -1,55 +1,45 @@
-from django.db import transaction
-from typing import cast, Optional
-from django.db.models import Manager
-from django.db.models import Q, QuerySet
-from django.core.paginator import Paginator
-
+from typing import Any
+from django.db.models import QuerySet
+from django.core.paginator import Paginator, Page
 from apps.exam.models.exam_models import Exam
-
 
 class ExamService:
     @staticmethod
-    def get_exam_list(page:int =1, size:int =10, search_keyword:Optional[str]=None, subject_id:Optional[str]|None=None, sort:str="created_at", order:str="desc") -> QuerySet[Exam, Exam]:
-        """
-        시험 목록 조회, 필터링, 정렬 및 페이지네이션
-        """
-        objects: Manager[Exam] = Manager()
+    def get_exam_list(
+        page: int = 1,
+        size: int = 10,
+        search_keyword: str | None = None,
+        subject_id: str | None = None,
+        sort: str = "created_at",
+        order: str = "desc"
+    ) -> Page[Exam]:
+        """시험 목록 조회 (Paginator의 Page 객체 반환)"""
+        exams = Exam.objects.select_related('subject').all()
 
-        # 1. 초기 쿼리셋 (N+1 방지를 위해 select_related 추가)
-        exams = objects.select_related('subject').all()
-
-        # 2. 필터링 (과목 ID)
         if subject_id:
             exams = exams.filter(subject_id=subject_id)
 
-        # 3. 필터링 (검색어)
         if search_keyword:
             exams = exams.filter(title__icontains=search_keyword)
 
-        # 4. 정렬 처리
-        # order가 'desc'이면 필드명 앞에 '-'를 붙임
         order_by = f"-{sort}" if order == "desc" else sort
         exams = exams.order_by(order_by)
 
-        # 5. 페이지네이션
         paginator = Paginator(exams, size)
-        page_obj = paginator.get_page(page)
-
-        return page_obj
+        return paginator.get_page(page)
 
     @staticmethod
-    def create_exam(validated_data):
-        """시험 생성 로직"""
+    def create_exam(validated_data: dict[str, Any]) -> Exam:
+        """시험 생성"""
         thumbnail_img = validated_data.pop("thumbnail_img", None)
         if thumbnail_img:
-            # S3 업로드 경로 설정
             validated_data["thumbnail_img_url"] = (
                 f"https://oz-externship.s3.ap-northeast-2.amazonaws.com/exams/{thumbnail_img.name}"
             )
         return Exam.objects.create(**validated_data)
 
     @staticmethod
-    def update_exam(exam_id, validated_data):
+    def update_exam(exam_id: int, validated_data: dict[str, Any]) -> Exam:
         """시험 정보 수정"""
         exam = Exam.objects.get(id=exam_id)
         thumbnail_img = validated_data.pop("thumbnail_img", None)
@@ -64,7 +54,7 @@ class ExamService:
         return exam
 
     @staticmethod
-    def delete_exam(exam_id):
+    def delete_exam(exam_id: int) -> int:
         """시험 삭제"""
         exam = Exam.objects.get(id=exam_id)
         exam.delete()

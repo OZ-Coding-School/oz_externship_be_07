@@ -9,5 +9,7 @@ class Exam(TimeStampModel):
     title = models.CharField(max_length=50)
     thumbnail_img_url = models.CharField(max_length=255, default="default_img_url")
 
+    objects:models.Manager["Exam"] = models.Manager()
+
     class Meta:
         db_table = "exams"

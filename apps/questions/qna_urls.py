@@ -11,7 +11,7 @@ urlpatterns = [
         AnswerViewSet.as_view({"post": "create"}),
         name="answer_create",
     ),
-    # AI 답변 생성/조회
+    # AI 답변 생성 / 조회
     path(
         "questions/<int:question_id>/ai-answer",
         AIAnswerViewSet.as_view({"get": "retrieve"}),

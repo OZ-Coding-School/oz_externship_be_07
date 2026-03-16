@@ -2,7 +2,7 @@ import json
 from typing import Any, cast
 
 from django.http import StreamingHttpResponse
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, APITestCase
@@ -101,10 +101,13 @@ class ChatbotViewTest(APITestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+    @override_settings(GEMINI_API_KEY="dummy_test_key_for_ci_pipeline")
     def test_post_completion_streaming_success(self) -> None:
         """AI 스트리밍 답변 생성 POST (201 Created 확인)"""
         url = reverse("chatbot:session-completions", kwargs={"session_id": self.session.id})
-        response = self.client.post(url, {"message": "반가워"})
+        data = {"message": "테스트 메시지"}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 

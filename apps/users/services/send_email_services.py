@@ -9,7 +9,8 @@ from rest_framework.exceptions import APIException, Throttled
 
 class SendEmailService:
     def create_code(self) -> str:
-        return "".join(secrets.choice(string.digits) for _ in range(6))
+        ennumcode = string.ascii_uppercase + string.ascii_lowercase + string.digits
+        return "".join(secrets.choice(ennumcode) for _ in range(6))
 
     def send_email_code(self, email: str) -> None:
         limit_key = f"limit:{email}"

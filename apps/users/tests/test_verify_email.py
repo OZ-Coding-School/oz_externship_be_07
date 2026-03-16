@@ -14,7 +14,7 @@ class EmailVerifyTest(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.email = "test@example.com"
-        cls.code = "123456"
+        cls.code = "Abc456"
 
     def setUp(self) -> None:
         self.client = APIClient()
@@ -49,11 +49,11 @@ class EmailVerifyTest(APITestCase):
         self.assertIn("인증 시간이 만료되었거나 잘못된 요청입니다.", str(response.data["error_detail"]["code"]))
 
     def test_verify_email_invalid_format(self) -> None:
-        data: dict[str, Any] = {"email": self.email, "code": "abc123"}
+        data: dict[str, Any] = {"email": self.email, "code": "ab#123"}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("인증번호는 숫자만 입력 가능합니다.", str(response.data["error_detail"]["code"]))
+        self.assertIn("인증번호는 영문과 숫자만 입력 가능합니다.", str(response.data["error_detail"]["code"]))
 
     def test_verify_email_brute_force_protection(self) -> None:
         data = {"email": self.email, "code": "999999"}

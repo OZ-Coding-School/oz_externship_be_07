@@ -19,7 +19,6 @@ class EmailVerifyView(APIView):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.service = EmailVerifyService()
 
     @extend_schema(
         summary="이메일 인증 확인 API",

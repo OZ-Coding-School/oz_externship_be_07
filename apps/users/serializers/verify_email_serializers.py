@@ -11,7 +11,7 @@ class EmailVerifySerializer(serializers.Serializer[Any]):
     )
 
     def validate_code(self, value: str) -> str:
-        if not value.isdigit():
-            raise ValidationError("인증번호는 숫자만 입력 가능합니다.")
+        if not value.isalnum():
+            raise ValidationError("인증번호는 영문과 숫자만 입력 가능합니다.")
 
         return value

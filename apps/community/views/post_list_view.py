@@ -1,21 +1,22 @@
-from typing import Any, Type, cast
+from typing import Any, cast
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.community.core.extend_schema import value_list
 from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
     build_post_list_response,
+    create_post,
     get_post_list_queryset,
     get_post_list_values,
-    post_create,
-    value_list,
 )
 
 
@@ -114,12 +115,6 @@ class PostListAPIView(APIView):
             else Response({"count": len(data), "next": None, "previous": None, "results": data})
         )
 
-    def get_serializer_class(self) -> Type[Any]:
-        if self.request.method == "GET":
-            return PostListSerializer
-        else:
-            return PostCreateSerializer
-
     @extend_schema(
         tags=["posts"],
         summary="게시판 등록",
@@ -133,4 +128,13 @@ class PostListAPIView(APIView):
         },
     )
     def post(self, request: Request) -> Response:
-        return post_create(self.request, PostCreateSerializer)
+        serializer = PostCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        instance = create_post(request.user, serializer.validated_data)
+
+        data = {
+            "detail": "게시글이 성공적으로 등록되었습니다.",
+            "pk": instance.pk,
+        }
+        return Response(data, status=status.HTTP_201_CREATED)

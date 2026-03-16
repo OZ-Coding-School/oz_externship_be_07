@@ -106,7 +106,6 @@ class PostDetailAPIViewTest(TestCase):
             "content": "테스트 수정 content",
         }
         response = self.client.put(url, data, content_type="application/json")
-
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_delete_success(self) -> None:

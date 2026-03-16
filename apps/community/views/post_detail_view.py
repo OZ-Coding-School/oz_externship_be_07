@@ -1,3 +1,5 @@
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
@@ -6,14 +8,15 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.community.core.extend_schema import value_list
+from apps.community.models.post_model import Post
 from apps.community.serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
 from apps.community.services.post_service import (
     build_post_detail_response,
+    delete_post,
     get_post_detail,
-    post_delete,
-    post_put,
-    value_list,
+    update_post,
 )
 
 
@@ -24,9 +27,9 @@ class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, str]]):
 
 
 class PostDetailAPIView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
     """게시글 상세 조회 API"""
 
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = PostUpdateSerializer
 
     @extend_schema(
@@ -93,7 +96,27 @@ class PostDetailAPIView(APIView):
         },
     )
     def put(self, request: Request, post_id: int) -> Response:
-        return post_put(post_id, self.request, PostUpdateSerializer)
+        try:
+            instance = get_object_or_404(Post, pk=post_id)
+        except Http404:
+            data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+        if instance.author.pk != request.user.pk:
+            data = {"error_detail": "권한이 없습니다."}
+            return Response(data, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.serializer_class(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request_data = update_post(instance, serializer.validated_data)
+
+        data = {
+            "title": request_data.title,
+            "content": request_data.content,
+            "category_name": request_data.category.name,
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=["posts"],
@@ -111,4 +134,16 @@ class PostDetailAPIView(APIView):
         },
     )
     def delete(self, request: Request, post_id: int) -> Response:
-        return post_delete(post_id, self.request)
+        try:
+            instance = get_object_or_404(Post, pk=post_id)
+        except Http404:
+            data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+        if instance.author.pk != request.user.pk:
+            data = {"error_detail": "권한이 없습니다."}
+            return Response(data, status=status.HTTP_403_FORBIDDEN)
+
+        delete_post(instance)
+        data = {"detail": "게시글이 삭제되었습니다."}
+        return Response(data, status=status.HTTP_200_OK)

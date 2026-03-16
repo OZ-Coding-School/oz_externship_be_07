@@ -28,8 +28,17 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
         content = data.get("content")
         category = data.get("category")
 
-        if not title or not content or not category:
-            raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
+        errors = {}
+
+        if not title:
+            errors["title"] = ["제목은 필수 값입니다."]
+        if not content:
+            errors["content"] = ["내용은 필수 값입니다."]
+        if not category:
+            errors["category"] = ["카테고리는 필수 값입니다."]
+
+        if errors:
+            raise serializers.ValidationError(errors)
         return data
 
 
@@ -52,6 +61,15 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
         content = data.get("content")
         category = data.get("category")
 
-        if not title or not content or not category:
-            raise serializers.ValidationError("제목, 내용, 카테고리는 필수 값입니다.")
+        errors = {}
+
+        if not title:
+            errors["title"] = ["제목은 필수 값입니다."]
+        if not content:
+            errors["content"] = ["내용은 필수 값입니다."]
+        if not category:
+            errors["category"] = ["카테고리는 필수 값입니다."]
+
+        if errors:
+            raise serializers.ValidationError(errors)
         return data

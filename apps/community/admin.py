@@ -29,6 +29,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     search_fields = ("title", "content", "author__nickname")
     list_filter = ("category", "is_notice", "is_visible")
     list_select_related = ("author", "category")
+    raw_id_fields = ("author",)
     ordering = ("-created_at",)
     inlines = [PostAttachmentInline, PostImageInline]
 
@@ -48,6 +49,7 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     search_fields = ("content", "author__nickname")
     list_filter = ("post",)
     list_select_related = ("author", "post")
+    raw_id_fields = ("author", "post")
     ordering = ("-created_at",)
     inlines = [CommentTagInline]
     @admin.register(PostComment)

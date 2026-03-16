@@ -13,6 +13,8 @@ class Cohort(TimeStampModel):
     end_date = models.DateField()
     status = models.CharField(max_length=15, default=CohortStatus.PENDING, choices=CohortStatus)
 
+    objects: models.Manager["Cohort"] = models.Manager()
+
     class Meta:
         db_table = "cohorts"
         unique_together = (("course", "number"),)

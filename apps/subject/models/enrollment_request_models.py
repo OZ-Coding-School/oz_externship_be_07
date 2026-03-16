@@ -14,5 +14,7 @@ class EnrollmentRequest(TimeStampModel):
     )
     accepted_at = models.DateTimeField(null=True, blank=True)
 
+    objects: models.Manager["EnrollmentRequest"] = models.Manager()
+
     class Meta:
         db_table = "enrollment_requests"

@@ -21,5 +21,7 @@ class ExamQuestion(TimeStampModel):
     point = models.SmallIntegerField()
     explanation = models.TextField()
 
+    objects: models.Manager["ExamQuestion"] = models.Manager()
+
     class Meta:
         db_table = "exam_questions"

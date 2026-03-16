@@ -8,5 +8,7 @@ class OperationManager(TimeStampModel):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    objects: models.Manager["OperationManager"] = models.Manager()
+
     class Meta:
         db_table = "operation_managers"

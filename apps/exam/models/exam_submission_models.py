@@ -14,5 +14,7 @@ class ExamSubmission(TimeStampModel):
     score = models.SmallIntegerField()
     correct_answer_count = models.SmallIntegerField()
 
+    objects: models.Manager["ExamSubmission"] = models.Manager()
+
     class Meta:
         db_table = "exam_submissions"

@@ -16,5 +16,7 @@ class ExamDeployment(TimeStampModel):
     questions_snapshot_json = models.JSONField()
     status = models.CharField(max_length=20, default=DeploymentStatus.DEACTIVATED, choices=DeploymentStatus)
 
+    objects: models.Manager["ExamDeployment"] = models.Manager()
+
     class Meta:
         db_table = "exam_deployments"

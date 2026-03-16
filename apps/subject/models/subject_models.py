@@ -13,6 +13,8 @@ class Subject(TimeStampModel):
     thumbnail_img_url = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=15, default=SubjectStatus.ACTIVATED, choices=SubjectStatus)
 
+    objects: models.Manager["Subject"] = models.Manager()
+
     class Meta:
         db_table = "subjects"
         unique_together = (("course", "title"),)

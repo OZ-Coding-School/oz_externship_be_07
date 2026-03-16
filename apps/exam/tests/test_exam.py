@@ -45,8 +45,6 @@ class ExamAPITest(APITestCase):
 
         cls.url = reverse("exam-list-create")
 
-
-
     def _get_test_image(self) -> IO[Any]:  # 리턴 타입 명시 (파일 객체)
         """테스트용 가짜 이미지 파일 생성"""
         file = tempfile.NamedTemporaryFile(suffix=".jpg")
@@ -121,10 +119,7 @@ class ExamAPITest(APITestCase):
         url = reverse("exam-detail", kwargs={"exam_id": exam.pk})
         img = self._get_test_image()
 
-        data = {
-            "title": "updated title",
-            "thumbnail_img": img
-        }
+        data = {"title": "updated title", "thumbnail_img": img}
 
         response = self.client.put(url, data, format="multipart")
 

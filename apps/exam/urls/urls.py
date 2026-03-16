@@ -27,11 +27,11 @@ urlpatterns = [  ###################### EXAM ##################################
         name="exam-deployment-status",
     ),
     ###################### EXAM_SUBMISSION ##########################
-    path("admin/exams/submissions", exam_submission_views.ExamSubmissionListAPIView.as_view(), name="exam-detail"),
+    path("admin/exams/submissions", exam_submission_views.ExamSubmissionListAPIView.as_view(), name="exam-submission"),
     path(
         "admin/exams/submissions/<int:submission_id>",
         exam_submission_views.ExamSubmissionDetailAPIView.as_view(),
-        name="exam-detail",
+        name="exam-submission-detail",
     ),
     path(
         "admin/exams/<int:exam_id>/questions",

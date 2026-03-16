@@ -39,10 +39,14 @@ class ExamDeploymentBaseAPIView(APIView):
         cohort = deployment.cohort
         course = cohort.course
 
+        raw_avg_score = getattr(deployment, "avg_score", 0.0)
+        if raw_avg_score is None:
+            raw_avg_score = 0.0
+
         return {
             "id": deployment.id,
             "submit_count": getattr(deployment, "submit_count", 0),
-            "avg_score": round(float(getattr(deployment, "avg_score", 0.0)), 1),
+            "avg_score": round(float(raw_avg_score), 1),
             "status": deployment.status,
             "exam": {
                 "id": deployment.exam.id,
@@ -68,7 +72,6 @@ class ExamDeploymentBaseAPIView(APIView):
 
 
 class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
-    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=["exams"],
@@ -142,7 +145,6 @@ class ExamDeploymentListCreateAPIView(ExamDeploymentBaseAPIView):
 
 
 class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
-    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=["exams"],
@@ -231,8 +233,6 @@ class ExamDeploymentDetailAPIView(ExamDeploymentBaseAPIView):
 
 
 class ExamDeploymentStatusUpdateAPIView(ExamDeploymentBaseAPIView):
-    permission_classes = [AllowAny]
-
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 배포 on/off API",

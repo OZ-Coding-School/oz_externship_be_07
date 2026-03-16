@@ -16,7 +16,6 @@ class ExamCreateSerializer(serializers.ModelSerializer[Exam]):
         read_only_fields = ["id", "thumbnail_img_url"]
 
 
-
 # 2. 목록 조회용 (GET List)
 class ExamListSerializer(serializers.ModelSerializer[Exam]):
     subject_name = serializers.CharField(source="subject.title", read_only=True)
@@ -37,10 +36,8 @@ class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
     def get_subject(self, obj: Exam) -> dict[str, Any]:
         if not obj.subject:
             return {}
-        return {
-            "id": obj.subject.id,
-            "title": obj.subject.title
-        }
+        return {"id": obj.subject.id, "title": obj.subject.title}
+
 
 # 4. 수정용 (PUT)
 class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
@@ -50,5 +47,3 @@ class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
         model = Exam
         fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
-
-

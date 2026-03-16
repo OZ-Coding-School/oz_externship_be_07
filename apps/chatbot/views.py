@@ -33,6 +33,7 @@ from .serializers import (
 class ChatbotCursorPagination(CursorPagination):
     ordering = "-created_at"
 
+
 class ChatbotSessionListCreateView(generics.ListCreateAPIView[Any]):
     """
     <GET> /api/v1/chatbot/sessions : 로그인한 사용자의 챗봇 세션 목록 조회
@@ -41,7 +42,7 @@ class ChatbotSessionListCreateView(generics.ListCreateAPIView[Any]):
 
     permission_classes = [IsAuthenticated]
     pagination_class = ChatbotCursorPagination
-        
+
     def get_serializer_class(self) -> type[BaseSerializer[Any]]:
         if self.request.method == "POST":
             return ChatbotSessionCreateSerializer

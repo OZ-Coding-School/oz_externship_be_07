@@ -1,8 +1,10 @@
 import json
+import os
 import time
 from collections.abc import Iterator
 from typing import Any
 
+from django.conf import settings
 from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
 from rest_framework import generics, status
@@ -12,6 +14,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
 from rest_framework.views import APIView
+
+from apps.chatbot.exceptions import SessionNotFoundError
+from apps.chatbot.services.chatbot_service import ChatbotService
 
 from .choices import MessageRoleChoices
 from .models import ChatbotCompletions, ChatbotSessions
@@ -75,9 +80,11 @@ class ChatbotSessionDetailView(generics.DestroyAPIView[Any]):
 class ChatbotCompletionView(APIView):
     """
     <POST> /api/v1/chatbot/sessions/{session_id}/completions : AI 답변 생성, 스트리밍 방식
-    <GET> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 조회
-    <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 삭제 (초기화)
     """
+
+    # todo: <GET> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 조회
+    # todo: <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 삭제 (초기화)
+    # 페이지네이션 할 때 수정
 
     permission_classes = [IsAuthenticated]
 
@@ -111,29 +118,38 @@ class ChatbotCompletionView(APIView):
     # AI 답변 생성 <POST>
     def post(self, request: Request, session_id: int) -> Response | StreamingHttpResponse:
         assert request.user.is_authenticated
+
         serializer = ChatbotCompletionRequestSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error_detail": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
-            session = ChatbotSessions.objects.get(id=session_id, user=request.user)
-        except ChatbotSessions.DoesNotExist:
-            return Response({"error": "챗봇 세션을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            session = ChatbotService.get_user_sessions(session_id=session_id, user=request.user)
+        except SessionNotFoundError as e:
+            return Response({"error_detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        api_key = getattr(settings, "GEMINI_API_KEY", None) or os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            return Response(
+                {"error_detail": "서버에 AI API 키가 설정되지 않았습니다. 관리자에게 문의하세요."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         user_message = str(serializer.validated_data["message"])
 
         # 사용자 질문 DB에 저장
-        ChatbotCompletions.objects.create(
-            session=session,
-            role=MessageRoleChoices.USER,  # .choices ChatbotCompletions MessageRoleChoices
-            message=user_message,
-        )
+        ChatbotService.save_user_message(session, user_message)
 
         return StreamingHttpResponse(
-            self._stream_gemini_response(session, user_message), content_type="text/event-stream"
+            self._stream_gemini_response(session, user_message, str(api_key)),
+            content_type="text/event-stream",
+            status=status.HTTP_201_CREATED,
         )
 
-    def _stream_gemini_response(self, session: ChatbotSessions, user_message: str) -> Iterator[str]:
+    def _stream_gemini_response(self, session: ChatbotSessions, user_message: str, api_key: str) -> Iterator[str]:
         full_response = ""
 
         dummy_text = f" 안녕하세요! AI 답변 스트리밍 테스트입니다. {user_message}"

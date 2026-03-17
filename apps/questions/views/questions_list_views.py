@@ -1,132 +1,149 @@
 from typing import Any, List
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.questions.serializers.questions_serializers import (
+    QuestionCreateResponseSerializer,
+    QuestionCreateSerializer,
+    QuestionListDetailSerializer,
+    QuestionListSerializer,
+    QuestionUpdateResponseSerializer,
+    QuestionUpdateSerializer,
+)
+from apps.questions.services.questions_list_services import QuestionListService
 from apps.questions.views.questions_create_views import QuestionCreateView
 from apps.questions.views.questions_update_views import QuestionUpdateView
 
 
 # 1. 목록 조회(GET) 및 등록(POST) 통합 관리
 class QuestionListView(APIView):
+    permission_classes = [AllowAny]
+
     def get_permissions(self) -> List[BasePermission]:
         if self.request.method == "POST":
             return [IsAuthenticated()]
         return [AllowAny()]
 
-    @extend_schema(tags=["qna"], summary="질문 조회", description="질문조회 작성 API")
+    serializer_class = QuestionListSerializer
+
+    @extend_schema(
+        tags=["qna"],
+        summary="질문 조회",
+        description="질문조회 작성 API",
+        responses={200: QuestionListSerializer(many=True)},
+        examples=[
+            OpenApiExample(
+                "성공예시(목록 조회)",
+                value={
+                    "results": [
+                        {
+                            "id": 1,
+                            "category": {"id": 12, "depth": 2, "names": ["백엔드", "Django"]},
+                            "author": {"id": 211, "nickname": "김오즈"},
+                            "title": "Django ORM질문",
+                            "content_preview": "ForeignKey 역참조 관련해서...",
+                            "answer_count": 5,
+                            "view_count": 27,
+                            "created_at": "2025-03-10 10:22:33",
+                        }
+                    ]
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "실패 예시(검색 결과 없음)",
+                value={"error_detail": "조회 가능한 질문이 존재하지 않습니다."},
+                response_only=True,
+                status_codes=["404"],
+            ),
+        ],
+    )
     def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """질문 목록 조회 MOCK"""
-        mock_data = {
-            "count": 152,
-            "next": "null",
-            "previous": "null",
-            "results": [
-                {
-                    "id": 10501,
-                    "category": {"id": 12, "depth": 2, "names": ["백엔드", "Django", "ORM"]},
-                    "author": {
-                        "id": 211,
-                        "nickname": "백엔드",
-                        "profile_image_url": "https://cdn.ozcodingschool.com/profiles/user_123.png",
-                    },
-                    "title": "Django ORM 역참조는 어떻게 사용하나요?",
-                    "content_preview": "ForeignKey에 related_name을 지정하면.....",
-                    "answer_count": 3,
-                    "view_count": 87,
-                    "created_at": "2025-03-01 10:03:21",
-                    "thumbnail_url": "https://cdn.ozcodingschool.com/qna/thumb_10501_01.png",
-                }
-            ],
-        }
+        # 필터 및 검색어 추출
+        category_id_raw = request.query_params.get("category_id")
+        category_id = int(category_id_raw) if category_id_raw else None
+        search_keyword = request.query_params.get("search")
 
-        error = {
-            "400": {"error_detail": "유효하지 않은 목록 조회 요청입니다."},
-            "404": {"error_detail": "조회 가능한 질문이 존재하지 않습니다."},
-        }
+        # 서비스 호출
+        questions = QuestionListService.get_question_list(category_id=category_id, search_keyword=search_keyword)
 
-        return Response(mock_data, status=status.HTTP_200_OK)
-        # return Response(error["404"], status=status.HTTP_404_NOT_FOUND)
+        # 데이터 없을 경우 404 응답
+        if not questions.exists():
+            return Response({"error_detail": "조회 가능한 질문이 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
 
-    @extend_schema(tags=["qna"], summary="질문 등록", description="질문등록 작성 API")
+        # 시리얼라이즈 및 반환
+        serializer = QuestionListSerializer(questions, many=True)
+        return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        tags=["qna"],
+        summary="질문 등록",
+        description="질문등록 작성 API",
+        request=QuestionCreateSerializer,
+        responses={201: QuestionCreateResponseSerializer},
+    )
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """기존 QuestionCreateView의 post 로직 호출"""
-        return QuestionCreateView().post(request, *args, **kwargs)
+        view = QuestionCreateView()
+        view.request = request
+        return view.post(request, *args, **kwargs)
 
 
 # 2. 상세 조회(GET) 및 수정(PUT) 통합 관리
 class QuestionListDetailView(APIView):
-    def get_permissions(self) -> List[BasePermission]:
-        if self.request.method == "PUT":
-            return [IsAuthenticated()]
-        return [AllowAny()]
+    permission_classes = [AllowAny]
 
-    @extend_schema(tags=["qna"], summary="질문 조회", description="질문 상세조회 작성 API")
-    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """질문 상세 조회 MOCK"""
-        mock_detail = {
-            "id": 10501,
-            "title": "Django에서 ForeignKey 역참조는 어떻게 하나요?",
-            "content": "Django 모델에서 related_name을 지정했을 떄....",
-            "category": {"id": 12, "depth": 3, "names": ["백엔드", "Django", "ORM"]},
-            "images": [{"id": 3, "img_url": "https://cdn.ozcodingschool.com/qna/img_20250301_101530.png"}],
-            "view_count": 88,
-            "created_at": "2025-03-01 10:25:33",
-            "author": {"id": 211, "nickname": "백엔드", "profile_image_url": "null"},
-            "answers": [
-                {
-                    "id": 501,
-                    "content": "related_name을 지정하면 역참조 시 해당 이름으로 접근할 수 있습니다. 예를들어'post.comments.all()' 형태로 사용합니다.",
-                    "created_at": "2025-03-01 11:30:00",
-                    "is_adopted": True,
-                    "author": {
-                        "id": 102,
-                        "nickname": "김오즈",
-                        "profile_image_url": "https://cdn.ozcodingschool.com/profile/user102.png",
-                    },
-                    "comments": [
-                        {
-                            "id": 1001,
-                            "content": "답변 감사합니다! 덕분에 이해됐어요.",
-                            "created_at": "2025-03-01 12:00:05",
-                            "author": {"id": 211, "nickname": "백엔드", "profile_image_url": "null"},
-                        },
-                        {
-                            "id": 1002,
-                            "content": "추가로 prefetch_related도 같이 쓰시면 좋아요.",
-                            "created_at": "2025-03-01 12:15:00",
-                            "author": {
-                                "id": 102,
-                                "nickname": "김오즈",
-                                "profile_image_url": "https://cdn.ozcodingschool.com/profile/user102.png",
-                            },
-                        },
-                    ],
+    serializer_class = QuestionListDetailSerializer
+
+    @extend_schema(
+        tags=["qna"],
+        summary="질문 상세 조회",
+        description="질문 상세조회을 조회하고 조회수를 1 올립니다.",
+        responses={200: QuestionListDetailSerializer},
+        examples=[
+            OpenApiExample(
+                "성공 예시 (상세조회)",
+                value={
+                    "id": 10501,
+                    "title": "상세 제목입니다.",
+                    "content": "상세 내용 본문입니다.",
+                    "view_count": 28,
+                    "created_at": "2025-03-10 10:22:33",
                 },
-                {
-                    "id": 502,
-                    "content": "select_related와 prefetch_related 차이도 알아두시면 좋습니다.",
-                    "created_at": "2025-03-01 14:00:00",
-                    "is_adopted": False,
-                    "author": {"id": 305, "nickname": "심상보", "profile_image_url": "null"},
-                    "comments": [],
-                },
-            ],
-        }
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "실패 예시 (없는 ID)",
+                value={"error_detail": "존재하지 않는 질문입니다."},
+                response_only=True,
+                status_codes=["404"],
+            ),
+        ],
+    )
+    def get(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
+        # 서비스 호출
+        try:
+            question = QuestionListService.get_question_detail(question_id)
+            # 시리얼라이저 반환
+            serializer = QuestionListDetailSerializer(question)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({"error_detail": "존재하지 않는 질문입니다."}, status=status.HTTP_404_NOT_FOUND)
 
-        error = {
-            "400": {"error_detail": "유효하지 않은 목록 조회 요청입니다."},
-            "404": {"error_detail": "조회 가능한 질문이 존재하지 않습니다."},
-        }
-
-        return Response(mock_detail, status=status.HTTP_200_OK)
-        # return Response(error["404"], status=status.HTTP_404_NOT_FOUND)
-
-    @extend_schema(tags=["qna"], summary="질문 수정", description="질문 수정 API")
-    def put(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """기존 QuestionUpdateView의 put 로직 호출"""
-        return QuestionUpdateView().put(request, *args, **kwargs)
+    @extend_schema(
+        tags=["qna"],
+        summary="질문 수정",
+        description="질문 수정 API",
+        request=QuestionUpdateSerializer,
+        responses={200: QuestionUpdateResponseSerializer},
+    )
+    def put(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
+        view = QuestionUpdateView()
+        view.request = request
+        return view.put(request, question_id)

@@ -22,8 +22,8 @@ class QuestionCreateService:
 
         if user.is_authenticated == False:
             raise PermissionDenied("로그인이 필요한 서비스 입니다.")
-        if user.role != "STUDENT":
-            raise PermissionDenied("질문 등록은 수강생 권한이 필요합니다.")
+        # if user.role != "STUDENT":
+        #     raise PermissionDenied("질문 등록은 수강생 권한이 필요합니다.")
 
         category = get_object_or_404(QuestionCategories, id=category_id)
 

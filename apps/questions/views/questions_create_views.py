@@ -1,31 +1,62 @@
-from typing import Any
+from typing import Any, cast
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.questions.serializers.questions_serializers import (
+    QuestionCreateResponseSerializer,
+    QuestionCreateSerializer,
+)
+from apps.questions.services.questions_create_services import QuestionCreateService
+from apps.users.models.models import User
+
 
 # 질문 등록
-@extend_schema(tags=["qna"], summary="질문 등록", description="질문등록 작성 API")
 class QuestionCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    # AllowAny는 후에 인증단계가 잘 구현되면은 IsAuthenticated 변경
+    permission_classes = [AllowAny]
 
+    serializer_class = QuestionCreateSerializer
+
+    @extend_schema(
+        tags=["qna"],
+        summary="질문 등록",
+        description="카테고리 ID, 제목, 내용을 입력해야 질문이 등록됩니다.",
+        request=QuestionCreateSerializer,
+        responses={201: QuestionCreateResponseSerializer},
+        examples=[
+            # MOCK데이터
+            OpenApiExample(
+                "성공예시",
+                value={"message": "질문이 성공적으로 등록되었습니다.", "question_id": 10501},
+                response_only=True,
+                status_codes=["201"],
+            )
+        ],
+    )
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """질문등록 MOCK"""
-        # 성공 데이터
-        success_data = {"message": "질문이 성공적으로 등록되었습니다.", "question_id": 10501}
+        print(f"---[DEBUG] Incoming Data: {request.data}---")
+        # 검증
+        serializer = QuestionCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        # 실패 데이터
-        error = {
-            "400": {"error_detail": "유효하지 않은 질문 등록 요청입니다."},
-            "401": {"error_detail": "로그인한 수강생만 질문을 등록할 수 있습니다."},
-            "403": {"error_detail": "질문 등록 권한이 없습니다."},
-        }
+        user = cast(User, request.user)
 
-        return Response(success_data, status=status.HTTP_201_CREATED)
+        try:
+            new_question = QuestionCreateService.create_question(
+                user=user,
+                category_id=serializer.validated_data["category_id"],
+                title=serializer.validated_data["title"],
+                content=serializer.validated_data["content"],
+                image_url_list=serializer.validated_data.get("image_urls"),
+            )
 
-        # 실패 테스트를 하고 싶을때는 아래 주석풀고 성공 리턴에 주석달기!
-        # return Response(error["400"], status=status.HTTP_400_BAD_REQUEST])
+            response_serializer = QuestionCreateResponseSerializer(new_question)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error_detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

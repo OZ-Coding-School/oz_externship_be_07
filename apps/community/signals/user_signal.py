@@ -11,7 +11,9 @@ def get_redis_data(instance: Any) -> str:
     """
     redis 저장 양식 설정
     """
-    return f"{instance.nickname}:{instance.id}:{instance.profile_img_url}"
+    img_url = instance.profile_img_url or ""
+
+    return f"{instance.nickname}:{instance.id}:{img_url}"
 
 
 def perform_redis_delete(user_id: int) -> None:

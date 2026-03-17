@@ -52,6 +52,9 @@ class QuestionUpdateView(APIView):
 
         # 타입 안전성을 위한 유저 캐스팅
         user = cast(User, request.user)
+        if not user or user.is_anonymous:
+            return Response({"error_detail": "인증된 유저가 아닙니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
         validated_data = serializer.validated_data
 
         try:

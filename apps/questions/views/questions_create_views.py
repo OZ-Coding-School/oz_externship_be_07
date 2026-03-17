@@ -2,7 +2,7 @@ from typing import Any, cast
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,8 +17,7 @@ from apps.users.models.models import User
 
 # 질문 등록
 class QuestionCreateView(APIView):
-    # AllowAny는 후에 인증단계가 잘 구현되면은 IsAuthenticated 변경
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     serializer_class = QuestionCreateSerializer
 

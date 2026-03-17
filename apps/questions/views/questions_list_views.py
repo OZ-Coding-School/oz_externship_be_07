@@ -94,10 +94,8 @@ class QuestionListView(APIView):
         responses={201: QuestionCreateResponseSerializer},
     )
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        view = QuestionCreateView()
-        view.request = request
-        view.format_kwarg = self.format_kwarg
-        return view.post(request, *args, **kwargs)
+        view = QuestionCreateView.as_view()
+        return view(request._request, *args, **kwargs)
 
 
 # 2. 상세 조회(GET) 및 수정(PUT) 통합 관리

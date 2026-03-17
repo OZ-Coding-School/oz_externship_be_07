@@ -1,10 +1,15 @@
 from django.urls import path
 
 from .views.answers_views import AIAnswerViewSet, AnswerViewSet
+from .views.questions_list_views import QuestionListDetailView, QuestionListView
 
 app_name = "questions"
 
 urlpatterns = [
+    # 질문 등록 및 전체조회
+    path("questions/", QuestionListView.as_view(), name="question_list_create"),
+    # 질문 상세조회 및 수정
+    path("questions/<int:question_id>/", QuestionListDetailView.as_view(), name="question_detail"),
     # 답변 등록
     path(
         "questions/<int:question_id>/answers",

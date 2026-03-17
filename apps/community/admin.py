@@ -57,6 +57,20 @@ class PostAttachmentInline(admin.TabularInline):  # type: ignore[type-arg]
         )
 
 
+class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
+    model = PostComment
+    extra = 0
+    fields = ("id", "author", "content_preview", "created_at")
+    readonly_fields = ("id", "author", "content_preview", "created_at")
+    raw_id_fields = ("author",)
+    show_change_link = True
+
+    @admin.display(description="댓글 내용")
+    def content_preview(self, obj: PostComment) -> str:
+        text = (obj.content or "").replace("\n", " ")
+        return Truncator(text).chars(16)
+
+
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = (
@@ -70,11 +84,11 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     raw_id_fields = ("author",)
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("like_count", "created_at", "updated_at")
     fieldsets = (
         ("기본 정보", {"fields": ("title", "author", "category")}),
         ("내용", {"fields": ("content",)}),
-        ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
+        ("운영", {"fields": ("view_count", "like_count", "is_notice", "is_visible")}),
         ("일시", {"fields": ("created_at", "updated_at")}),
     )
 
@@ -121,7 +135,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     def like_count(self, obj: Post) -> int:
         return obj.like_count_value
 
-    inlines = [PostAttachmentInline, PostImageInline]
+    inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
 
 
 class CommentTagInline(admin.TabularInline):  # type: ignore[type-arg]

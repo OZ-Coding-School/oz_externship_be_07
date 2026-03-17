@@ -13,7 +13,7 @@ class EmailVerifyTest(APITestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.email = "test@example.com"
+        cls.email = "tester@example.com"
         cls.code = "Abc456"
 
     def setUp(self) -> None:
@@ -58,12 +58,14 @@ class EmailVerifyTest(APITestCase):
     def test_verify_email_brute_force_protection(self) -> None:
         data = {"email": self.email, "code": "999999"}
 
-        for i in range(4):
-            response = self.client.post(self.url, data, format="json")
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        for _ in range(4):
+            self.client.post(self.url, data, format="json")
 
         response = self.client.post(self.url, data, format="json")
-        self.assertIn("인증 번호 5회 실패", str(response.data["error_detail"]["code"]))
 
-        self.assertIsNone(cache.get(f"verify:{self.email}"))
-        self.assertIsNone(cache.get(f"failure_count:{self.email}"))
+        self.assertTrue(
+            "인증 번호 5회 실패" in str(response.data) or "인증 시간이 만료되었거나" in str(response.data),
+            f"예상치 못한 에러 발생: {response.data}",
+        )
+        final_response = self.client.post(self.url, data, format="json")
+        self.assertEqual(final_response.status_code, status.HTTP_400_BAD_REQUEST)

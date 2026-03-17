@@ -1,5 +1,4 @@
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
-from redis.commands.search.querystring import tags
 from rest_framework import status
 from rest_framework.exceptions import APIException, Throttled
 from rest_framework.permissions import AllowAny
@@ -7,7 +6,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.users.serializers.send_sms_serialiers import SmsSendSerializer
+from apps.users.serializers.send_sms_serializers import SmsSendSerializer
 from apps.users.services.send_sms_services import SendSmsService
 
 

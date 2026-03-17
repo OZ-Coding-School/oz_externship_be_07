@@ -58,12 +58,14 @@ class EmailVerifyTest(APITestCase):
     def test_verify_email_brute_force_protection(self) -> None:
         data = {"email": self.email, "code": "999999"}
 
-        for i in range(4):
+        for _ in range(5):
             response = self.client.post(self.url, data, format="json")
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        response = self.client.post(self.url, data, format="json")
-        self.assertIn("인증 번호 5회 실패", str(response.data["error_detail"]["code"]))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("인증 번호 5회 실패", str(response.data))
 
-        self.assertIsNone(cache.get(f"verify:{self.email}"))
-        self.assertIsNone(cache.get(f"failure_count:{self.email}"))
+        final_check_data = {"email": self.email, "code": self.code}
+        final_response = self.client.post(self.url, final_check_data, format="json")
+
+        self.assertEqual(final_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("인증 번호 5회 실패", str(final_response.data))

@@ -21,7 +21,7 @@ class EmailVerifyService:
             if fail_count >= 5:
                 cache.delete(verify_key)
                 cache.delete(fail_key)
-                raise ValidationError("인증 번호 5회 실패로 인증이 취소되었습니다. 다시 인증번호를 요청해주세요.")
+                raise ValidationError("인증 번호 5회 실패. 다시 인증번호를 요청해주세요.")
 
             cache.set(fail_key, fail_count, timeout=300)
             raise ValidationError(f"인증번호가 일치하지 않습니다. (남은 횟수: {5 - fail_count}회)")

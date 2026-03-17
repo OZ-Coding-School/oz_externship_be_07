@@ -22,6 +22,7 @@ from apps.questions.views.questions_update_views import QuestionUpdateView
 
 # 1. 목록 조회(GET) 및 등록(POST) 통합 관리
 class QuestionListView(APIView):
+
     def get_permissions(self) -> List[BasePermission]:
         if self.request.method == "POST":
             return [IsAuthenticated()]
@@ -74,7 +75,6 @@ class QuestionListView(APIView):
                     {"error_detail": "유효하지 않은 카테고리 ID입니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
         search_keyword = request.query_params.get("search")
-
         # 서비스 호출
         questions = QuestionListService.get_question_list(category_id=category_id, search_keyword=search_keyword)
 
@@ -96,6 +96,7 @@ class QuestionListView(APIView):
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         view = QuestionCreateView()
         view.request = request
+        view.format_kwarg = self.format_kwarg
         return view.post(request, *args, **kwargs)
 
 

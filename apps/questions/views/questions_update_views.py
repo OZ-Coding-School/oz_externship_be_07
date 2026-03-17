@@ -46,13 +46,12 @@ class QuestionUpdateView(APIView):
         serializer = QuestionUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"error_detail": "유효하지 않은 질문 수정 요청입니다."},
+                {"error_detail": "유효하지 않은 질문 수정 요청입니다.", "errors": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # 타입 안전성을 위한 유저 캐스팅
         user = cast(User, request.user)
-
         validated_data = serializer.validated_data
 
         try:
@@ -69,4 +68,7 @@ class QuestionUpdateView(APIView):
             return Response(response_serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error_detail": str(e) or "질문을 수정할 권한이 없거나 오류가 발생했습니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )

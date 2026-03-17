@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from apps.subject.models import EnrollmentRequest
+from apps.subject.models.enrollment_request_models import EnrollmentRequest
 from apps.users.serializers.admin.user_enrollment import AdminUserEnrollmentSerializer
 
 

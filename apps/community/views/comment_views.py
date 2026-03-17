@@ -93,8 +93,9 @@ class CommentViewSet(
             content=serializer.validated_data.get("content"),
             tagged_user_ids=serializer.validated_data.get("tagged_user_ids", []),
         )
+        result_data = self.get_serializer(comment).data
 
-        return Response({"detail": "댓글이 등록되었습니다.", "data": comment}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "댓글이 등록되었습니다.", "data": result_data}, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="댓글 수정",

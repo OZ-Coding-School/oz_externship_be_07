@@ -1,16 +1,15 @@
 # apps/community/services/comment_service.py
-from typing import List
+from typing import Any, List
 
 from django.db import transaction
 
-from apps.community.models import CommentTag, PostComment
-from apps.users.models import User
+from apps.community.models.comment_model import CommentTag, PostComment
 
 
 class CommentService:
     @staticmethod
     @transaction.atomic
-    def create_comment_tags(post_id: int, author: User, content: str, tagged_user_ids: List[int]) -> PostComment:
+    def create_comment_tags(post_id: int, author: Any, content: str, tagged_user_ids: List[int]) -> PostComment:
         """
         댓글과 태그 유저 저장
         """

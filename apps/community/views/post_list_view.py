@@ -1,16 +1,18 @@
 from typing import Any, cast
 
+from django.core.files.storage import default_storage
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
+from martor.utils import markdownify
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.serializers import PostCreateSerializer
+from apps.community.serializers import PostCreateSerializer, MartorTestSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
     build_post_list_response,
@@ -138,3 +140,20 @@ class PostListAPIView(APIView):
             "pk": instance.pk,
         }
         return Response(data, status=status.HTTP_201_CREATED)
+
+class MartorTestVIew(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = MartorTestSerializer
+    def post(self, request):
+        serializer = MartorTestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        content = serializer.validated_data.get("content", "")
+        html_content = markdownify(content)
+        image_obj = serializer.validated_data['markdownimg']
+        file_path = default_storage.save(f'test_uploads/{image_obj.name}', image_obj)
+        return Response({
+            "html": html_content,
+            "status": "success",
+            "saved_at": file_path,
+        })

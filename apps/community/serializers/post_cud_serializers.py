@@ -21,7 +21,7 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
 
     class Meta:
         model = Post
-        fields = ["title", "content", "category"]
+        fields = ["title", "content", "category", ""]
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
@@ -73,3 +73,7 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
         if errors:
             raise serializers.ValidationError(errors)
         return data
+
+class MartorTestSerializer(serializers.Serializer):
+    content = serializers.CharField(help_text="마크다운 텍스트를 입력하세요.")
+    markdownimg = serializers.ImageField(help_text="업로드할 이미지 파일을 선택하세요.")

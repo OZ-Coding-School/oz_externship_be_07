@@ -2,6 +2,7 @@ from typing import Any, cast
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
+from martor.utils import markdownify
 
 from apps.community.models.post_model import Post, PostImage
 
@@ -106,7 +107,7 @@ def build_post_detail_response(post: Any) -> dict[str, Any]:
             "profile_img_url": post.author.profile_img_url,
         },
         "category": {"id": post.category.id, "name": post.category.name},
-        "content": post.content,
+        "content": markdownify(post.content),
         "view_count": post.view_count,
         "like_count": post.like_count,
         "created_at": post.created_at,

@@ -13,7 +13,7 @@ class EmailVerifyTest(APITestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.email = "test@example.com"
+        cls.email = "tester@example.com"
         cls.code = "Abc456"
 
     def setUp(self) -> None:

@@ -7,7 +7,7 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from apps.subject.models import CohortStudent
+from apps.subject.models.cohort_student_models import CohortStudent
 from apps.users.choices import UserRole
 from apps.users.models.models import User
 from apps.users.serializers.admin.user_search import StudentManagerSerializer

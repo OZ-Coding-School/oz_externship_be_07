@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.subject.models import Cohort, Course
+from apps.subject.models.cohort_models import Cohort
+from apps.subject.models.course_models import Course
 from apps.users.models.models import User
 
 

@@ -34,13 +34,13 @@ class UserLogicTest(TestCase):
         return get_redis_connection("default")
 
     def tearDown(self) -> None:
-        self.redis_conn.execute_command("ZREM", "default", self.test_entry)  # type: ignore
+        self.redis_conn.execute_command("ZREM", "default", self.test_entry)
 
     def test_logic_step_by_step(self) -> None:
         search_query = "app"
         list_results = self.redis_conn.execute_command(
             "ZRANGEBYLEX", "default", f"[{search_query}", f"[{search_query}\xff"
-        )  # type: ignore
+        )
         print(f"\n1. byte data: {list_results}")
 
         results: List[Dict[str, Any]] = []

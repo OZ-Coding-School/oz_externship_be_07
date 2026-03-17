@@ -135,6 +135,15 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     def like_count(self, obj: Post) -> int:
         return obj.like_count_value
 
+    def get_deleted_objects(self, objs: Any, request: HttpRequest) -> tuple[Any, Any, Any, Any]:
+        deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+
+        warning = "⚠️주의: 게시글 삭제 시 해당 게시글의 댓글이 함께 삭제되며 되돌릴 수 없습니다."
+        if warning not in deleted_objects:
+            deleted_objects.append(warning)
+
+        return deleted_objects, model_count, perms_needed, protected
+
     inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
 
 

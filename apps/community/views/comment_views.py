@@ -83,13 +83,12 @@ class CommentViewSet(
         },
     )
     def create(self, request: Request, post_id: int) -> Response:
-        # Todo: 태그된 닉네임 테이블등록
         serializer = self.get_serializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
         serializer.save(author=request.user, post_id=post_id)
 
-        return Response({"detail": "댓글이 등록되었습니다."}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "댓글이 등록되었습니다.", "data": serializer.data}, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="댓글 수정",

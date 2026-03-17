@@ -1,5 +1,6 @@
 import os
 import uuid
+from pathlib import Path
 from typing import Any, cast
 
 from django.contrib.auth import get_user_model
@@ -125,15 +126,6 @@ User = get_user_model()
 def create_post(author: Any, validated_data: dict[str, Any]) -> Post:
     return Post.objects.create(author=author, **validated_data)
 
-
-def create_post_image(post: Post, image_url: str) -> PostImage:
-    return PostImage.objects.create(post=post, img_url=image_url)
-
-
-def create_post_attachment(post: Post, file_url: str, file_name: str) -> PostAttachment:
-    return PostAttachment.objects.create(post=post, file_url=file_url, file_name=file_name)
-
-
 def update_post(instance: Post, validated_data: dict[str, Any]) -> Post:
     for key, value in validated_data.items():
         setattr(instance, key, value)
@@ -141,30 +133,52 @@ def update_post(instance: Post, validated_data: dict[str, Any]) -> Post:
     instance.save()
     return instance
 
-
 def delete_post(instance: Post) -> None:
     instance.delete()
 
+def post_file_delete(instance: Post) -> None:
+    attachments = PostAttachment.objects.filter(post=instance)
 
-def post_file_upload(instance: Post, file: UploadedFile) -> None:
-    image_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"]
-    if not file or not file.name:
-        return
-    name, file_extension = os.path.splitext(file.name)
-    file_extension = file_extension.lower()
+    for attachment in attachments:
+        path = attachment.file_url.split("/post_attachments/")[-1]
+        default_storage.delete(path)
 
-    ex_file_name = f"{uuid.uuid4()}{file_extension}"
-    if file_extension in image_extensions:
-        file_path = default_storage.save(f"post_images/{ex_file_name}", file)
-        file_url = default_storage.url(file_path)
+    attachments.delete()
 
-        if file_url not in instance.content:
-            create_post_image(instance, file_url)
+def post_image_delete(instance: Post) -> None:
+    images = PostImage.objects.filter(post=instance)
 
-            instance.content += f"\n\n![이미지]({file_url})"
-            instance.save()
+    for image in images:
+        path = image.img_url.split("/post_images/")[-1]
+        default_storage.delete(path)
+
+    images.delete()
+
+def post_file_save(instance: Post, file_name: str, file_url: str) -> PostAttachment:
+    return PostAttachment.objects.create(Post=instance, file_name=file_name, file_url=file_url)
+
+def post_image_save(instance: Post, file_url: str) -> PostImage:
+    return PostImage.objects.create(Post=instance, file_url=file_url)
+
+def upload_file(file: UploadedFile) -> dict[str, str]:
+    original_name = file.name
+    extension = Path(file.name).suffix.lower()
+    file_name = f"{uuid.uuid4()}{extension}"
+
+    image_extension = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"]
+
+    if extension in image_extension:
+        folder = "post_images"
+        markdown = f"![이미지]({{url}})"
     else:
-        file_path = default_storage.save(f"post_attachments/{ex_file_name}", file)
-        file_url = default_storage.url(file_path)
+        folder = "post_attachment"
+        markdown = f"[{original_name}]({{url}})"
 
-        create_post_attachment(instance, file_url, file.name)
+    file_path = default_storage.save(f"{folder}/{file_name}", file)
+    file_url = default_storage.url(file_path)
+
+    return {
+        "file_url": file_url,
+        "file_name": file_name,
+        "markdown": markdown.format(url=file_url)
+    }

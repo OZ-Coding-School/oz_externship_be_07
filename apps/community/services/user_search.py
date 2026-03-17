@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from django_redis import get_redis_connection
+from django_redis import get_redis_connection  # type: ignore
 
 
 class UserSearchService:

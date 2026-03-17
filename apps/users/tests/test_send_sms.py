@@ -1,4 +1,5 @@
 import random
+from unittest.mock import MagicMock, patch
 
 from django.conf import settings
 from django.core.cache import cache
@@ -15,14 +16,16 @@ class SendSmsTest(APITestCase):
         self.valid_phone = f"010-{middle}-{last}"
         cache.clear()
 
-    def test_send_sms_success(self) -> None:
+    @patch("apps.users.services.send_sms_services.Client")
+    def test_send_sms_success(self, mock_send_sms: MagicMock) -> None:
         response = self.client.post(self.url, {"phone_number": self.valid_phone}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["detail"], "인증 코드가 전송 되었습니다.")
+        self.assertTrue(mock_send_sms.called)
 
-        clean_number = "".join(filter(str.isdigit, self.valid_phone))
-        self.assertTrue(cache.get(f"limit_sms:{clean_number}"))
+        phone_number = self.valid_phone.replace("-", "")
+        self.assertIsNotNone(cache.get(f"limit_sms:{phone_number}"))
 
     def test_send_sms_fail_field(self) -> None:
         response = self.client.post(self.url, {"phone_number": "안녕-하세요-ㅋㅋ"}, format="json")

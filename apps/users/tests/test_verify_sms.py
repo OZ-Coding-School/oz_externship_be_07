@@ -7,10 +7,17 @@ from rest_framework.test import APITestCase
 
 
 class SmsVerifyTest(APITestCase):
+    url: str
+    valid_phone: str
+    invalid_code: str
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.url = reverse("users:sms-verify")
+        cls.valid_phone = "010-1234-5678"
+        cls.invalid_code = "000000"
+
     def setUp(self) -> None:
-        self.url = reverse("users:sms-verify")
-        self.valid_phone = "010-1234-5678"
-        self.invalid_code = "000000"
         cache.clear()
 
     @patch("apps.users.services.verify_sms_services.Client")

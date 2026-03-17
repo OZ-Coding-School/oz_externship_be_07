@@ -10,12 +10,13 @@ from apps.community.serializers.comment_serializers import (
 
 
 class UserLogicTest(TestCase):
-    def setUp(self) -> None:
-        self.factory = APIRequestFactory()
-        self.redis_conn = get_redis_connection("default")
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.factory = APIRequestFactory()
+        cls.redis_conn = get_redis_connection("default")
 
-        self.test_entry = "apple:1:https://example.com/img.png"
-        self.redis_conn.execute_command("ZADD", "default", 0, self.test_entry)
+        cls.test_entry = "apple:1:https://example.com/img.png"
+        cls.redis_conn.execute_command("ZADD", "default", 0, cls.test_entry)
 
         print("\n" + "-----------------------------------")
         print("view logic test")

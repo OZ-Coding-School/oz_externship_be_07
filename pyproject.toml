@@ -64,7 +64,7 @@ strict = true
 exclude = ["migrations", "manage.py"]
 
 [[tool.mypy.overrides]]
-module = ["admin_auto_filters", "admin_auto_filters.*", "google", "google.*"]
+module = ["admin_auto_filters", "admin_auto_filters.*"]
 ignore_missing_imports = true
 
 [tool.django-stubs]

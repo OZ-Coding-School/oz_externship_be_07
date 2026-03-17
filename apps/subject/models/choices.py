@@ -1,0 +1,19 @@
+from django.db import models
+
+
+class CohortStatus(models.TextChoices):
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+
+
+class StudentEnrollmentRequestsStatus(models.TextChoices):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    CANCELED = "CANCELED"
+
+
+class SubjectStatus(models.TextChoices):
+    ACTIVATED = "ACTIVATED"
+    DEACTIVATED = "DEACTIVATED"

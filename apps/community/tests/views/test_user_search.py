@@ -1,7 +1,7 @@
 import json
 
 from django.test import TestCase
-from django_redis import get_redis_connection # type: ignore
+from django_redis import get_redis_connection  # type: ignore
 from rest_framework.test import APIRequestFactory
 
 from apps.community.serializers.comment_serializers import (

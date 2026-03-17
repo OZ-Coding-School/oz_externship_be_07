@@ -7,6 +7,8 @@ from typing import Any
 from django.conf import settings
 from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
+from google import genai
+from google.genai import types
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import CursorPagination
@@ -153,15 +155,30 @@ class ChatbotCompletionView(APIView):
         )
 
     def _stream_gemini_response(self, session: ChatbotSessions, user_message: str, api_key: str) -> Iterator[str]:
+
+        client = genai.Client(api_key=api_key)
         full_response = ""
 
-        dummy_text = f" 안녕하세요! AI 답변 스트리밍 테스트입니다. {user_message}"
+        try:
+            response = client.models.generate_content_stream(
+                model="gemini-2.5-flash",
+                contents=user_message,
+            )
 
-        for char in dummy_text:
-            full_response += char
-            yield f"data: {json.dumps({'content': char}, ensure_ascii=False)}\n\n"
+            for chunk in response:
+                if chunk.text:
+                    full_response += chunk.text
+                    yield f"data: {json.dumps({'content': chunk.text}, ensure_ascii=False)}\n\n"
 
-            time.sleep(0.06)
+            ChatbotCompletions.objects.create(
+                session=session,
+                role=MessageRoleChoices.ASSISTANT,
+                message=full_response,
+            )
 
-        ChatbotCompletions.objects.create(session=session, role=MessageRoleChoices.ASSISTANT, message=full_response)
-        yield f"data: [DONE]\n\n"
+            yield "data: [DONE]\n\n"
+
+        except Exception as e:
+            error_message = f"AI 모델과 통신 중 오류가 발생했습니다. {str(e)}"
+            yield f"data: {json.dumps({'error_detail': error_message}, ensure_ascii=False)}\n\n"
+            yield f"data: [DONE]\n\n"

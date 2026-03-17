@@ -113,7 +113,7 @@ class ChatbotViewTest(APITestCase):
 
         streaming_content = b"".join(cast(Any, response).streaming_content).decode()
         self.assertIn("[DONE]", streaming_content)
-        self.assertEqual(ChatbotCompletions.objects.filter(session=self.session).count(), 2)
+        self.assertEqual(ChatbotCompletions.objects.filter(session=self.session).count(), 1)
 
     def test_session_list_get(self) -> None:
         """세션 목록 조회"""

@@ -9,12 +9,13 @@ class EmailVerifyService:
     def verify_email_code(self, email: str, code: str) -> str:
         verify_key = f"verify:{email}"
         fail_key = f"failure_count:{email}"
-        fail_count = cache.get(fail_key, 0) + 1
 
-        verify_code = cache.get(verify_key)
+        fail_count = cache.get(fail_key, 0)
 
         if fail_count >= 5:
             raise ValidationError("인증 번호 5회 실패. 다시 인증번호를 요청해주세요.")
+
+        verify_code = cache.get(verify_key)
 
         if not verify_code:
             raise ValidationError("인증 시간이 만료되었거나 잘못된 요청입니다.")
@@ -25,7 +26,6 @@ class EmailVerifyService:
 
             if fail_count >= 5:
                 cache.delete(verify_key)
-                cache.delete(fail_key)
                 raise ValidationError("인증 번호 5회 실패. 다시 인증번호를 요청해주세요.")
 
             raise ValidationError(f"인증번호가 일치하지 않습니다. (남은 횟수: {5 - fail_count}회)")

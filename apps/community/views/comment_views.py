@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.community.models import PostComment
 from apps.community.serializers.comment_serializers import PostCommentSerializer
+from apps.community.services.comment_service import CommentService
 
 
 class CommentViewSet(
@@ -83,13 +84,18 @@ class CommentViewSet(
         },
     )
     def create(self, request: Request, post_id: int) -> Response:
-        # Todo: 태그된 닉네임 테이블등록
         serializer = self.get_serializer(data=request.data)
-
         serializer.is_valid(raise_exception=True)
-        serializer.save(author=request.user, post_id=post_id)
 
-        return Response({"detail": "댓글이 등록되었습니다."}, status=status.HTTP_201_CREATED)
+        comment = CommentService.create_comment_tags(
+            post_id=post_id,
+            author=request.user,
+            content=serializer.validated_data.get("content"),
+            tagged_user_ids=serializer.validated_data.get("tagged_user_ids", []),
+        )
+        result_data = self.get_serializer(comment).data
+
+        return Response({"detail": "댓글이 등록되었습니다.", "data": result_data}, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="댓글 수정",

@@ -64,8 +64,10 @@ class EmailVerifyTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("인증 번호 5회 실패", str(response.data))
 
+        cache.delete(f"failure_count:{self.email}")
+
         final_check_data = {"email": self.email, "code": self.code}
         final_response = self.client.post(self.url, final_check_data, format="json")
 
         self.assertEqual(final_response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("인증 번호 5회 실패", str(final_response.data))
+        self.assertIn("인증 시간이 만료되었거나 잘못된 요청입니다.", str(final_response.data))

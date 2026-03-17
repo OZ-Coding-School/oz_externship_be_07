@@ -123,3 +123,39 @@ class QuestionUpdateSerializer(serializers.Serializer[Any]):
 class QuestionUpdateResponseSerializer(serializers.Serializer[Any]):
     question_id = serializers.IntegerField(source="id")
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+# 질의응답 카테고리 등록
+class AdminQuestionListSerializer(serializers.ModelSerializer[Questions]):
+    question_id = serializers.IntegerField(source="id")
+    category_path = serializers.SerializerMethodField()
+    content_preview = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Questions
+        fields = [
+            "question_id",
+            "title",
+            "category_path",
+            "content_preview",
+            "nickname", # 모델에 nickname 필드가 있는지 확인 필요 (없을 시 author.nickname 등으로 수정)
+            "view_count",
+            "has_answer",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_category_path(self, obj: Questions) -> str:
+        # CategorySerializer의 get_names 로직을 활용하여 경로 생성
+        if obj.category:
+            names = []
+            current = obj.category
+            while current:
+                names.append(current.name)
+                current = current.parent
+            return " > ".join(names[::-1])
+        return "없음"
+
+    def get_content_preview(self, obj: Questions) -> str:
+        if obj.content:
+            return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
+        return ""

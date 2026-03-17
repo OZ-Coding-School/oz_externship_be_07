@@ -10,13 +10,14 @@ from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
 from apps.community.models.post_model import Post
-from apps.community.serializers import PostUpdateSerializer, PostExSerializer
+from apps.community.serializers import PostExSerializer, PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
 from apps.community.services.post_service import (
     build_post_detail_response,
     delete_post,
     get_post_detail,
-    update_post, post_file_upload,
+    post_file_upload,
+    update_post,
 )
 
 

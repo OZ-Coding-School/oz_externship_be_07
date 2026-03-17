@@ -4,10 +4,11 @@ from typing import Any, cast
 
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
-from martor.utils import markdownify
+from martor.utils import markdownify  # type: ignore
 
-from apps.community.models.post_model import Post, PostImage, PostAttachment
+from apps.community.models.post_model import Post, PostAttachment, PostImage
 
 
 def get_post_list_queryset(
@@ -124,11 +125,14 @@ User = get_user_model()
 def create_post(author: Any, validated_data: dict[str, Any]) -> Post:
     return Post.objects.create(author=author, **validated_data)
 
+
 def create_post_image(post: Post, image_url: str) -> PostImage:
-    return PostImage.objects.create(post=post, image_url=image_url)
+    return PostImage.objects.create(post=post, img_url=image_url)
+
 
 def create_post_attachment(post: Post, file_url: str, file_name: str) -> PostAttachment:
-    return PostAttachment.objects.create(post=post, file=file_url, file_name=file_name)
+    return PostAttachment.objects.create(post=post, file_url=file_url, file_name=file_name)
+
 
 def update_post(instance: Post, validated_data: dict[str, Any]) -> Post:
     for key, value in validated_data.items():
@@ -141,14 +145,17 @@ def update_post(instance: Post, validated_data: dict[str, Any]) -> Post:
 def delete_post(instance: Post) -> None:
     instance.delete()
 
-def post_file_upload(instance: Post, file) -> None:
+
+def post_file_upload(instance: Post, file: UploadedFile) -> None:
     image_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"]
-    _, file_extension = os.path.splitext(file.name)
+    if not file or not file.name:
+        return
+    name, file_extension = os.path.splitext(file.name)
     file_extension = file_extension.lower()
 
     ex_file_name = f"{uuid.uuid4()}{file_extension}"
     if file_extension in image_extensions:
-        file_path = default_storage.save(f'post_images/{ex_file_name}', file)
+        file_path = default_storage.save(f"post_images/{ex_file_name}", file)
         file_url = default_storage.url(file_path)
 
         if file_url not in instance.content:
@@ -157,7 +164,7 @@ def post_file_upload(instance: Post, file) -> None:
             instance.content += f"\n\n![이미지]({file_url})"
             instance.save()
     else:
-        file_path = default_storage.save(f'post_attachments/{ex_file_name}', file)
+        file_path = default_storage.save(f"post_attachments/{ex_file_name}", file)
         file_url = default_storage.url(file_path)
 
         create_post_attachment(instance, file_url, file.name)

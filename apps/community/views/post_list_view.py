@@ -1,26 +1,23 @@
-import os.path
-import uuid
 from typing import Any, cast
 
-from django.core.files.storage import default_storage
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
-from martor.utils import markdownify
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.serializers import PostCreateSerializer, MartorTestSerializer, PostExSerializer
+from apps.community.serializers import PostCreateSerializer, PostExSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
     build_post_list_response,
     create_post,
     get_post_list_queryset,
-    get_post_list_values, post_file_upload,
+    get_post_list_values,
+    post_file_upload,
 )
 
 

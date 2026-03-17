@@ -274,18 +274,14 @@ AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID", "")
 AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY", "")
 AWS_S3_BUCKET_NAME = os.getenv("AWS_S3_BUCKET_NAME", "")
 
-MARTOR_RENDER_URL = 'martor'
-MARTOR_UPLOAD_URL = '/api/v1/posts/martor/api/uploader/'
+MARTOR_RENDER_URL = "martor"
+MARTOR_UPLOAD_URL = "/api/v1/posts/martor/api/uploader/"
 
 MARTOR_ENABLE_CONFIGS = {
-    'emoji': 'true',
-    'imgur': 'true',
-    'mention': 'false',
-    'jquery': 'true',
-    'spellcheck': 'false',
-    'wysiwyg': 'true',
+    "emoji": "true",
+    "imgur": "true",
+    "mention": "false",
+    "jquery": "true",
+    "spellcheck": "false",
+    "wysiwyg": "true",
 }
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MARTOR_UPLOAD_PATH = 'martor'

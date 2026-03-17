@@ -42,10 +42,12 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
             raise serializers.ValidationError(errors)
         return data
 
+
 class PostExSerializer(serializers.ModelSerializer[Post]):
     class Meta:
         model = Post
         fields = ["title", "content", "category"]
+
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     markdownimg = serializers.ImageField(required=False, write_only=True)
@@ -79,7 +81,3 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
         if errors:
             raise serializers.ValidationError(errors)
         return data
-
-class MartorTestSerializer(serializers.Serializer):
-    content = serializers.CharField(help_text="마크다운 텍스트를 입력하세요.")
-    markdownimg = serializers.ImageField(help_text="업로드할 이미지 파일을 선택하세요.")

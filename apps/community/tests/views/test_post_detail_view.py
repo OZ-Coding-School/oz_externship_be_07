@@ -2,7 +2,7 @@ from typing import Any
 
 from django.test import TestCase
 from django.urls import reverse
-from martor.utils import markdownify
+from martor.utils import markdownify  # type: ignore
 from rest_framework import status
 from rest_framework.test import APIClient
 

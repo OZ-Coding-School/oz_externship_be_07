@@ -91,7 +91,7 @@ class CohortUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
 
 class CohortStudentItemSerializer(serializers.Serializer[Dict[str, Any]]):
     value = serializers.CharField()
-    label = serializers.CharField() # type: ignore[assignment]
+    label = serializers.CharField()  # type: ignore[assignment]
 
 
 class ErrorDetailStringSerializer(serializers.Serializer[Dict[str, Any]]):

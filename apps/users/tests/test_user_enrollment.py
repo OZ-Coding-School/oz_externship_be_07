@@ -10,7 +10,6 @@ from rest_framework.test import APIClient
 from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.course_models import Course
 from apps.subject.models.enrollment_request_models import EnrollmentRequest
-
 from apps.users.models.models import User
 
 

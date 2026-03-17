@@ -18,7 +18,9 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
-    markdownimg = serializers.ImageField(required=False, write_only=True)
+    markdownimg = serializers.ListField(
+        child=serializers.ImageField(required=False, write_only=True)
+    )
 
     class Meta:
         model = Post
@@ -50,7 +52,9 @@ class PostExSerializer(serializers.ModelSerializer[Post]):
 
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
-    markdownimg = serializers.ImageField(required=False, write_only=True)
+    markdownimg = serializers.ListField(
+        child=serializers.ImageField(required=False, write_only=True)
+    )
 
     class Meta:
         model = Post

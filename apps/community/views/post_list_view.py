@@ -132,10 +132,10 @@ class PostListAPIView(APIView):
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        file = serializer.validated_data.get("markdownimg", None)
+        files = serializer.validated_data.get("markdownimg", [])
         instance = create_post(request.user, serializer.validated_data)
 
-        if file:
+        for file in files:
             post_file_upload(instance, file)
 
         data = {

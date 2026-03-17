@@ -113,8 +113,8 @@ class PostDetailAPIView(APIView):
         request_data = update_post(instance, serializer.validated_data)
         serializer.instance = request_data
 
-        file = serializer.validated_data.get("markdownimg", None)
-        if file:
+        files = serializer.validated_data.get("markdownimg", [])
+        for file in files:
             post_file_upload(instance, file)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

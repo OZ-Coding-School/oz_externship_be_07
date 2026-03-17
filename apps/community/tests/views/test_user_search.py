@@ -1,7 +1,7 @@
 import json
 
 from django.test import TestCase
-from django_redis import get_redis_connection
+from django_redis import get_redis_connection # type: ignore
 from rest_framework.test import APIRequestFactory
 
 from apps.community.serializers.comment_serializers import (
@@ -10,7 +10,7 @@ from apps.community.serializers.comment_serializers import (
 
 
 class UserLogicTest(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.factory = APIRequestFactory()
         self.redis_conn = get_redis_connection("default")
 
@@ -21,10 +21,10 @@ class UserLogicTest(TestCase):
         print("view logic test")
         print("----------------------------------")
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.redis_conn.execute_command("ZREM", "default", self.test_entry)
 
-    def test_logic_step_by_step(self):
+    def test_logic_step_by_step(self) -> None:
         search_query = "app"
         list_results = self.redis_conn.execute_command(
             "ZRANGEBYLEX", "default", f"[{search_query}", f"[{search_query}\xff"

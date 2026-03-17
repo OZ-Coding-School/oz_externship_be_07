@@ -1,8 +1,6 @@
-from typing import Any
-
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.exceptions import APIException, PermissionDenied
+from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -48,6 +46,6 @@ class SmsVerifyView(APIView):
             return Response({"detail": "SMS 인증에 성공하였습니다.", "sms_token": sms_token}, status=status.HTTP_200_OK)
 
         except ValueError as e:
-            raise PermissionDenied(detail=str(e))
+            return Response({"error_detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             raise APIException(detail=str(e))

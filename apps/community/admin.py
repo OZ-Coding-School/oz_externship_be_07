@@ -2,6 +2,7 @@ from typing import Any
 
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
+from django.db.models import Count, QuerySet
 from django.http import HttpRequest
 from django.utils.html import format_html
 from django.utils.text import Truncator
@@ -58,7 +59,9 @@ class PostAttachmentInline(admin.TabularInline):  # type: ignore[type-arg]
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
-    list_display = ("id", "title", "author", "view_count", "category", "is_notice", "is_visible", "created_at")
+    list_display = (
+        "id", "title", "author", "view_count", "like_count", "category", "is_notice", "is_visible", "created_at"
+    )
     list_display_links = ("id", "title")
     list_editable = ("is_notice", "is_visible")
     search_fields = ("title", "content", "author__nickname")
@@ -107,6 +110,16 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             return queryset[:5], False
 
         return queryset.filter(title__icontains=keyword), False
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
+        queryset = super().get_queryset(request)
+        return queryset.select_related("author", "category").annotate(
+            like_count_value=Count("likes")
+        )
+
+    @admin.display(description="좋아요 수", ordering="like_count_value")
+    def like_count(self, obj: Post) -> int:
+        return obj.like_count_value
 
     inlines = [PostAttachmentInline, PostImageInline]
 

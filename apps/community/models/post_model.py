@@ -16,8 +16,12 @@ class Post(TimeStampModel):
         "community.PostCategory", on_delete=models.PROTECT, null=False, related_name="posts", verbose_name="카테고리"
     )
 
+    def __str__(self) -> str:
+        return f"{self.title} (#{self.pk})"
+
     class Meta:
         db_table = "posts"
+        verbose_name_plural = "게시글"
         indexes = [
             models.Index(fields=["author"]),
             models.Index(fields=["created_at"]),
@@ -32,6 +36,9 @@ class PostAttachment(models.Model):
     file_url = models.CharField(max_length=255, null=False, verbose_name="첨부파일 URL")
     file_name = models.CharField(max_length=50, null=False, verbose_name="첨부파일 이름")
 
+    def __str__(self) -> str:
+        return f"{self.file_name} - 게시글#{self.post_id}"
+
     class Meta:
         db_table = "post_attachments"
         verbose_name = "첨부파일"
@@ -44,6 +51,9 @@ class PostImage(TimeStampModel):
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=False, verbose_name="게시판id")
     img_url = models.TextField(null=False, verbose_name="이미지 URL")
+
+    def __str__(self) -> str:
+        return f"이미지#{self.pk} - 게시글#{self.post_id}"
 
     class Meta:
         db_table = "post_images"
@@ -77,9 +87,14 @@ class PostLike(TimeStampModel):
         verbose_name="게시글",
     )
 
+    def __str__(self) -> str:
+        state = "ON" if self.is_liked else "OFF"
+        return f"좋아요({state}) - {self.user.nickname} / 게시글#{self.post_id}"
+
     class Meta:
         db_table = "post_likes"
         verbose_name = "게시글 좋아요"
+        verbose_name_plural = "게시글 좋아요"
         indexes = [
             models.Index(fields=["post_id"], name="idx_post_like_id"),
         ]

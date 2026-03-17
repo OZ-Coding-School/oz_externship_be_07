@@ -28,8 +28,8 @@ class PostCategoryListSpecAPIView(APIView):
 
     @extend_schema(
         operation_id="v1_posts_category_list",
-        tags=["커뮤니티 관리"],
-        summary="커뮤니티 게시글 카테고리 목록 조회 API",
+        tags=["admin_posts"],
+        summary="게시글 카테고리 목록 조회 API",
         description=(
             "커뮤니티 게시글 작성 시 선택 가능한 카테고리 목록을 조회합니다. "
             "Spec 단계에서는 DB 조회 없이 모델 mock 데이터를 serializer로 직렬화하여 "

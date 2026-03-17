@@ -16,6 +16,7 @@ if not SECRET_KEY:
 
 # Application definition
 DJANGO_APPS = [
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -29,6 +30,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "drf_spectacular",
     "django_filters",
+    "admin_auto_filters",
 ]
 
 # 추가한 도메인별 앱을 줄바꿈, 쉼표를 사용하여 나열.

@@ -57,6 +57,9 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampModel):
         "birthday",
     ]
 
+    def __str__(self) -> str:
+        return f"{self.nickname} ({self.email})"
+
     class Meta:
         db_table = "user"
 

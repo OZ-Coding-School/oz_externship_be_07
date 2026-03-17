@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
@@ -74,7 +74,15 @@ class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = (
-        "id", "title", "author", "view_count", "like_count", "category", "is_notice", "is_visible", "created_at"
+        "id",
+        "title",
+        "author",
+        "view_count",
+        "like_count",
+        "category",
+        "is_notice",
+        "is_visible",
+        "created_at",
     )
     list_display_links = ("id", "title")
     list_editable = ("is_notice", "is_visible")
@@ -126,14 +134,13 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return queryset.filter(title__icontains=keyword), False
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
-        queryset = super().get_queryset(request)
-        return queryset.select_related("author", "category").annotate(
-            like_count_value=Count("likes")
-        )
+        queryset = cast(QuerySet[Post], super().get_queryset(request))
+        queryset = queryset.select_related("author", "category").annotate(like_count_value=Count("likes"))
+        return cast(QuerySet[Post], queryset)
 
     @admin.display(description="좋아요 수", ordering="like_count_value")
     def like_count(self, obj: Post) -> int:
-        return obj.like_count_value
+        return int(getattr(obj, "like_count_value", 0))
 
     def get_deleted_objects(self, objs: Any, request: HttpRequest) -> tuple[Any, Any, Any, Any]:
         deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)

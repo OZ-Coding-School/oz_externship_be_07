@@ -1,3 +1,5 @@
+import os.path
+import uuid
 from typing import Any, cast
 
 from django.core.files.storage import default_storage
@@ -12,13 +14,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.serializers import PostCreateSerializer, MartorTestSerializer
+from apps.community.serializers import PostCreateSerializer, MartorTestSerializer, PostExSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
     build_post_list_response,
     create_post,
     get_post_list_queryset,
-    get_post_list_values,
+    get_post_list_values, post_file_upload,
 )
 
 
@@ -121,7 +123,7 @@ class PostListAPIView(APIView):
         tags=["posts"],
         summary="게시판 등록",
         description="커뮤니 게시글 작성 API",
-        request=PostCreateSerializer,
+        request=PostExSerializer,
         examples=[value_list["201"], value_list["400"], value_list["401"]],
         responses={
             201: OpenApiTypes.OBJECT,
@@ -133,27 +135,14 @@ class PostListAPIView(APIView):
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        file = serializer.validated_data.get("markdownimg", None)
         instance = create_post(request.user, serializer.validated_data)
+
+        if file:
+            post_file_upload(instance, file)
 
         data = {
             "detail": "게시글이 성공적으로 등록되었습니다.",
             "pk": instance.pk,
         }
         return Response(data, status=status.HTTP_201_CREATED)
-
-class MartorTestVIew(APIView):
-    permission_classes = [AllowAny]
-    serializer_class = MartorTestSerializer
-    def post(self, request):
-        serializer = MartorTestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        content = serializer.validated_data.get("content", "")
-        html_content = markdownify(content)
-        image_obj = serializer.validated_data['markdownimg']
-        file_path = default_storage.save(f'test_uploads/{image_obj.name}', image_obj)
-        return Response({
-            "html": html_content,
-            "status": "success",
-            "saved_at": file_path,
-        })

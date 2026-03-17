@@ -2,6 +2,7 @@ from typing import Any
 
 from django.test import TestCase
 from django.urls import reverse
+from martor.utils import markdownify
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -34,7 +35,7 @@ class PostDetailAPIViewTest(TestCase):
         cls.inactive_category = PostCategory.objects.create(name="비활성 카테고리", status=False)
         cls.post = Post.objects.create(
             title="테스트 게시글 1번",
-            content="게시글 본문입니다.",
+            content="#게시글 본문입니다.",
             author=cls.user,
             category=cls.category,
             view_count=3,
@@ -62,7 +63,7 @@ class PostDetailAPIViewTest(TestCase):
         data = response.json()
         self.assertEqual(data["id"], self.post.id)
         self.assertEqual(data["title"], self.post.title)
-        self.assertEqual(data["content"], self.post.content)
+        self.assertEqual(data["content"], markdownify(self.post.content))
         self.assertEqual(data["author"]["id"], self.user.id)
         self.assertEqual(data["category"]["id"], self.category.id)
         self.assertEqual(data["category"]["name"], self.category.name)

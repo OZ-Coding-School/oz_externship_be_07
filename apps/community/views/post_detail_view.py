@@ -10,13 +10,13 @@ from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
 from apps.community.models.post_model import Post
-from apps.community.serializers import PostUpdateSerializer
+from apps.community.serializers import PostUpdateSerializer, PostExSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
 from apps.community.services.post_service import (
     build_post_detail_response,
     delete_post,
     get_post_detail,
-    update_post,
+    update_post, post_file_upload,
 )
 
 
@@ -78,7 +78,7 @@ class PostDetailAPIView(APIView):
     @extend_schema(
         tags=["posts"],
         summary="게시판 수정",
-        request=PostUpdateSerializer,
+        request=PostExSerializer,
         description="커뮤니티 게시글 수정 API",
         examples=[
             value_list["200"],
@@ -111,6 +111,10 @@ class PostDetailAPIView(APIView):
 
         request_data = update_post(instance, serializer.validated_data)
         serializer.instance = request_data
+
+        file = serializer.validated_data.get("markdownimg", None)
+        if file:
+            post_file_upload(instance, file)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -18,10 +18,11 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
+    markdownimg = serializers.ImageField(required=False, write_only=True)
 
     class Meta:
         model = Post
-        fields = ["title", "content", "category", ""]
+        fields = ["title", "content", "category", "markdownimg"]
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
@@ -41,12 +42,17 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
             raise serializers.ValidationError(errors)
         return data
 
-
-class PostUpdateSerializer(serializers.ModelSerializer[Post]):
-
+class PostExSerializer(serializers.ModelSerializer[Post]):
     class Meta:
         model = Post
         fields = ["title", "content", "category"]
+
+class PostUpdateSerializer(serializers.ModelSerializer[Post]):
+    markdownimg = serializers.ImageField(required=False, write_only=True)
+
+    class Meta:
+        model = Post
+        fields = ["title", "content", "category", "markdownimg"]
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {

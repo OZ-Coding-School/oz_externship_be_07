@@ -62,7 +62,7 @@ class AdminEnrollmentAcceptTest(APITestCase):
         # 신청 데이터 생성
         cls.enroll1 = EnrollmentRequest.objects.create(user=cls.user, cohort=cls.cohort, status="PENDING")
         cls.enroll2 = EnrollmentRequest.objects.create(user=cls.user, cohort=cls.cohort, status="PENDING")
-        cls.already_approved = EnrollmentRequest.objects.create(user=cls.user, cohort=cls.cohort, status="APPROVED")
+        cls.already_approved = EnrollmentRequest.objects.create(user=cls.user, cohort=cls.cohort, status="ACCEPTED")
 
         cls.url = reverse("admin-enrollment-accept")
 
@@ -80,8 +80,8 @@ class AdminEnrollmentAcceptTest(APITestCase):
         # DB 반영 확인
         self.enroll1.refresh_from_db()
         self.enroll2.refresh_from_db()
-        self.assertEqual(self.enroll1.status, "APPROVED")
-        self.assertEqual(self.enroll2.status, "APPROVED")
+        self.assertEqual(self.enroll1.status, "ACCEPTED")
+        self.assertEqual(self.enroll2.status, "ACCEPTED")
 
     def test_accept_enrollments_empty_list(self) -> None:
         """빈 리스트 요청 시 시리얼라이저 에러 확인 (400)"""
@@ -101,16 +101,7 @@ class AdminEnrollmentAcceptTest(APITestCase):
 
     def test_accept_enrollments_permission_denied(self) -> None:
         """일반 유저가 요청 시 403 에러 확인"""
-        user_manager: Any = User.objects
-        regular_user = user_manager.create_user(
-            email="normal@example.com",
-            password="password",
-            role="USER",
-            nickname="tuser99",
-            birthday="1990-01-01",
-            phone_number="01099998888",
-        )
-        self.client.force_authenticate(user=cast(AbstractBaseUser, regular_user))
+        self.client.force_authenticate(user=cast(AbstractBaseUser, self.user))
 
         data: Dict[str, List[int]] = {"enrollments": [self.enroll1.id]}
         response = self.client.post(self.url, data, format="json")

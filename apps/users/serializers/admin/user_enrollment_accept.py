@@ -1,9 +1,9 @@
-from typing import Any, Dict
+from typing import Any
 
 from rest_framework import serializers
 
 
-class AdminEnrollmentAcceptSerializer(serializers.Serializer[Dict[str, Any]]):
+class AdminEnrollmentAcceptSerializer(serializers.Serializer[dict[str, Any]]):
     enrollments = serializers.ListField(
         child=serializers.IntegerField(),
         required=True,

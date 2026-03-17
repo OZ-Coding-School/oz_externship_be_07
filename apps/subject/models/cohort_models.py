@@ -16,6 +16,3 @@ class Cohort(TimeStampModel):
     class Meta:
         db_table = "cohorts"
         unique_together = (("course", "number"),)
-        indexes = [
-            models.Index(fields=["course", "number"]),
-        ]

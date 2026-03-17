@@ -16,6 +16,3 @@ class Subject(TimeStampModel):
     class Meta:
         db_table = "subjects"
         unique_together = (("course", "title"),)
-        indexes = [
-            models.Index(fields=["course", "title"]),
-        ]

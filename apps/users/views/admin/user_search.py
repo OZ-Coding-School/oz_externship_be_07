@@ -7,7 +7,7 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from apps.subject.models import CohortStudent
+from apps.subject.models.cohort_student_models import CohortStudent
 from apps.users.choices import UserRole
 from apps.users.models.models import User
 from apps.users.serializers.admin.user_search import StudentManagerSerializer
@@ -31,7 +31,7 @@ class StudentManagementViewSet(viewsets.ReadOnlyModelViewSet[User]):
 
     def get_queryset(self) -> QuerySet[User]:
         prefetch_payload = Prefetch(
-            "cohortstudent_set", queryset=CohortStudent.objects.select_related("cohort__course").order_by("id")
+            "cohort_students", queryset=CohortStudent.objects.select_related("cohort__course").order_by("id")  # type: ignore
         )
         return User.objects.exclude(role=UserRole.ADMIN).prefetch_related(prefetch_payload).order_by("id")
 

@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.subject.models import Cohort, Course
+from apps.subject.models.cohort_models import Cohort
+from apps.subject.models.course_models import Course
 from apps.users.models.models import User
 
 
@@ -32,7 +33,7 @@ class StudentManagerSerializer(serializers.ModelSerializer[User]):
 
     class Meta:
         model = User
-        fields = [
+        fields: list[str] = [
             "id",
             "email",
             "nickname",
@@ -47,7 +48,7 @@ class StudentManagerSerializer(serializers.ModelSerializer[User]):
 
     @extend_schema_field(InProgressCourseSerializer(allow_null=True))
     def get_in_progress_course(self, obj: User) -> Optional[Dict[str, Any]]:
-        all_enrollments = list(obj.cohortstudent_set.all())
+        all_enrollments = list(obj.cohort_students.all())  # type: ignore
 
         if not all_enrollments:
             return None

@@ -1,5 +1,8 @@
 from typing import Any
 
+from admin_auto_filters.filters import (
+    AutocompleteFilter,  # type: ignore[import-untyped]
+)
 from django.contrib import admin
 from django.http import HttpRequest
 from django.utils.html import format_html
@@ -83,6 +86,30 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             )
         return self.fieldsets
 
+    def get_search_results(
+        self,
+        request: HttpRequest,
+        queryset: Any,
+        search_term: str,
+    ) -> tuple[Any, bool]:
+        is_post_filter_autocomplete = (
+            request.path.endswith("/autocomplete/")
+            and request.GET.get("app_label") == "community"
+            and request.GET.get("model_name") == "postcomment"
+            and request.GET.get("field_name") == "post"
+        )
+
+        if not is_post_filter_autocomplete:
+            return super().get_search_results(request, queryset, search_term)
+
+        queryset = queryset.order_by("-created_at", "-id")
+        keyword = search_term.strip()
+
+        if keyword == "":
+            return queryset[:5], False
+
+        return queryset.filter(title__icontains=keyword), False
+
     inlines = [PostAttachmentInline, PostImageInline]
 
 
@@ -95,11 +122,17 @@ class CommentTagInline(admin.TabularInline):  # type: ignore[type-arg]
     show_change_link = True
 
 
+class PostCommentPostAutocompleteFilter(AutocompleteFilter):  # type: ignore[misc]
+    title = "게시글"
+    field_name = "post"
+
+
 @admin.register(PostComment)
 class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ("id", "author", "post", "content_preview", "created_at")
-    search_fields = ("content", "author__nickname")
-    list_filter = ("post",)
+    search_fields = ("content", "author__nickname", "post__title")
+    list_filter = (PostCommentPostAutocompleteFilter,)
+    show_facets = admin.ShowFacets.NEVER
     list_select_related = ("author", "post")
     raw_id_fields = ("author", "post")
     ordering = ("-created_at",)

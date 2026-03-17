@@ -31,6 +31,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
     "django_filters",
     "admin_auto_filters",
+    "martor",
 ]
 
 # 추가한 도메인별 앱을 줄바꿈, 쉼표를 사용하여 나열.
@@ -272,3 +273,6 @@ AWS_S3_REGION = os.getenv("AWS_S3_REGION", "")
 AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID", "")
 AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY", "")
 AWS_S3_BUCKET_NAME = os.getenv("AWS_S3_BUCKET_NAME", "")
+
+MARTOR_RENDER_URL = '/api/v1/posts/martor/markdownify/'
+MARTOR_UPLOAD_URL = '/api/v1/posts/martor/api/uploader/'

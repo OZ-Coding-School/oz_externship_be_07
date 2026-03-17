@@ -14,7 +14,7 @@ class SmsVerifyTest(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.url = reverse("users:sms-verify")
-        cls.valid_phone = "010-1234-5678"
+        cls.valid_phone = "010-2234-5678"
         cls.invalid_code = "000000"
 
     def setUp(self) -> None:

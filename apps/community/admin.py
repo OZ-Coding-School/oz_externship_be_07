@@ -1,8 +1,6 @@
 from typing import Any
 
-from admin_auto_filters.filters import (
-    AutocompleteFilter,  # type: ignore[import-untyped]
-)
+from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 from django.http import HttpRequest
 from django.utils.html import format_html

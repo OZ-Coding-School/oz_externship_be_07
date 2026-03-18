@@ -17,7 +17,7 @@ class TokenRefreshTest(TestCase):
     def setUpTestData(cls) -> None:
         cls.user = User.objects.create_user(
             email=f"u{uuid.uuid4().hex[:5]}@test.com",
-            password="password123!",
+            password="passwood123!",
             nickname=uuid.uuid4().hex[:10],
             name="순광팔",
             phone_number=f"010{uuid.uuid4().hex[:8]}",

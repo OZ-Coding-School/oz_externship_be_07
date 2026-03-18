@@ -1,4 +1,5 @@
 from typing import Any, cast
+from urllib.parse import urlparse
 
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
@@ -12,6 +13,11 @@ from apps.community.models.comment_model import CommentTag, PostComment
 from apps.community.models.post_model import Post, PostAttachment, PostImage, PostLike
 
 
+def _is_safe_external_url(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
 class PostImageInline(admin.TabularInline):  # type: ignore[type-arg]
     model = PostImage
     extra = 0
@@ -21,7 +27,7 @@ class PostImageInline(admin.TabularInline):  # type: ignore[type-arg]
 
     @admin.display(description="미리보기")
     def image_thumbnail(self, obj: PostImage) -> str:
-        if not obj.img_url:
+        if not obj.img_url or not _is_safe_external_url(obj.img_url):
             return "-"
         return format_html(
             '<a href="{}" target="_blank" rel="noopener noreferrer">'
@@ -42,7 +48,7 @@ class PostAttachmentInline(admin.TabularInline):  # type: ignore[type-arg]
 
     @admin.display(description="다운로드")
     def file_download(self, obj: PostAttachment) -> str:
-        if not obj.file_url:
+        if not obj.file_url or not _is_safe_external_url(obj.file_url):
             return "-"
         extension = obj.file_name.rsplit(".", 1)[-1].upper() if "." in obj.file_name else "FILE"
         display_name = Truncator(obj.file_name).chars(26)

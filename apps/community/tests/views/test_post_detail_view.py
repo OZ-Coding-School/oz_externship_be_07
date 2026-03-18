@@ -2,7 +2,6 @@ from typing import Any
 
 from django.test import TestCase
 from django.urls import reverse
-from martor.utils import markdownify  # type: ignore
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -63,7 +62,7 @@ class PostDetailAPIViewTest(TestCase):
         data = response.json()
         self.assertEqual(data["id"], self.post.id)
         self.assertEqual(data["title"], self.post.title)
-        self.assertEqual(data["content"], markdownify(self.post.content))
+        self.assertEqual(data["content"], self.post.content)
         self.assertEqual(data["author"]["id"], self.user.id)
         self.assertEqual(data["category"]["id"], self.category.id)
         self.assertEqual(data["category"]["name"], self.category.name)

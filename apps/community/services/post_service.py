@@ -2,7 +2,6 @@ import re
 from typing import Any, cast
 
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
-from martor.utils import markdownify  # type: ignore
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -108,7 +107,7 @@ def build_post_detail_response(post: Any) -> dict[str, Any]:
             "profile_img_url": post.author.profile_img_url,
         },
         "category": {"id": post.category.id, "name": post.category.name},
-        "content": markdownify(post.content),
+        "content": post.content,
         "view_count": post.view_count,
         "like_count": post.like_count,
         "created_at": post.created_at,

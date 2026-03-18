@@ -7,7 +7,7 @@ from apps.subject.models.subject_models import Subject
 
 
 class SubjectCreateRequestSerializer(serializers.Serializer[Any]):
-    course = serializers.IntegerField()
+    course_id = serializers.IntegerField()
     title = serializers.CharField(max_length=30)
     number_of_days = serializers.IntegerField(min_value=1)
     number_of_hours = serializers.IntegerField(min_value=1)
@@ -20,6 +20,8 @@ class SubjectCreateRequestSerializer(serializers.Serializer[Any]):
 
 
 class SubjectCreateResponseSerializer(serializers.ModelSerializer[Subject]):
+    course_id = serializers.IntegerField(source="course.id", read_only=True)
+
     class Meta:
         model = Subject
         fields = (
@@ -90,11 +92,9 @@ class SubjectScatterPointSerializer(serializers.ModelSerializer[ExamSubmission])
         ]
 
     def get_time(self, obj: ExamSubmission) -> float:
-        if obj.created_at and obj.started_at:
-            duration = obj.created_at - obj.started_at
-            hours = duration.total_seconds() / 3600
-            return round(hours, 1)
-        return 0.0
+        duration = obj.created_at - obj.started_at
+        hours = duration.total_seconds() / 3600
+        return round(hours, 1)
 
 
 class ErrorResponseSerializer(serializers.Serializer[Any]):

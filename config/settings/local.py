@@ -12,8 +12,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
 
 MEDIA_URL = "media/"
-MEDIA_ROOT = str(BASE_DIR / "media")
-MARTOR_UPLOAD_PATH = "martor"
+MEDIA_ROOT = BASE_DIR / "media"
 
 INTERNAL_IPS = [
     "127.0.0.1",

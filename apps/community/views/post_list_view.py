@@ -101,15 +101,16 @@ class PostListAPIView(APIView):
                 sort=(request.query_params.get("sort") or "latest").strip(),
             )
         )
+
         paginator = PostListPagination()
         page = paginator.paginate_queryset(values_queryset, request)
-        data = PostListSerializer(
-            cast(
-                Any,
-                build_post_list_response(list(values_queryset) if page is None else cast(list[dict[str, Any]], page)),
-            ),
-            many=True,
-        ).data
+
+        page_items = list(values_queryset) if page is None else cast(list[dict[str, Any]], page)
+        response_data = build_post_list_response(page_items)
+
+        serializer = PostListSerializer(cast(Any, response_data), many=True)
+        data = serializer.data
+
         return (
             paginator.get_paginated_response(data)
             if page is not None

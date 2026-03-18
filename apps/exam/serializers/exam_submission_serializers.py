@@ -4,7 +4,6 @@ from rest_framework import serializers
 
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_models import Exam
-from apps.exam.models.exam_question_models import ExamQuestion
 from apps.exam.models.exam_submission_models import ExamSubmission
 
 

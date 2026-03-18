@@ -197,6 +197,11 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             )
         return self.fieldsets
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
+        queryset = super().get_queryset(request).select_related("author", "post")
+        return cast(QuerySet[PostComment], queryset)
+
+
     inlines = [CommentTagInline]
 
     @admin.display(description="댓글내용", ordering="content")

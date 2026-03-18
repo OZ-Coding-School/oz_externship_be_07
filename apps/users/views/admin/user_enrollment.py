@@ -23,8 +23,8 @@ class IsStaffUser(permissions.BasePermission):
 
 
 @extend_schema_view(
-    list=extend_schema(summary="관리자용 수강생 등록 요청 목록 조회 API", tags=["admin_enrollments"]),
-    retrieve=extend_schema(summary="관리자용 수강생 등록 요청 목록 상세조회 API", tags=["admin_enrollments"]),
+    list=extend_schema(summary="관리자용 수강생 등록 요청 목록 조회 API", tags=["admin_accounts"]),
+    retrieve=extend_schema(summary="관리자용 수강생 등록 요청 목록 상세조회 API", tags=["admin_accounts"]),
 )
 class AdminUserEnrollmentViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet[EnrollmentRequest]

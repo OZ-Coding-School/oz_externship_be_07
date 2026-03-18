@@ -4,7 +4,7 @@ from typing import Any, cast
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 from martor.utils import markdownify  # type: ignore
 
-from apps.community.models import PostCategory
+from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
 
@@ -125,7 +125,7 @@ def create_post(author: Any, title: str, content: str, category: PostCategory) -
     )
 
 
-def update_post(instance: Post, title: str, content: str, category: PostCategory ) -> None:
+def update_post(instance: Post, title: str, content: str, category: PostCategory) -> None:
     instance.title = title
     instance.content = content
     instance.category = category

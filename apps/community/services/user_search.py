@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from django_redis import get_redis_connection  # type: ignore
+from apps.community.core.redis import RedisClient
 
 
 class UserSearchService:
@@ -9,7 +9,7 @@ class UserSearchService:
         if not nickname:
             return []
 
-        redis_conn = get_redis_connection("user_search")
+        redis_conn = RedisClient.get_index(name="user_search")
 
         list_results = redis_conn.execute_command("ZRANGEBYLEX", "user_search", f"[{nickname}", f"[{nickname}\xff")
 

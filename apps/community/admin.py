@@ -264,4 +264,6 @@ class PostLikeAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return False
 
     def has_delete_permission(self, request: HttpRequest, obj: PostLike | None = None) -> bool:
+        if "/admin/community/post/" in request.path:
+            return True
         return False

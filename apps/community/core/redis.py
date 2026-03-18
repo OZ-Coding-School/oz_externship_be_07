@@ -2,12 +2,11 @@ import json
 from typing import Any
 
 from django_redis import get_redis_connection  # type: ignore
-from redis import Redis
 
 
 class RedisClient:
     @staticmethod
-    def _get_index(name: str = "default") -> Any:
+    def get_index(name: str = "default") -> Any:
         """
         redis 연결
         """
@@ -19,7 +18,7 @@ class RedisClient:
         string 저장
         """
         try:
-            conn = cls._get_index(name)
+            conn = cls.get_index(name)
             if timeout:
                 return bool(conn.setex(key, timeout, value))
             return bool(conn.set(key, value))
@@ -33,7 +32,7 @@ class RedisClient:
         string 조회
         """
         try:
-            data = cls._get_index(name).get(key)
+            data = cls.get_index(name).get(key)
             return data.decode("utf-8") if data else None
         except Exception as e:
             print(f"string get Error: {e}")

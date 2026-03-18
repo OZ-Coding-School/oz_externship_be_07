@@ -3,8 +3,8 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django_redis import get_redis_connection  # type: ignore
 
+from apps.community.core.redis import RedisClient
 from apps.community.signals.user_signal import (
     remove_user_search_data,
     stringify_user_tag,
@@ -23,25 +23,29 @@ class Command(BaseCommand):
         recently_updated_users = User.objects.filter(updated_at__gte=one_hour_ago)
 
         if not recently_updated_users.exists():
-            print("동기화할 데이터가 없습니다.")
+            self.stdout.write("동기화할 데이터가 없습니다.")
             return
 
-        redis_conn = get_redis_connection("user_search")
+        redis_conn = RedisClient.get_index(name="user_search")
 
-        for user in recently_updated_users:
-            if user.status in ["DEACTIVATED", "WITHDREW"]:
-                remove_user_search_data(user.id)
-                continue
+        user_keys = [f"user_info:{user.id}" for user in recently_updated_users]
+        old_data_list = redis_conn.mget(user_keys)
+        user_with_old_data = zip(recently_updated_users, old_data_list)  # 같은 인덱스끼리 합침
 
-            new_data = stringify_user_tag(user)
-            info_key = f"user_info:{user.id}"
-            old_data = redis_conn.get(info_key)
+        sync_user = 0
+        with redis_conn.pipeline() as pipe:
+            for user, old_data in user_with_old_data:
+                if user.status in ["DEACTIVATED", "WITHDREW"]:
+                    remove_user_search_data(user.id)
+                    continue
 
-            with redis_conn.pipeline() as pipe:
+                new_data = stringify_user_tag(user)
+                info_key = f"user_info:{user.id}"
+
                 if old_data:
                     pipe.zrem("user_search", old_data)
                 pipe.zadd("user_search", {new_data: 0})
                 pipe.set(info_key, new_data)
-                pipe.execute()
+                sync_user += 1
 
-        self.stdout.write(f"성공적으로 {recently_updated_users.count()}명의 데이터를 동기화했습니다.")
+            pipe.execute()

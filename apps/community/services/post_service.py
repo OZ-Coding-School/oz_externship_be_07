@@ -1,9 +1,10 @@
-
 import re
 from typing import Any, cast
+
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 from martor.utils import markdownify  # type: ignore
 
+from apps.community.models import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
 
@@ -114,7 +115,8 @@ def build_post_detail_response(post: Any) -> dict[str, Any]:
         "updated_at": post.updated_at,
     }
 
-def create_post(author: Any, title: str, content: str, category: int) -> Post:
+
+def create_post(author: Any, title: str, content: str, category: PostCategory) -> Post:
     return Post.objects.create(
         author=author,
         title=title,
@@ -122,15 +124,18 @@ def create_post(author: Any, title: str, content: str, category: int) -> Post:
         category=category,
     )
 
-def update_post(instance: Post, title: str, content: str, category: int) -> None:
+
+def update_post(instance: Post, title: str, content: str, category: PostCategory ) -> None:
     instance.title = title
     instance.content = content
     instance.category = category
 
     instance.save()
 
+
 def delete_post(instance: Post) -> None:
     instance.delete()
+
 
 def post_file_delete(instance: Post) -> None:
     if not instance:
@@ -138,22 +143,25 @@ def post_file_delete(instance: Post) -> None:
 
         attachments.delete()
 
+
 def post_image_delete(instance: Post) -> None:
     if not instance:
         images = PostImage.objects.filter(post=instance)
 
         images.delete()
 
+
 def post_file_save(instance: Post) -> None:
-    image_url = re.findall(r'(!?)\[(.*?)\]\((https?://[^\s\)]+)', instance.content)
+    image_url = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", instance.content)
     for is_image, name, url in image_url:
-        if  is_image:
+        if is_image:
             PostImage.objects.create(post=instance, img_url=url)
         else:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
+
 def file_synchronization(instance: Post) -> None:
-    current_image_urls = re.findall(r'!\[.*?\]\((https?://[^\)]+)\)', instance.content)
+    current_image_urls = re.findall(r"!\[.*?\]\((https?://[^\)]+)\)", instance.content)
     image_delete = PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls)
 
     PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls).delete()
@@ -163,7 +171,7 @@ def file_synchronization(instance: Post) -> None:
         if url not in existing_db_urls:
             PostImage.objects.create(post=instance, img_url=url)
 
-    current_attachments = re.findall(r'(?<!\!)\[(.*?)\]\((https?://[^\)]+)\)', instance.content)
+    current_attachments = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^\)]+)\)", instance.content)
     current_att_urls = [url for name, url in current_attachments]
 
     file_delete = PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls)

@@ -2,7 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.community.models import PostCategory
+from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
 
@@ -19,10 +19,8 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
-    category_id = serializers.PrimaryKeyRelatedField(
-        queryset = PostCategory.objects.all(),
-        source = "category"
-    )
+    category_id = serializers.PrimaryKeyRelatedField(queryset=PostCategory.objects.all(), source="category")
+
     class Meta:
         model = Post
         fields = ["title", "content", "category_id"]
@@ -53,10 +51,7 @@ class PostExSerializer(serializers.ModelSerializer[Post]):
 
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
-    category_id = serializers.PrimaryKeyRelatedField(
-        queryset = PostCategory.objects.all(),
-        source = "category"
-    )
+    category_id = serializers.PrimaryKeyRelatedField(queryset=PostCategory.objects.all(), source="category")
 
     class Meta:
         model = Post

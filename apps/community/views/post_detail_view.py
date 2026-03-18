@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,8 +15,11 @@ from apps.community.serializers.post_detail_serializer import PostDetailSerializ
 from apps.community.services.post_service import (
     build_post_detail_response,
     delete_post,
+    file_synchronization,
     get_post_detail,
-    update_post, post_file_delete, post_image_delete, file_synchronization,
+    post_file_delete,
+    post_image_delete,
+    update_post,
 )
 
 
@@ -29,7 +32,7 @@ class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, str]]):
 class PostDetailAPIView(APIView):
     """게시글 상세 조회 API"""
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     @extend_schema(
         summary="게시글 상세 조회",
@@ -95,9 +98,6 @@ class PostDetailAPIView(APIView):
         },
     )
     def put(self, request: Request, post_id: int) -> Response:
-        if not request.user.is_authenticated: # DB에 있는 유저 중 아무나 한 명을 강제로 할당
-            from apps.questions.serializers.common_serializers import User
-            request.user = User.objects.filter(is_superuser=True).first() or User.objects.first()
         try:
             instance = get_object_or_404(Post, pk=post_id)
         except Http404:
@@ -109,7 +109,12 @@ class PostDetailAPIView(APIView):
         serializer = PostUpdateSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        update_post(instance, serializer.validated_data['title'], serializer.validated_data['content'], serializer.validated_data['category'])
+        update_post(
+            instance,
+            serializer.validated_data["title"],
+            serializer.validated_data["content"],
+            serializer.validated_data["category"],
+        )
         file_synchronization(instance)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

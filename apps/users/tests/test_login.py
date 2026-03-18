@@ -50,7 +50,7 @@ class LoginTest(TestCase):
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("이메일 또는 비밀번호가 잘못되었습니다", str(response.data))  # type: ignore
+        self.assertEqual(response.data["error_detail"], "이메일 또는 비밀번호가 잘못되었습니다.")  # type: ignore
 
     def test_login_withdrawn_user_403_fail(self) -> None:
         due_date = date.today() + timedelta(days=30)
@@ -63,7 +63,7 @@ class LoginTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertIn("탈퇴 신청한 계정입니다", str(response.data))  # type: ignore
-        self.assertEqual(response.data["error_detail"]["expire_at"], due_date.strftime("%Y-%m-%d"))  # type: ignore
+        self.assertEqual(response.data["expire_at"], due_date.strftime("%Y-%m-%d"))  # type: ignore
 
     def test_login_non_existent_user_fail(self) -> None:
         data = {"email": "none@example.com", "password": self.password}

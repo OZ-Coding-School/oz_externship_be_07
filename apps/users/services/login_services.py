@@ -13,11 +13,15 @@ class LoginService:
         user = authenticate(email=email, password=password)
 
         if not user:
-            raise ValidationError("이메일 또는 비밀번호가 잘못되었습니다.")
+            raise ValidationError({"error_detail": "이메일 또는 비밀번호가 잘못되었습니다."})
 
         if hasattr(user, "withdrawals") and user.withdrawals:
-            raise PermissionDenied(
-                {"detail": "탈퇴 신청한 계정입니다.", "expire_at": user.withdrawals.due_date.strftime("%Y-%m-%d")}
+            raise ValidationError(
+                {
+                    "error_type": "WITHDRAWN",
+                    "error_detail": "탈퇴 신청한 계정입니다.",
+                    "expire_at": user.withdrawals.due_date.strftime("%Y-%m-%d"),
+                }
             )
 
         refresh = RefreshToken.for_user(user)

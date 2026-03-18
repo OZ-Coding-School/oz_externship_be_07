@@ -54,7 +54,11 @@ class LoginView(APIView):
             )
             return response
 
-        except PermissionDenied as e:
-            return Response({"error_detail": e.detail}, status=status.HTTP_403_FORBIDDEN)
         except ValidationError as e:
-            return Response({"error_detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+            error_data = e.detail
+            status_code: int = status.HTTP_400_BAD_REQUEST
+
+            if isinstance(error_data, dict) and error_data.get("error_type") == "WITHDRAWN":
+                status_code = status.HTTP_403_FORBIDDEN
+
+            return Response(error_data, status=status_code)

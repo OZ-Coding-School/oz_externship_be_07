@@ -18,8 +18,6 @@ def reject_enrollment_requests(enrollment_ids: list[int]) -> int:
     """
     대기 중인 수강 신청 건들을 반려합니다.
     """
-    updated_count = EnrollmentRequest.objects.filter(id__in=enrollment_ids, status="PENDING").update(
-        status="REJECTED"
-    )
+    updated_count = EnrollmentRequest.objects.filter(id__in=enrollment_ids, status="PENDING").update(status="REJECTED")
 
     return updated_count

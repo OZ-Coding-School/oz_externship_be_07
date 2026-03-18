@@ -1,8 +1,8 @@
+from typing import Any
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
-from typing import Any
-
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -13,7 +13,6 @@ from rest_framework.views import APIView
 from apps.community.core.extend_schema import value_list
 from apps.community.models.post_model import Post
 from apps.community.serializers import PostUpdateSerializer
-from apps.community.models.post_model import Post
 from apps.community.serializers.post_cud_serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
 from apps.community.serializers.post_like_serializer import (

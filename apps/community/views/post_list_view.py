@@ -22,7 +22,7 @@ from apps.community.services.post_service import (
     create_post,
     get_post_list_queryset,
     get_post_list_values,
-    post_image_save, post_file_save, upload_file,
+    post_image_save, post_file_save
 )
 
 
@@ -137,7 +137,7 @@ class PostListAPIView(APIView):
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        instance = create_post(request.user, serializer.validated_data)
+        instance = create_post(request.user, serializer.validated_data['title'], serializer.validated_data['content'])
 
         image_url = re.findall(r'!\[.*?\]\((https?://[^\)]+)\)', instance.content)
         for url in image_url:
@@ -149,20 +149,7 @@ class PostListAPIView(APIView):
             if "post_attachments" in url:
                 post_file_save(instance, file_name=name, file_url=url)
 
-        data = {
+        return Response({
             "detail": "게시글이 성공적으로 등록되었습니다.",
             "pk": instance.pk,
-        }
-        return Response(data, status=status.HTTP_201_CREATED)
-
-class FileUploadAPI(APIView):
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser]
-
-    def post(self, request: Request) -> Response:
-        serializer = FileUploadSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        uploaded_file = upload_file(serializer.validated_data["file"])
-
-        return Response(uploaded_file, status=status.HTTP_201_CREATED)
+        }, status=status.HTTP_201_CREATED)

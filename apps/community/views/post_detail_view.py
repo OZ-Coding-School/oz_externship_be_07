@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,7 +18,7 @@ from apps.community.services.post_service import (
     build_post_detail_response,
     delete_post,
     get_post_detail,
-    update_post, post_file_delete, post_image_delete,
+    update_post, post_file_delete, post_image_delete, file_synchronization,
 )
 
 
@@ -32,7 +32,6 @@ class PostDetailAPIView(APIView):
     """게시글 상세 조회 API"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
-    serializer_class = PostUpdateSerializer
 
     @extend_schema(
         summary="게시글 상세 조회",
@@ -80,7 +79,7 @@ class PostDetailAPIView(APIView):
     @extend_schema(
         tags=["posts"],
         summary="게시판 수정",
-        request=PostExSerializer,
+        request=PostUpdateSerializer,
         description="커뮤니티 게시글 수정 API",
         examples=[
             value_list["200"],
@@ -101,37 +100,16 @@ class PostDetailAPIView(APIView):
         try:
             instance = get_object_or_404(Post, pk=post_id)
         except Http404:
-            data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_detail": "해당 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         if instance.author.pk != request.user.pk:
-            data = {"error_detail": "권한이 없습니다."}
-            return Response(data, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error_detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = self.serializer_class(instance, data=request.data)
+        serializer = PostUpdateSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        request_data = update_post(instance, serializer.validated_data)
-        serializer.instance = request_data
-
-        content = instance.content
-        current_image_urls = re.findall(r'!\[.*?\]\((https?://[^\)]+)\)', content)
-        PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls).delete()
-
-        existing_db_urls = PostImage.objects.filter(post=instance).values_list("img_url", flat=True)
-        for url in current_image_urls:
-            if url not in existing_db_urls and "post_images" in url:
-                PostImage.objects.create(post=instance, img_url=url)
-
-        current_attachments = re.findall(r'(?<!\!)\[(.*?)\]\((https?://[^\)]+)\)', content)
-        current_att_urls = [att[1] for att in current_attachments]
-
-        PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls).delete()
-
-        existing_att_urls = PostAttachment.objects.filter(post=instance).values_list("file_url", flat=True)
-        for name, url in current_att_urls:
-            if url not in existing_att_urls and "post_attachments" in url:
-                PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
+        update_post(instance, serializer.validated_data['title'], serializer.validated_data['content'], serializer.validated_data['category'])
+        file_synchronization(instance)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -154,16 +132,13 @@ class PostDetailAPIView(APIView):
         try:
             instance = get_object_or_404(Post, pk=post_id)
         except Http404:
-            data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_detail": "해당 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         if instance.author.pk != request.user.pk:
-            data = {"error_detail": "권한이 없습니다."}
-            return Response(data, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error_detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
         delete_post(instance)
         post_file_delete(instance)
         post_image_delete(instance)
 
-        data = {"detail": "게시글이 삭제되었습니다."}
-        return Response(data, status=status.HTTP_200_OK)
+        return Response({"detail": "게시글이 삭제되었습니다."}, status=status.HTTP_200_OK)

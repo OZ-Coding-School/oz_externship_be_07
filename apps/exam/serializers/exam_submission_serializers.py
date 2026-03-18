@@ -43,7 +43,7 @@ class ExamItemSerializer(serializers.ModelSerializer[Exam]):
 # 쪽지시험 결과 확인
 class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]):
     id = serializers.IntegerField(source="id", read_only=True)
-    submission_id = serializers.IntegerField(source="submitter.id", read_only=True)
+    submitter_id = serializers.IntegerField(source="submitter.id", read_only=True)
     deployment_id = serializers.IntegerField(source="deployment.id", read_only=True)
     exam = ExamItemSerializer()
     questions = serializers.SerializerMethodField()

@@ -9,7 +9,8 @@ from apps.subject.models.subject_models import Subject
 
 # 쪽지시험 생성 API 및 수정 API
 class ExamCreateUpdateSerializer(serializers.ModelSerializer[Exam]):
-    thumbnail_img = serializers.CharField(source="thumbnail_img_url")
+    # 입력시 입력필드 : thumbnail_img, 수정시 출력필드 : thumbnail_img_url
+    thumbnail_img = serializers.CharField(source="thumbnail_img_url", write_only=True)
     subject_id = serializers.IntegerField(source="subject.id")
 
     class Meta:

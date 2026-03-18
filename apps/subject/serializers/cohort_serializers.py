@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from rest_framework import serializers
 
@@ -7,7 +7,7 @@ from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.course_models import Course
 
 
-class CohortCreateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortCreateRequestSerializer(serializers.Serializer[dict[str, Any]]):
     number = serializers.IntegerField()
     max_student = serializers.IntegerField()
 
@@ -32,7 +32,7 @@ class CohortCreateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
         required=False,
     )
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         start_date = attrs.get("start_date")
         end_date = attrs.get("end_date")
 
@@ -42,7 +42,7 @@ class CohortCreateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
         return attrs
 
 
-class CohortUpdateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortUpdateRequestSerializer(serializers.Serializer[dict[str, Any]]):
     number = serializers.IntegerField(required=False)
     max_student = serializers.IntegerField(required=False)
     start_date = serializers.DateField(
@@ -60,7 +60,7 @@ class CohortUpdateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
         required=False,
     )
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         instance = self.instance if isinstance(self.instance, Cohort) else None
 
         start_date = attrs.get("start_date", getattr(instance, "start_date", None))
@@ -72,19 +72,19 @@ class CohortUpdateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
         return attrs
 
 
-class CohortCreateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortCreateResponseSerializer(serializers.Serializer[dict[str, Any]]):
     detail = serializers.CharField()
     id = serializers.IntegerField()
 
 
-class CohortListItemSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortListItemSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     course_id = serializers.IntegerField()
     number = serializers.IntegerField()
     status = serializers.CharField()
 
 
-class CohortUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortUpdateResponseSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     course_id = serializers.IntegerField()
     number = serializers.IntegerField()
@@ -95,15 +95,15 @@ class CohortUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
     updated_at = serializers.DateTimeField()
 
 
-class CohortAvgScoreItemSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortAvgScoreItemSerializer(serializers.Serializer[dict[str, Any]]):
     name = serializers.CharField()
     score = serializers.IntegerField()
 
 
-class CohortStudentItemSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortStudentItemSerializer(serializers.Serializer[dict[str, Any]]):
     value = serializers.CharField()
     label = serializers.CharField()  # type: ignore[assignment]
 
 
-class ErrorDetailStringSerializer(serializers.Serializer[Dict[str, Any]]):
+class ErrorDetailStringSerializer(serializers.Serializer[dict[str, Any]]):
     error_detail = serializers.CharField()

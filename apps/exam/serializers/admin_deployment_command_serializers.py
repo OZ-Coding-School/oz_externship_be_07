@@ -1,8 +1,9 @@
-from typing import Any, Dict
+from typing import Any
 
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.exam.models.choices import DeploymentStatus
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_models import Exam
 from apps.subject.models.cohort_models import Cohort
@@ -34,7 +35,7 @@ class ExamDeploymentCreateSerializer(serializers.ModelSerializer[ExamDeployment]
             "close_at",
         ]
 
-    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         open_at = data.get("open_at")
         close_at = data.get("close_at")
         now = timezone.now()
@@ -48,7 +49,7 @@ class ExamDeploymentCreateSerializer(serializers.ModelSerializer[ExamDeployment]
         return data
 
 
-class ExamDeploymentCreateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentCreateResponseSerializer(serializers.Serializer[dict[str, Any]]):
     pk = serializers.IntegerField()
 
 
@@ -67,7 +68,7 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]
             "close_at",
         ]
 
-    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         open_at = data.get("open_at", getattr(self.instance, "open_at", None))
         close_at = data.get("close_at", getattr(self.instance, "close_at", None))
         now = timezone.now()
@@ -81,7 +82,7 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]
         return data
 
 
-class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[dict[str, Any]]):
     deployment_id = serializers.IntegerField()
     duration_time = serializers.IntegerField()
     open_at = serializers.DateTimeField()
@@ -89,14 +90,14 @@ class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[Dict[str, An
     updated_at = serializers.DateTimeField()
 
 
-class ExamDeploymentStatusUpdateSerializer(serializers.Serializer[Dict[str, Any]]):
-    status = serializers.ChoiceField(choices=["activated", "deactivated"])
+class ExamDeploymentStatusUpdateSerializer(serializers.Serializer[dict[str, Any]]):
+    status = serializers.ChoiceField(choices=DeploymentStatus.choices)
 
 
-class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[dict[str, Any]]):
     deployment_id = serializers.IntegerField()
     status = serializers.CharField()
 
 
-class ExamDeploymentDeleteResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentDeleteResponseSerializer(serializers.Serializer[dict[str, Any]]):
     detail = serializers.CharField()

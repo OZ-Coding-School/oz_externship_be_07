@@ -1,33 +1,33 @@
-from typing import Any, Dict
+from typing import Any
 
 from rest_framework import serializers
 
 
-class ExamSimpleSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamSimpleSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     title = serializers.CharField()
     thumbnail_img_url = serializers.CharField()
 
 
-class SubjectSimpleSerializer(serializers.Serializer[Dict[str, Any]]):
+class SubjectSimpleSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     name = serializers.CharField()
 
 
-class CourseSimpleSerializer(serializers.Serializer[Dict[str, Any]]):
+class CourseSimpleSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     name = serializers.CharField()
     tag = serializers.CharField()
 
 
-class CohortSimpleSerializer(serializers.Serializer[Dict[str, Any]]):
+class CohortSimpleSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     number = serializers.IntegerField()
     display = serializers.CharField()
     course = CourseSimpleSerializer()
 
 
-class ExamDeploymentListQuerySerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentListQuerySerializer(serializers.Serializer[dict[str, Any]]):
     page = serializers.IntegerField(required=False, default=1, min_value=1)
     size = serializers.IntegerField(required=False, default=10, min_value=1)
     search_keyword = serializers.CharField(required=False, allow_blank=True)
@@ -40,7 +40,7 @@ class ExamDeploymentListQuerySerializer(serializers.Serializer[Dict[str, Any]]):
     )
 
 
-class ExamDeploymentListItemSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentListItemSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     submit_count = serializers.IntegerField()
     avg_score = serializers.FloatField()
@@ -51,14 +51,14 @@ class ExamDeploymentListItemSerializer(serializers.Serializer[Dict[str, Any]]):
     created_at = serializers.DateTimeField()
 
 
-class ExamDeploymentListResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentListResponseSerializer(serializers.Serializer[dict[str, Any]]):
     count = serializers.IntegerField()
     previous = serializers.CharField(allow_null=True, required=False)
     next = serializers.CharField(allow_null=True, required=False)
     results = ExamDeploymentListItemSerializer(many=True)
 
 
-class ExamDeploymentDetailSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamDeploymentDetailSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     exam_access_url = serializers.CharField()
     access_code = serializers.CharField()

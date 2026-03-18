@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 
 from django.test import TestCase
 from django_redis import get_redis_connection  # type: ignore
-from redis import Redis
 from rest_framework.test import APIRequestFactory
 
 from apps.community.serializers.comment_serializers import (

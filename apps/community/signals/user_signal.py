@@ -25,7 +25,7 @@ def remove_user_search_data(user_id: int) -> None:
     old_data = RedisClient.get_string(info_key, "user_search")
 
     if old_data:
-        with redis_conn as pipe:
+        with redis_conn.pipeline() as pipe:
             pipe.zrem("user_search", old_data)
             pipe.delete(info_key)
             pipe.execute()

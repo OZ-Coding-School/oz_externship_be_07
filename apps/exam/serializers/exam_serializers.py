@@ -9,11 +9,12 @@ from apps.subject.models.subject_models import Subject
 
 # 쪽지시험 생성 API 및 수정 API
 class ExamCreateUpdateSerializer(serializers.ModelSerializer[Exam]):
-    thumbnail_img = serializers.ImageField(write_only=True)
+    thumbnail_img = serializers.CharField(source="thumbnail_img_url")
+    subject_id = serializers.IntegerField(source="subject.id")
 
     class Meta:
         model = Exam
-        fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
+        fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
 
@@ -50,16 +51,7 @@ class ExamQuestionDetailSerializer(serializers.ModelSerializer[ExamQuestion]):
 
     class Meta:
         model = ExamQuestion
-        fields = [
-            "question_id",
-            "type",
-            "question",
-            "prompt",
-            "point",
-            "options",
-            "correct_answer",
-            "explanation",
-        ]
+        fields = ["question_id", "type", "question", "prompt", "point", "options", "correct_answer", "explanation"]
 
 
 # 쪽지시험 상세 조회 API - subject
@@ -71,7 +63,7 @@ class ExamSubjectDetailSerializer(serializers.ModelSerializer[Subject]):
 
 # 쪽지시험 상세 조회 API
 class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
-    subject = ExamSubjectDetailSerializer()
+    subject = ExamSubjectDetailSerializer(read_only=True)
     questions = ExamQuestionDetailSerializer(many=True)
 
     class Meta:

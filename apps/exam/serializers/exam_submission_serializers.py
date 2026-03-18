@@ -41,38 +41,13 @@ class ExamItemSerializer(serializers.ModelSerializer[Exam]):
         ]
 
 
-# 쪽지시험 결과 확인 - question
-class ExamQuestionItemSerializer(serializers.ModelSerializer[ExamQuestion]):
-    number = serializers.IntegerField()
-    options = serializers.IntegerField(source="options_json")
-    is_correct = serializers.BooleanField()
-    submitted_answer = serializers.JSONField()
-
-    class Meta:
-        model = ExamQuestion
-        fields = [
-            "id",
-            "number",
-            "question",
-            "prompt",
-            "blank_count",
-            "options",
-            "type",
-            "answer",
-            "point",
-            "explanation",
-            "is_correct",
-            "submitted_answer",
-        ]
-
-
 # 쪽지시험 결과 확인
 class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]):
     id = serializers.IntegerField(source="id", read_only=True)
     submission_id = serializers.IntegerField(source="submitter.id", read_only=True)
     deployment_id = serializers.IntegerField(source="deployment.id", read_only=True)
     exam = ExamItemSerializer()
-    questions = ExamQuestionItemSerializer()
+    questions = serializers.SerializerMethodField()
     total_score = serializers.IntegerField(source="score", read_only=True)
     elapsed_time = serializers.SerializerMethodField()
     submitted_at = serializers.DateTimeField(source="created_at", read_only=True)
@@ -97,6 +72,37 @@ class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]
         elapsed_delta = obj.created_at - obj.started_at
         elapsed_time = int(elapsed_delta.total_seconds() // 60)
         return max(0, elapsed_time)
+
+    def get_questions(self, obj: ExamSubmission) -> list[dict[str, Any]]:
+        snapshot = obj.deployment.questions_snapshot_json
+        submitted_answers = obj.answers_json
+
+        answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
+
+        questions = []
+
+        for index, q_info in enumerate(snapshot, start=1):
+            q_id = q_info.get("id")
+            submitted_val = answer_map.get(q_id)
+            correct_val = q_info.get("answer")
+
+            questions.append(
+                {
+                    "id": q_id,
+                    "question": q_info.get("question"),
+                    "prompt": q_info.get("prompt", ""),
+                    "blank_count": q_info.get("blank_count", 0),
+                    "options": q_info.get("options", []),
+                    "type": q_info.get("type", ""),
+                    "answer": correct_val,
+                    "point": q_info.get("point", 0),
+                    "explanation": q_info.get("explanation", ""),
+                    "is_correct": submitted_val == correct_val,
+                    "submitted_answer": submitted_val,
+                }
+            )
+
+        return questions
 
 
 # 쪽지시험 응시 내역 목록 조회 API
@@ -148,7 +154,7 @@ class ExamSubmissionDetailSerializer(serializers.ModelSerializer[ExamSubmission]
     exam = ExamDeploymentItemSerializer()
     student = serializers.SerializerMethodField()
     result = serializers.SerializerMethodField()
-    questions = ExamQuestionItemSerializer()
+    questions = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamSubmission
@@ -176,3 +182,34 @@ class ExamSubmissionDetailSerializer(serializers.ModelSerializer[ExamSubmission]
             "cheating_count": obj.cheating_count,
             "elapsed_time": max(0, elapsed_time),
         }
+
+    def get_questions(self, obj: ExamSubmission) -> list[dict[str, Any]]:
+        snapshot = obj.deployment.questions_snapshot_json
+        submitted_answers = obj.answers_json
+
+        answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
+
+        processed_questions = []
+
+        for index, q_info in enumerate(snapshot, start=1):
+            q_id = q_info.get("id")
+            submitted_val = answer_map.get(q_id)
+            correct_val = q_info.get("answer")
+
+            processed_questions.append(
+                {
+                    "id": q_id,
+                    "number": index,
+                    "type": q_info.get("type"),
+                    "question": q_info.get("question"),
+                    "prompt": q_info.get("prompt", ""),
+                    "options": q_info.get("options", []),
+                    "point": q_info.get("point", 0),
+                    "answer": correct_val,
+                    "submitted_answer": submitted_val,
+                    "is_correct": submitted_val == correct_val,
+                    "explanation": q_info.get("explanation", ""),
+                }
+            )
+
+        return processed_questions

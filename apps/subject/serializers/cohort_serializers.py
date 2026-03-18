@@ -4,12 +4,19 @@ from rest_framework import serializers
 
 from apps.subject.models.choices import CohortStatus
 from apps.subject.models.cohort_models import Cohort
+from apps.subject.models.course_models import Course
 
 
 class CohortCreateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
-    course_id = serializers.IntegerField(required=True)
-    number = serializers.IntegerField(required=True)
-    max_student = serializers.IntegerField(required=True)
+    number = serializers.IntegerField()
+    max_student = serializers.IntegerField()
+
+    course_id = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(),
+        source="course",
+        write_only=True,
+    )
+
     start_date = serializers.DateField(
         required=True,
         format="%Y-%m-%d",
@@ -30,7 +37,7 @@ class CohortCreateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
         end_date = attrs.get("end_date")
 
         if start_date and end_date and end_date <= start_date:
-            raise serializers.ValidationError({"error_detail": "종료 일시는 시작 일시 이후여야 합니다."})
+            raise serializers.ValidationError({"end_date": ["종료일은 시작일 이후여야 합니다."]})
 
         return attrs
 
@@ -60,7 +67,7 @@ class CohortUpdateRequestSerializer(serializers.Serializer[Dict[str, Any]]):
         end_date = attrs.get("end_date", getattr(instance, "end_date", None))
 
         if start_date and end_date and end_date <= start_date:
-            raise serializers.ValidationError({"error_detail": "종료 일시는 시작 일시 이후여야 합니다."})
+            raise serializers.ValidationError({"end_date": ["종료일은 시작일 이후여야 합니다."]})
 
         return attrs
 
@@ -72,7 +79,6 @@ class CohortCreateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
 
 class CohortListItemSerializer(serializers.Serializer[Dict[str, Any]]):
     id = serializers.IntegerField()
-    # 명세서에 맞춰 course -> course_id
     course_id = serializers.IntegerField()
     number = serializers.IntegerField()
     status = serializers.CharField()
@@ -89,6 +95,11 @@ class CohortUpdateResponseSerializer(serializers.Serializer[Dict[str, Any]]):
     updated_at = serializers.DateTimeField()
 
 
+class CohortAvgScoreItemSerializer(serializers.Serializer[Dict[str, Any]]):
+    name = serializers.CharField()
+    score = serializers.IntegerField()
+
+
 class CohortStudentItemSerializer(serializers.Serializer[Dict[str, Any]]):
     value = serializers.CharField()
     label = serializers.CharField()  # type: ignore[assignment]
@@ -96,7 +107,3 @@ class CohortStudentItemSerializer(serializers.Serializer[Dict[str, Any]]):
 
 class ErrorDetailStringSerializer(serializers.Serializer[Dict[str, Any]]):
     error_detail = serializers.CharField()
-
-
-class ErrorDetailFieldSerializer(serializers.Serializer[Dict[str, Any]]):
-    error_detail = serializers.DictField(child=serializers.ListField(child=serializers.CharField()))

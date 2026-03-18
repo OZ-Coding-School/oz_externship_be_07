@@ -41,11 +41,8 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertIn("access_token", response.data)  # type: ignore
-        self.assertIn("user_info", response.data)  # type: ignore
-        self.assertEqual(response.data["user_info"]["email"], self.email)  # type: ignore
 
         self.assertNotIn("refresh", response.data)  # type: ignore
-
         self.assertIn("refresh_token", response.cookies)
 
     def test_login_invalid_password_fail(self) -> None:

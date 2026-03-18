@@ -25,19 +25,12 @@ class LoginView(APIView):
                 response={
                     "type": "object",
                     "properties": {
-                        "access_token": {"type": "string"},
-                        "user_info": {
-                            "type": "object",
-                            "properties": {
-                                "email": {"type": "string"},
-                                "nickname": {"type": "string"},
-                            },
-                        },
+                        "access_token": {"type": "string", "description": "서비스 이용을 위한 액세스 토큰"},
                     },
                 },
             ),
-            400: OpenApiResponse(description="잘못된 요청 (비밀번호 불일치 등)"),
-            403: OpenApiResponse(description="탈퇴 신청 계정"),
+            400: OpenApiResponse(description="잘못된 요청 (이메일/비밀번호 불일치)"),
+            403: OpenApiResponse(description="탈퇴 신청 계정 (접근 권한 없음)"),
         },
     )
     def post(self, request: Request) -> Response:

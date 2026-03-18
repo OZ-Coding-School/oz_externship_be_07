@@ -23,10 +23,7 @@ class LoginService:
         refresh = RefreshToken.for_user(user)
 
         return {
+            "detail": "로그인 성공",
             "access_token": str(refresh.access_token),
             "refresh": str(refresh),
-            "user_info": {
-                "email": user.email,
-                "nickname": user.nickname,
-            },
         }

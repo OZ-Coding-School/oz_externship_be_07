@@ -19,7 +19,7 @@ class LoginTest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.email = f"u{uuid.uuid4().hex[:5]}@a.com"
-        cls.password = "testpassword123!"
+        cls.password = "password123!"
         cls.user = User.objects.create_user(
             email=cls.email,
             password=cls.password,

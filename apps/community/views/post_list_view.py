@@ -1,28 +1,23 @@
-import re
-import uuid
-from pathlib import Path
 from typing import Any, cast
 
-from django.core.files.storage import default_storage
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.serializers import PostCreateSerializer, PostExSerializer, PostImageSerializer, FileUploadSerializer
+from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
     build_post_list_response,
     create_post,
     get_post_list_queryset,
     get_post_list_values,
-    post_image_save, post_file_save
+    post_file_save
 )
 
 
@@ -125,7 +120,7 @@ class PostListAPIView(APIView):
         tags=["posts"],
         summary="게시판 등록",
         description="커뮤니 게시글 작성 API",
-        request=PostExSerializer,
+        request=PostCreateSerializer,
         examples=[value_list["201"], value_list["400"], value_list["401"]],
         responses={
             201: OpenApiTypes.OBJECT,
@@ -137,17 +132,8 @@ class PostListAPIView(APIView):
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        instance = create_post(request.user, serializer.validated_data['title'], serializer.validated_data['content'])
-
-        image_url = re.findall(r'!\[.*?\]\((https?://[^\)]+)\)', instance.content)
-        for url in image_url:
-            if "post_images" in url:
-                post_image_save(instance, file_url=url)
-
-        file_url = re.findall(r'(?<!\!)\[(.*?)\]\((https?://[^\)]|)\)', instance.content)
-        for name, url in file_url:
-            if "post_attachments" in url:
-                post_file_save(instance, file_name=name, file_url=url)
+        instance = create_post(request.user, serializer.validated_data['title'], serializer.validated_data['content'], serializer.validated_data['category'])
+        post_file_save(instance)
 
         return Response({
             "detail": "게시글이 성공적으로 등록되었습니다.",

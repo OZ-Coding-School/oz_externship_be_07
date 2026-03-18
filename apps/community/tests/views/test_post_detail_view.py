@@ -35,7 +35,7 @@ class PostDetailAPIViewTest(TestCase):
         cls.inactive_category = PostCategory.objects.create(name="비활성 카테고리", status=False)
         cls.post = Post.objects.create(
             title="테스트 게시글 1번",
-            content="#게시글 본문입니다.",
+            content="게시글 본문입니다.",
             author=cls.user,
             category=cls.category,
             view_count=3,
@@ -89,10 +89,10 @@ class PostDetailAPIViewTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         url = reverse("post-detail", kwargs={"post_id": self.post.id})
-        data = {"title": "테스트 수정 title", "content": "테스트 수정 content", "category": self.category.pk}
+        data = {"title": "테스트 수정 title", "content": "테스트 수정 #content", "category_id": self.category.pk}
         response = self.client.put(url, data, content_type="application/json")
         get_data = response.json()
-
+        print(get_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_data["title"], data["title"])
         self.assertEqual(get_data["content"], data["content"])
@@ -113,6 +113,7 @@ class PostDetailAPIViewTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         url = reverse("post-detail", kwargs={"post_id": self.post.id})
+
         response = self.client.delete(url)
         get_data = response.json()
 

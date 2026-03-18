@@ -2,6 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
+from apps.community.models import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
 
@@ -18,9 +19,13 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 
 
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset = PostCategory.objects.all(),
+        source = "category"
+    )
     class Meta:
         model = Post
-        fields = ["title", "content", "category"]
+        fields = ["title", "content", "category_id"]
 
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         title = data.get("title")
@@ -34,7 +39,7 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
         if not content:
             errors["content"] = ["내용은 필수 값입니다."]
         if not category:
-            errors["category"] = ["카테고리는 필수 값입니다."]
+            errors["category_id"] = ["카테고리는 필수 값입니다."]
 
         if errors:
             raise serializers.ValidationError(errors)
@@ -44,13 +49,18 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
 class PostExSerializer(serializers.ModelSerializer[Post]):
     class Meta:
         model = Post
-        fields = ["title", "content", "category"]
+        fields = ["title", "content", "category_id"]
 
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset = PostCategory.objects.all(),
+        source = "category"
+    )
+
     class Meta:
         model = Post
-        fields = ["title", "content", "category"]
+        fields = ["title", "content", "category_id"]
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {
@@ -72,11 +82,8 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
         if not content:
             errors["content"] = ["내용은 필수 값입니다."]
         if not category:
-            errors["category"] = ["카테고리는 필수 값입니다."]
+            errors["category_id"] = ["카테고리는 필수 값입니다."]
 
         if errors:
             raise serializers.ValidationError(errors)
         return data
-
-class FileUploadSerializer(serializers.Serializer):
-    file = serializers.FileField(required=True)

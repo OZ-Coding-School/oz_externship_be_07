@@ -1,9 +1,6 @@
 
 import re
 from typing import Any, cast
-
-from django.contrib.auth import get_user_model
-from django.core.files.storage import default_storage
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 from martor.utils import markdownify  # type: ignore
 
@@ -117,7 +114,7 @@ def build_post_detail_response(post: Any) -> dict[str, Any]:
         "updated_at": post.updated_at,
     }
 
-def create_post(author: Any, title: str, content: str, category: str) -> Post:
+def create_post(author: Any, title: str, content: str, category: int) -> Post:
     return Post.objects.create(
         author=author,
         title=title,
@@ -136,34 +133,28 @@ def delete_post(instance: Post) -> None:
     instance.delete()
 
 def post_file_delete(instance: Post) -> None:
-    attachments = PostAttachment.objects.filter(post=instance)
+    if not instance:
+        attachments = PostAttachment.objects.filter(post=instance)
 
-    # for attachment in attachments:
-    #     default_storage.delete(attachment.file_url)
-
-    attachments.delete()
+        attachments.delete()
 
 def post_image_delete(instance: Post) -> None:
-    images = PostImage.objects.filter(post=instance)
+    if not instance:
+        images = PostImage.objects.filter(post=instance)
 
-    # for image in images:
-    #     default_storage.delete(image.img_url)
+        images.delete()
 
-    images.delete()
-
-def post_file_save(instance: Post, file_name: str, file_url: str) -> PostAttachment:
-    return PostAttachment.objects.create(Post=instance, file_name=file_name, file_url=file_url)
-
-def post_image_save(instance: Post, file_url: str) -> PostImage:
-    return PostImage.objects.create(Post=instance, file_url=file_url)
+def post_file_save(instance: Post) -> None:
+    image_url = re.findall(r'(!?)\[(.*?)\]\((https?://[^\s\)]+)', instance.content)
+    for is_image, name, url in image_url:
+        if  is_image:
+            PostImage.objects.create(post=instance, img_url=url)
+        else:
+            PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 def file_synchronization(instance: Post) -> None:
-
     current_image_urls = re.findall(r'!\[.*?\]\((https?://[^\)]+)\)', instance.content)
-    file_delete = PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls)
-    # for url in file_delete:
-    #     if default_storage.exists(url.img_url):
-    #         default_storage.delete(url.img_url)
+    image_delete = PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls)
 
     PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls).delete()
 
@@ -173,15 +164,13 @@ def file_synchronization(instance: Post) -> None:
             PostImage.objects.create(post=instance, img_url=url)
 
     current_attachments = re.findall(r'(?<!\!)\[(.*?)\]\((https?://[^\)]+)\)', instance.content)
-    current_att_urls = [att[1] for att in current_attachments]
+    current_att_urls = [url for name, url in current_attachments]
 
     file_delete = PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls)
-    # for url in file_delete:
-    #     if default_storage.exists(url.file_url):
-    #         default_storage.delete(url.file_url)
+
     PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls).delete()
 
     existing_att_urls = PostAttachment.objects.filter(post=instance).values_list("file_url", flat=True)
-    for name, url in current_att_urls:
+    for name, url in current_attachments:
         if url not in existing_att_urls:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)

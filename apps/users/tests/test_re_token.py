@@ -20,6 +20,7 @@ class TokenRefreshTest(TestCase):
             password="password123!",
             nickname=uuid.uuid4().hex[:10],
             name="순광팔",
+            phone_number=f"010{uuid.uuid4().hex[:8]}",
             birthday="2000-09-25",
             gender="M",
         )

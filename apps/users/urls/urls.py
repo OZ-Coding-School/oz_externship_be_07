@@ -12,10 +12,10 @@ app_name = "users"
 
 urlpatterns = [
     path("signup", SignUpView.as_view(), name="signup"),
-    path("email/send/", EmailSendView.as_view(), name="email-send"),
-    path("email/verify/", EmailVerifyView.as_view(), name="email-verify"),
-    path("sms/send/", SmsSendView.as_view(), name="sms-send"),
-    path("sms/verify/", SmsVerifyView.as_view(), name="sms-verify"),
+    path("verification/send-email/", EmailSendView.as_view(), name="email-send"),
+    path("verification/verify-email/", EmailVerifyView.as_view(), name="email-verify"),
+    path("verification/send-sms/", SmsSendView.as_view(), name="sms-send"),
+    path("verification/verify-sms/", SmsVerifyView.as_view(), name="sms-verify"),
     path("login/", LoginView.as_view(), name="login"),
-    path("token/refesh", ReTokenView.as_view(), name="token-refresh"),
+    path("me/refresh", ReTokenView.as_view(), name="token-refresh"),
 ]

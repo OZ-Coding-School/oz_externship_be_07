@@ -2,7 +2,7 @@ from typing import Any, cast
 
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
-from django.db.models import Count, QuerySet
+from django.db.models import Count, Q, QuerySet
 from django.http import HttpRequest
 from django.utils.html import format_html
 from django.utils.text import Truncator
@@ -134,8 +134,12 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return queryset.filter(title__icontains=keyword), False
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
-        queryset = cast(QuerySet[Post], super().get_queryset(request))
-        queryset = queryset.select_related("author", "category").annotate(like_count_value=Count("likes"))
+        queryset = (
+            super()
+            .get_queryset(request)
+            .select_related("author", "category")
+            .annotate(like_count_value=Count("likes", filter=Q(likes__is_liked=True), distinct=True))
+        )
         return cast(QuerySet[Post], queryset)
 
     @admin.display(description="좋아요 수", ordering="like_count_value")

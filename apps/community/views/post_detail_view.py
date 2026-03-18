@@ -15,7 +15,10 @@ from apps.community.serializers.post_detail_serializer import PostDetailSerializ
 from apps.community.services.post_service import (
     build_post_detail_response,
     delete_post,
+    file_synchronization,
     get_post_detail,
+    post_file_delete,
+    post_image_delete,
     update_post,
 )
 
@@ -30,7 +33,6 @@ class PostDetailAPIView(APIView):
     """게시글 상세 조회 API"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
-    serializer_class = PostUpdateSerializer
 
     @extend_schema(
         summary="게시글 상세 조회",
@@ -99,18 +101,21 @@ class PostDetailAPIView(APIView):
         try:
             instance = get_object_or_404(Post, pk=post_id)
         except Http404:
-            data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_detail": "해당 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         if instance.author.pk != request.user.pk:
-            data = {"error_detail": "권한이 없습니다."}
-            return Response(data, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error_detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = self.serializer_class(instance, data=request.data)
+        serializer = PostUpdateSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        request_data = update_post(instance, serializer.validated_data)
-        serializer.instance = request_data
+        update_post(
+            instance,
+            serializer.validated_data["title"],
+            serializer.validated_data["content"],
+            serializer.validated_data["category"],
+        )
+        file_synchronization(instance)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -133,13 +138,13 @@ class PostDetailAPIView(APIView):
         try:
             instance = get_object_or_404(Post, pk=post_id)
         except Http404:
-            data = {"error_detail": "해당 게시글을 찾을 수 없습니다."}
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_detail": "해당 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         if instance.author.pk != request.user.pk:
-            data = {"error_detail": "권한이 없습니다."}
-            return Response(data, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error_detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
         delete_post(instance)
-        data = {"detail": "게시글이 삭제되었습니다."}
-        return Response(data, status=status.HTTP_200_OK)
+        post_file_delete(instance)
+        post_image_delete(instance)
+
+        return Response({"detail": "게시글이 삭제되었습니다."}, status=status.HTTP_200_OK)

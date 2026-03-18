@@ -17,6 +17,7 @@ from apps.community.services.post_service import (
     create_post,
     get_post_list_queryset,
     get_post_list_values,
+    post_file_save,
 )
 
 
@@ -131,10 +132,18 @@ class PostListAPIView(APIView):
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        instance = create_post(request.user, serializer.validated_data)
+        instance = create_post(
+            request.user,
+            serializer.validated_data["title"],
+            serializer.validated_data["content"],
+            serializer.validated_data["category"],
+        )
+        post_file_save(instance)
 
-        data = {
-            "detail": "게시글이 성공적으로 등록되었습니다.",
-            "pk": instance.pk,
-        }
-        return Response(data, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "detail": "게시글이 성공적으로 등록되었습니다.",
+                "pk": instance.pk,
+            },
+            status=status.HTTP_201_CREATED,
+        )

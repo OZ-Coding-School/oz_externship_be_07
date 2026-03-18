@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from apps.community.views.post_detail_view import PostDetailAPIView
 from apps.community.views.post_list_view import PostListAPIView

@@ -19,15 +19,9 @@ class BasePresignedUrlView(APIView):
 
     def put(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         file_name = request.data.get("file_name")
+        extension = str(file_name).split(".")[-1].lower() if file_name else ""
 
-        if not file_name:
-            return Response(
-                {"error_detail": "파일 이름이 필요합니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        extension = str(file_name).split(".")[-1].lower()
-        if extension not in ALLOWED_EXTENSIONS:
+        if not file_name or extension not in ALLOWED_EXTENSIONS:
             return Response(
                 {"error_detail": "지원하지 않는 파일 형식입니다."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -46,7 +40,7 @@ class BasePresignedUrlView(APIView):
             presigned_url = s3_client.generate_presigned_url(
                 "put_object",
                 Params={"Bucket": settings.AWS_S3_BUCKET_NAME, "Key": key},
-                ExpiresIn=600,
+                ExpiresIn=300,
             )
         except ClientError:
             return Response(

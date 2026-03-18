@@ -1,14 +1,18 @@
+from typing import Any
+
 from django.core.management.base import BaseCommand
 from django_redis import get_redis_connection  # type: ignore
+
 from apps.community.signals.user_signal import stringify_user_tag
 from apps.users.models.models import User
+
 
 class Command(BaseCommand):
     """
     DB기준으로 redis 데이터 재구축
     """
 
-    def handle(self, *args, **options) -> None:
+    def handle(self, *args: Any, **kwargs: Any) -> None:
         redis_conn = get_redis_connection("user_search")
 
         print("기존 데이터를 삭제 중")

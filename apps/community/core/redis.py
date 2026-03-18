@@ -4,14 +4,14 @@ from typing import Any
 from django_redis import get_redis_connection  # type: ignore
 from redis import Redis
 
+
 class RedisClient:
     @staticmethod
-    def _get_index(name: str = "default") -> Redis:
+    def _get_index(name: str = "default") -> Any:
         """
         redis 연결
         """
         return get_redis_connection(name)
-
 
     @classmethod
     def set_string(cls, key: str, value: str, name: str = "default", timeout: int | None = None) -> bool:
@@ -52,7 +52,7 @@ class RedisClient:
             return False
 
     @classmethod
-    def get_json(cls, key: str, name: str = "default") -> str | None:
+    def get_json(cls, key: str, name: str = "default") -> Any:
         """
         json decode 가져오기
         """

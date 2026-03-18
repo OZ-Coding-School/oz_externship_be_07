@@ -1,15 +1,23 @@
+from datetime import timedelta
+from typing import Any
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
-from apps.users.models.models import User
-from apps.community.signals.user_signal import stringify_user_tag, remove_user_search_data
 from django_redis import get_redis_connection  # type: ignore
+
+from apps.community.signals.user_signal import (
+    remove_user_search_data,
+    stringify_user_tag,
+)
+from apps.users.models.models import User
+
 
 class Command(BaseCommand):
     """
     수정시간 기준으로 1시간 전인 User 데이터 동기화
     """
-    def handle(self, *args, **options) -> None:
+
+    def handle(self, *args: Any, **kwargs: Any) -> None:
         one_hour_ago = timezone.now() - timedelta(hours=1)
 
         recently_updated_users = User.objects.filter(updated_at__gte=one_hour_ago)
@@ -31,8 +39,8 @@ class Command(BaseCommand):
 
             with redis_conn.pipeline() as pipe:
                 if old_data:
-                    pipe.zrem('user_search', old_data)
-                pipe.zadd('user_search', {new_data: 0})
+                    pipe.zrem("user_search", old_data)
+                pipe.zadd("user_search", {new_data: 0})
                 pipe.set(info_key, new_data)
                 pipe.execute()
 

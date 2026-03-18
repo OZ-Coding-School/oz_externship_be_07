@@ -68,7 +68,6 @@ class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
     extra = 0
     fields = ("id", "author", "content_preview", "created_at")
     readonly_fields = ("id", "author", "content_preview", "created_at")
-    raw_id_fields = ("author",)
     show_change_link = True
 
     @admin.display(description="댓글 내용")
@@ -134,7 +133,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     def get_search_results(
         self,
         request: HttpRequest,
-        queryset: Any,
+        queryset: QuerySet[Post],
         search_term: str,
     ) -> tuple[QuerySet[Post], bool]:
         if not self._is_postcomment_post_autocomplete_request(request):

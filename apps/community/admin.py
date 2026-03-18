@@ -73,6 +73,11 @@ class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    AUTOCOMPLETE_APP_LABEL = "community"
+    AUTOCOMPLETE_MODEL_NAME = "postcomment"
+    AUTOCOMPLETE_FIELD_NAME = "post"
+    AUTOCOMPLETE_LIMIT = 5
+
     list_display = (
         "id",
         "title",
@@ -109,29 +114,31 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             )
         return self.fieldsets
 
+    def _is_postcomment_post_autocomplete_request(self, request: HttpRequest) -> bool:
+        return (
+            request.path.endswith("/autocomplete/")
+            and request.GET.get("app_label") == self.AUTOCOMPLETE_APP_LABEL
+            and request.GET.get("model_name") == self.AUTOCOMPLETE_MODEL_NAME
+            and request.GET.get("field_name") == self.AUTOCOMPLETE_FIELD_NAME
+        )
+
     def get_search_results(
         self,
         request: HttpRequest,
         queryset: Any,
         search_term: str,
-    ) -> tuple[Any, bool]:
-        is_post_filter_autocomplete = (
-            request.path.endswith("/autocomplete/")
-            and request.GET.get("app_label") == "community"
-            and request.GET.get("model_name") == "postcomment"
-            and request.GET.get("field_name") == "post"
-        )
+    ) -> tuple[QuerySet[Post], bool]:
+        if not self._is_postcomment_post_autocomplete_request(request):
+            base_qs, use_distinct = super().get_search_results(request, queryset, search_term)
+            return cast(QuerySet[Post], base_qs), use_distinct
 
-        if not is_post_filter_autocomplete:
-            return super().get_search_results(request, queryset, search_term)
-
-        queryset = queryset.order_by("-created_at", "-id")
+        ordered_qs = queryset.order_by("-created_at", "-id")
         keyword = search_term.strip()
 
         if keyword == "":
-            return queryset[:5], False
+            return ordered_qs[: self.AUTOCOMPLETE_LIMIT], False
 
-        return queryset.filter(title__icontains=keyword), False
+        return ordered_qs.filter(title__icontains=keyword), False
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
         queryset = (
@@ -200,7 +207,6 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
         queryset = super().get_queryset(request).select_related("author", "post")
         return cast(QuerySet[PostComment], queryset)
-
 
     inlines = [CommentTagInline]
 

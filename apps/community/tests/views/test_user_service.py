@@ -1,4 +1,5 @@
 from django.test import TransactionTestCase
+
 from apps.community.services.user_search import UserSearchService
 from apps.users.models.models import User
 

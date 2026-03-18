@@ -130,6 +130,13 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             and request.GET.get("field_name") == self.AUTOCOMPLETE_FIELD_NAME
         )
 
+
+    def formfield_for_foreignkey(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Any:
+        if db_field.name == "category":
+            kwargs["queryset"] = PostCategory.objects.filter(status=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
     def get_search_results(
         self,
         request: HttpRequest,

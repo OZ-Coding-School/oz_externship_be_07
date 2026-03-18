@@ -50,6 +50,12 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
         return data
 
 
+class PostExSerializer(serializers.ModelSerializer[Post]):
+    class Meta:
+        model = Post
+        fields = ["title", "content", "category_id"]
+
+
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     """게시글 수정 Serializer"""
 

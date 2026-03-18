@@ -102,8 +102,7 @@ class CohortAvgScoreItemSerializer(serializers.Serializer[dict[str, Any]]):
 
 class CohortStudentItemSerializer(serializers.Serializer[dict[str, Any]]):
     value = serializers.CharField()
-    label = serializers.CharField()  # type: ignore[assignment]
-
+    label = serializers.CharField()
 
 class ErrorDetailFieldSerializer(serializers.Serializer[dict[str, Any]]):
     error_detail = serializers.DictField(child=serializers.ListField(child=serializers.CharField()))

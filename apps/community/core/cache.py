@@ -1,4 +1,6 @@
-from django.core.cache import cache
+from django.core.cache import caches
+
+cache = caches["hit_like"]
 
 
 def cache_get_int(key: str, default: int = 0) -> int:

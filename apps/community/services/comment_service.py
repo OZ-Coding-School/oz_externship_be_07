@@ -16,7 +16,11 @@ class CommentService:
         comment = PostComment.objects.create(post_id=post_id, author=author, content=content)
 
         if tagged_user_ids:
-            for tagged_id in set(tagged_user_ids):
-                CommentTag.objects.create(comment=comment, tagged_user_id=tagged_id)
+            tags = [
+                CommentTag(comment=comment, tagged_user_id=tagged_id)
+                for tagged_id in set(tagged_user_ids)
+            ]
+
+            CommentTag.objects.bulk_create(tags)
 
         return comment

@@ -1,6 +1,5 @@
 from typing import Any
 
-from django_redis import get_redis_connection  # type: ignore
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView

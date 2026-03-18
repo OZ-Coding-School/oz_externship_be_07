@@ -76,6 +76,10 @@ class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
         text = (obj.content or "").replace("\n", " ")
         return Truncator(text).chars(16)
 
+    def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
+        queryset = cast(QuerySet[PostComment], super().get_queryset(request))
+        return queryset.select_related("author")
+
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
@@ -99,7 +103,6 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_editable = ("is_notice", "is_visible")
     search_fields = ("title", "content", "author__nickname")
     list_filter = ("category", "is_notice", "is_visible")
-    list_select_related = ("author", "category")
     raw_id_fields = ("author",)
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
@@ -191,7 +194,6 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     search_fields = ("content", "author__nickname", "post__title")
     list_filter = (PostCommentPostAutocompleteFilter,)
     show_facets = admin.ShowFacets.NEVER
-    list_select_related = ("author", "post")
     raw_id_fields = ("author", "post")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"

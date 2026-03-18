@@ -2,9 +2,9 @@ from django.db import models
 
 
 class CohortStatus(models.TextChoices):
-    PENDING = "PENDING"
+    PREPARING = "PREPARING"
     IN_PROGRESS = "IN_PROGRESS"
-    COMPLETED = "COMPLETED"
+    FINISHED = "FINISHED"
 
 
 class StudentEnrollmentRequestsStatus(models.TextChoices):

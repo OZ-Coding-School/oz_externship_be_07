@@ -4,9 +4,11 @@ from rest_framework import serializers
 
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
+from apps.subject.models.subject_models import Subject
 
 
-class ExamCreateSerializer(serializers.ModelSerializer[Exam]):
+# 쪽지시험 생성 API 및 수정 API
+class ExamCreateUpdateSerializer(serializers.ModelSerializer[Exam]):
     thumbnail_img = serializers.ImageField(write_only=True)
 
     class Meta:
@@ -15,6 +17,7 @@ class ExamCreateSerializer(serializers.ModelSerializer[Exam]):
         read_only_fields = ["id", "thumbnail_img_url"]
 
 
+# 쪽지시험 목록조회 API - page, size, total_count는 pagenation에서 제공
 class ExamListSerializer(serializers.ModelSerializer[Exam]):
     subject_name = serializers.CharField(source="subject.title", read_only=True)
     question_count = serializers.IntegerField(read_only=True)
@@ -36,10 +39,10 @@ class ExamListSerializer(serializers.ModelSerializer[Exam]):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def get_detail_url(self, obj: Exam) -> str:
-        # 원하는 경로 형식에 맞춰 ID를 조합합니다.
         return f"/admin/exams/{obj.id}"
 
 
+# 쪽지시험 상세 조회 API - quesitons
 class ExamQuestionDetailSerializer(serializers.ModelSerializer[ExamQuestion]):
     question_id = serializers.IntegerField(source="id")
     options = serializers.JSONField(source="options_json")
@@ -59,24 +62,18 @@ class ExamQuestionDetailSerializer(serializers.ModelSerializer[ExamQuestion]):
         ]
 
 
+# 쪽지시험 상세 조회 API - subject
+class ExamSubjectDetailSerializer(serializers.ModelSerializer[Subject]):
+    class Meta:
+        model = Subject
+        fields = ["id", "title"]
+
+
+# 쪽지시험 상세 조회 API
 class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
-    subject = serializers.SerializerMethodField()
-    questions = ExamQuestionDetailSerializer(source="examquestion_set", many=True, read_only=True)
+    subject = ExamSubjectDetailSerializer()
+    questions = ExamQuestionDetailSerializer(many=True)
 
     class Meta:
         model = Exam
         fields = ["id", "title", "subject", "questions", "thumbnail_img_url", "created_at", "updated_at"]
-
-    def get_subject(self, obj: Exam) -> dict[str, Any]:
-        if not obj.subject:
-            return {}
-        return {"id": obj.subject.id, "title": obj.subject.title}
-
-
-class ExamUpdateSerializer(serializers.ModelSerializer[Exam]):
-    thumbnail_img = serializers.ImageField(write_only=True, required=False)
-
-    class Meta:
-        model = Exam
-        fields = ["id", "title", "subject", "thumbnail_img", "thumbnail_img_url"]
-        read_only_fields = ["id", "thumbnail_img_url"]

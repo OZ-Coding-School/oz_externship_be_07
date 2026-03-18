@@ -23,7 +23,7 @@ class AdminEnrollmentAcceptAPIView(APIView):
 
     @extend_schema(
         summary="관리자용 수강생 등록 요청 승인 API",
-        tags=["admin_enrollments"],
+        tags=["admin_accounts"],
         request=AdminEnrollmentAcceptSerializer,
         responses={
             200: {"description": "OK", "example": {"detail": "수강생 등록 신청들에 대한 승인 요청이 처리되었습니다."}},

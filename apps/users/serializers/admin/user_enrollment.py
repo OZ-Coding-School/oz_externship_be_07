@@ -3,6 +3,7 @@ from rest_framework import serializers
 from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.course_models import Course
 from apps.subject.models.enrollment_request_models import EnrollmentRequest
+from apps.users.choices import EnrollmentStatus
 from apps.users.models.models import User
 
 
@@ -43,6 +44,6 @@ class AdminUserEnrollmentSerializer(serializers.ModelSerializer[EnrollmentReques
         fields = ["id", "user", "cohort", "course", "status", "created_at"]
 
     def get_status(self, obj: EnrollmentRequest) -> str:
-        if obj.status == "APPROVED":
-            return "ACCEPTED"
+        if obj.status == "APPROVED" or obj.status == EnrollmentStatus.ACCEPTED:
+            return EnrollmentStatus.ACCEPTED
         return obj.status

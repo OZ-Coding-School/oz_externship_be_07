@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.urls import reverse
@@ -71,7 +71,7 @@ class AdminEnrollmentRejectTest(APITestCase):
 
     def test_reject_enrollments_success(self) -> None:
         """정상적인 반려 요청 테스트"""
-        data: Dict[str, List[int]] = {"enrollments": [self.enroll1.id, self.enroll2.id]}
+        data: dict[str, list[int]] = {"enrollments": [self.enroll1.id, self.enroll2.id]}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -85,7 +85,7 @@ class AdminEnrollmentRejectTest(APITestCase):
 
     def test_reject_enrollments_empty_list(self) -> None:
         """빈 리스트 요청 시 시리얼라이저 에러 확인 (400)"""
-        data: Dict[str, List[Any]] = {"enrollments": []}
+        data: dict[str, list[Any]] = {"enrollments": []}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -93,7 +93,7 @@ class AdminEnrollmentRejectTest(APITestCase):
 
     def test_reject_enrollments_fail_already_approved(self) -> None:
         """이미 승인된 건에 대해 요청 시 400 에러 확인"""
-        data: Dict[str, List[int]] = {"enrollments": [self.already_approved.id]}
+        data: dict[str, list[int]] = {"enrollments": [self.already_approved.id]}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -103,7 +103,7 @@ class AdminEnrollmentRejectTest(APITestCase):
         """일반 유저가 요청 시 403 에러 확인"""
         self.client.force_authenticate(user=cast(AbstractBaseUser, self.user))
 
-        data: Dict[str, List[int]] = {"enrollments": [self.enroll1.id]}
+        data: dict[str, list[int]] = {"enrollments": [self.enroll1.id]}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

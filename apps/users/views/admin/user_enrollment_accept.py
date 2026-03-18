@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from apps.users.serializers.admin.user_enrollment_accept import (
     AdminEnrollmentAcceptSerializer,
 )
-from apps.users.services.admin.user_enrollment_accept import accept_enrollment_requests
+from apps.users.services.admin.user_enrollment_action import accept_enrollment_requests
 from apps.users.views.admin.user_enrollment import IsStaffUser
 
 

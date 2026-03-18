@@ -50,3 +50,8 @@ class AnswerResponseSerializer(serializers.ModelSerializer[Answers]):
         model = Answers
         fields = ["id", "author", "content", "is_adopted", "images", "comments", "created_at"]
         read_only_fields = fields
+
+
+# Presigned URL 요청
+class PresignedUrlRequestSerializer(serializers.Serializer[None]):
+    file_name = serializers.CharField()

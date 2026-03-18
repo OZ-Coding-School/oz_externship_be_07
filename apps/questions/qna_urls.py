@@ -1,7 +1,8 @@
 from django.urls import path
 
 from .views.answers_views import AIAnswerViewSet, AnswerViewSet
-from apps.core.views.presigned_url_views import AnswerPresignedUrlView
+from .views.presigned_url_views import AnswerPresignedUrlView, QuestionPresignedUrlView
+from .views.questions_list_views import QuestionListDetailView, QuestionListView
 
 app_name = "questions"
 
@@ -40,10 +41,16 @@ urlpatterns = [
         AnswerViewSet.as_view({"post": "comment"}),
         name="answer_comment_create",
     ),
-    # presigned-url
+    # 답변 이미지 Presigned URL 발급
     path(
         "answers/presigned-url",
         AnswerPresignedUrlView.as_view(),
         name="answer_presigned_url",
-),
+    ),
+    # 질문 이미지 Presigned URL 발급
+    path(
+        "questions/presigned-url",
+        QuestionPresignedUrlView.as_view(),
+        name="question_presigned_url",
+    ),
 ]

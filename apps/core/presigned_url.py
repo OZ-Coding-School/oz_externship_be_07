@@ -4,13 +4,11 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
-from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 
 ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]
 
@@ -66,18 +64,3 @@ class BasePresignedUrlView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
-
-class AnswerPresignedUrlView(BasePresignedUrlView):
-    folder = "answers"
-
-    @extend_schema(
-        summary="답변 이미지 Presigned URL 발급",
-        tags=["Answers"],
-        responses={
-            200: OpenApiResponse(description="Presigned URL 발급 성공"),
-            400: OpenApiResponse(description="지원하지 않는 파일 형식입니다."),
-        },
-    )
-    def put(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        return super().put(request, *args, **kwargs)

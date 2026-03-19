@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("exam", "0001_initial"),
+        ("exams", "0001_initial"),
         ("subject", "0001_initial"),
         ("users", "0001_initial"),
     ]
@@ -28,17 +28,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="examdeployment",
             name="exam_id",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="exam.exam"),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="exams.exam"),
         ),
         migrations.AddField(
             model_name="examquestion",
             name="exam_id",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="exam.exam"),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="exams.exam"),
         ),
         migrations.AddField(
             model_name="examsubmission",
             name="deployment_id",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="exam.examdeployment"),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="exams.examdeployment"),
         ),
         migrations.AddField(
             model_name="examsubmission",

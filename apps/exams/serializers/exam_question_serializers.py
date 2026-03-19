@@ -3,8 +3,8 @@ from typing import Any, Dict
 
 from rest_framework import serializers
 
-from apps.exam.models.choices import QuestionType
-from apps.exam.models.exam_question_models import ExamQuestion
+from apps.exams.models.choices import QuestionType
+from apps.exams.models.exam_question_models import ExamQuestion
 
 
 class ExamQuestionCreateSerializer(serializers.Serializer[Dict[str, Any]]):

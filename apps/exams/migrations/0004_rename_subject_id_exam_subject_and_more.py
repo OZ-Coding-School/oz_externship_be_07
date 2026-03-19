@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("exam", "0003_alter_examdeployment_status_alter_examquestion_type"),
+        ("exams", "0003_alter_examdeployment_status_alter_examquestion_type"),
     ]
 
     operations = [
@@ -23,12 +23,12 @@ class Migration(migrations.Migration):
         migrations.RenameField(
             model_name="examdeployment",
             old_name="exam_id",
-            new_name="exam",
+            new_name="exams",
         ),
         migrations.RenameField(
             model_name="examquestion",
             old_name="exam_id",
-            new_name="exam",
+            new_name="exams",
         ),
         migrations.RenameField(
             model_name="examsubmission",

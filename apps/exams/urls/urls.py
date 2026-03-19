@@ -1,13 +1,13 @@
 from django.urls import path
 
-from apps.exam.views.exam_question_views import (
+from apps.exams.views.exam_question_views import (
     ExamQuestionCreateAPIView,
     ExamQuestionUpdateDeleteAPIView,
 )
 
-app_name = "exam"
+app_name = "exams"
 
 urlpatterns = [
-    path("<int:exam_id>/questions", ExamQuestionCreateAPIView.as_view(), name="exam-question-create"),
+    path("<int:exam_id>/questions", ExamQuestionCreateAPIView.as_view(), name="exams-question-create"),
     path("questions/<int:question_id>", ExamQuestionUpdateDeleteAPIView.as_view(), name="exam_question-update-delete"),
 ]

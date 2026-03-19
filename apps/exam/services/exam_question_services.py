@@ -5,9 +5,8 @@ from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 
 
-
 class ExamQuestionConflictError(Exception):
-   pass
+    pass
 
 
 class ExamQuestionService:
@@ -18,7 +17,6 @@ class ExamQuestionService:
         options_json: Optional[str] = None
         if data.get("options") is not None:
             options_json = json.dumps(data["options"], ensure_ascii=False)
-
 
         return ExamQuestion.objects.create(
             exam=exam,
@@ -64,6 +62,3 @@ class ExamQuestionService:
         question_id: int = question.id
         question.delete()
         return {"exam_id": exam_id, "question_id": question_id}
-
-
-

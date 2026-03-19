@@ -11,13 +11,13 @@ from rest_framework.views import APIView
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 from apps.exam.serializers.exam_question_serializers import (
+    ErrorDetailSerializer,
     ExamQuestionCreateSerializer,
     ExamQuestionDeleteResponseSerializer,
     ExamQuestionResponseSerializer,
     ExamQuestionUpdateSerializer,
-    ErrorDetailSerializer,
 )
-from apps.exam.servieces.exam_question_services import ExamQuestionService
+from apps.exam.services.exam_question_services import ExamQuestionService
 
 
 class ExamQuestionListCreateAPIView(APIView):
@@ -152,7 +152,6 @@ class ExamQuestionDetailAPIView(APIView):
         question = ExamQuestionService.update_question(question, serializer.validated_data)
         response_serializer = ExamQuestionResponseSerializer(question)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
-
 
     @extend_schema(
         tags=["exams"],

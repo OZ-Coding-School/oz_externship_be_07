@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -23,10 +23,8 @@ from apps.questions.views.questions_update_views import QuestionUpdateView
 
 # 1. 목록 조회(GET) 및 등록(POST) 통합 관리
 class QuestionListView(APIView):
-    # 전역 설정을 위한 페이지네이터 연결
-    pagination_class = PageNumberPagination
 
-    def get_permissions(self) -> List[BasePermission]:
+    def get_permissions(self) -> list[BasePermission]:
         if self.request.method == "POST":
             return [IsAuthenticated()]
         return [AllowAny()]
@@ -40,11 +38,13 @@ class QuestionListView(APIView):
         parameters=[
             OpenApiParameter(name="category_id", description="카테고리 ID필터", type=int),
             OpenApiParameter(name="search", description="검색어", type=str),
+            OpenApiParameter(name="answer_status", description="답변 상태(answered/unanswered)", type=str),
+            OpenApiParameter(name="sort", description="정렬(latest: 최신순, views: 조회수순)", type=str),
             OpenApiParameter(name="page", description="페이지 번호", type=int),
         ],
         responses={200: QuestionListSerializer(many=True)},
     )
-    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def get(self, request: Request) -> Response:
         # 필터 및 검색어 추출
         category_id_raw = request.query_params.get("category_id")
         category_id = None
@@ -57,15 +57,19 @@ class QuestionListView(APIView):
                 )
 
         search_keyword = request.query_params.get("search")
+        answer_status = request.query_params.get("answer_status")
+        sort_by = request.query_params.get("sort", "latest")
         # 서비스 호출
-        questions = QuestionListService.get_question_list(category_id=category_id, search_keyword=search_keyword)
+        questions = QuestionListService.get_question_list(
+            category_id=category_id, search_keyword=search_keyword, answer_status=answer_status, sort_by=sort_by
+        )
 
         # 페이지네이션 적용
-        paginator = self.pagination_class()
+        paginator = PageNumberPagination()
         page = paginator.paginate_queryset(questions, request)
 
         if page is not None:
-            serializer = self.serializer_class(questions, many=True)
+            serializer = self.serializer_class(page, many=True)
             return paginator.get_paginated_response(serializer.data)
 
         # 시리얼라이즈 및 반환
@@ -86,7 +90,7 @@ class QuestionListView(APIView):
 
 # 2. 상세 조회(GET) 및 수정(PUT) 통합 관리
 class QuestionListDetailView(APIView):
-    def get_permissions(self) -> List[BasePermission]:
+    def get_permissions(self) -> list[BasePermission]:
         if self.request.method == "GET":
             return [AllowAny()]
         return [IsAuthenticated()]

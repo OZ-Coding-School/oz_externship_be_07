@@ -1,8 +1,9 @@
+import json
+
 from typing import Any, Dict
-
 from rest_framework import serializers
-
 from apps.exam.models.choices import QuestionType
+from apps.exam.models.exam_question_models import ExamQuestion
 
 
 class ExamQuestionCreateSerializer(serializers.Serializer[Dict[str, Any]]):
@@ -19,29 +20,41 @@ class ExamQuestionCreateSerializer(serializers.Serializer[Dict[str, Any]]):
     point = serializers.IntegerField(min_value=0, max_value=100)
     explanation = serializers.CharField()
 
-    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        return data
-
-    def validate_type(self, value: str) -> str:
-        return value.upper()
-
 
 class ExamQuestionUpdateSerializer(ExamQuestionCreateSerializer):
     pass
 
 
-class ExamQuestionResponseSerializer(serializers.Serializer[Dict[str, Any]]):
-    question_id = serializers.IntegerField()
-    type = serializers.CharField()
-    question = serializers.CharField()
-    prompt = serializers.CharField(allow_null=True, allow_blank=True)
-    options = serializers.ListField(child=serializers.CharField(), allow_null=True)
-    blank_count = serializers.IntegerField(allow_null=True)
-    correct_answer = serializers.JSONField()
-    point = serializers.IntegerField()
-    explanation = serializers.CharField()
+class ExamQuestionResponseSerializer(serializers.ModelSerializer[Dict[str, Any]]):
+    question_id = serializers.IntegerField(source="id")
+    correct_answer = serializers.JSONField(source="answer")
+    options = serializers.SerializerMethodField()
 
+    class Meta:
+        model = ExamQuestion
+        fields =  [
+            "question_id",
+            "type",
+            "question",
+            "prompt",
+            "options",
+            "blank_count",
+            "correct_answer",
+            "point",
+            "explanation",
+        ]
+
+    def get_options(self, obj: ExamQuestion) -> Any:
+        if not obj.options_json:
+            return None
+        try:
+            return json.loads(obj.options_json)
+        except (ValueError, TypeError, json.JSONDecodeError):
+            return None
 
 class ExamQuestionDeleteResponseSerializer(serializers.Serializer[Dict[str, Any]]):
     exam_id = serializers.IntegerField()
     question_id = serializers.IntegerField()
+
+class ErrorDetailSerializer(serializers.Serializer[Dict[str, str]]):
+    error_detail = serializers.CharField()

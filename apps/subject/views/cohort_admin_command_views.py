@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.subject.core.error_base import SubjectBaseAPIView
 from apps.subject.serializers.cohort_serializers import (
     CohortCreateRequestSerializer,
     CohortCreateResponseSerializer,
@@ -21,7 +22,6 @@ from apps.subject.serializers.cohort_serializers import (
     ErrorDetailStringSerializer,
 )
 from apps.subject.services.cohort_services import CohortService
-from apps.subject.core.error_base import SubjectBaseAPIView
 from apps.subject.views.cohort_permissions import IsSubjectStaffUser
 from apps.subject.views.cohort_views import error_response
 

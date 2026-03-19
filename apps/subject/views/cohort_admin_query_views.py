@@ -1,10 +1,9 @@
 from django.http import Http404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from apps.subject.serializers.cohort_serializers import (
     CohortAvgScoreItemSerializer,
@@ -12,11 +11,13 @@ from apps.subject.serializers.cohort_serializers import (
     ErrorDetailStringSerializer,
 )
 from apps.subject.services.cohort_services import CohortService
-from apps.subject.views.cohort_views import check_admin_role, error_response
+from apps.subject.core.error_base import SubjectBaseAPIView
+from apps.subject.views.cohort_permissions import IsSubjectStaffUser
+from apps.subject.views.cohort_views import error_response
 
 
-class AdminCourseCohortAvgScoresAPIView(APIView):
-    permission_classes = [AllowAny]
+class AdminCourseCohortAvgScoresAPIView(SubjectBaseAPIView):
+    permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
         tags=["subjects"],
@@ -29,9 +30,6 @@ class AdminCourseCohortAvgScoresAPIView(APIView):
         },
     )
     def get(self, request: Request, course_id: int) -> Response:
-        permission_error = check_admin_role(request)
-        if permission_error:
-            return permission_error
 
         try:
             result = CohortService.get_cohort_avg_scores(course_id=course_id)
@@ -44,8 +42,8 @@ class AdminCourseCohortAvgScoresAPIView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class AdminCohortStudentListAPIView(APIView):
-    permission_classes = [AllowAny]
+class AdminCohortStudentListAPIView(SubjectBaseAPIView):
+    permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
         tags=["subjects"],
@@ -58,9 +56,6 @@ class AdminCohortStudentListAPIView(APIView):
         },
     )
     def get(self, request: Request, cohort_id: int) -> Response:
-        permission_error = check_admin_role(request)
-        if permission_error:
-            return permission_error
 
         try:
             cohort_students = CohortService.get_cohort_students(cohort_id=cohort_id)

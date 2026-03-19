@@ -8,10 +8,9 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from apps.subject.serializers.cohort_serializers import (
     CohortCreateRequestSerializer,
@@ -22,15 +21,17 @@ from apps.subject.serializers.cohort_serializers import (
     ErrorDetailStringSerializer,
 )
 from apps.subject.services.cohort_services import CohortService
-from apps.subject.views.cohort_views import check_admin_role, error_response
+from apps.subject.core.error_base import SubjectBaseAPIView
+from apps.subject.views.cohort_permissions import IsSubjectStaffUser
+from apps.subject.views.cohort_views import error_response
 
 
 def field_error_response(*, errors: dict[str, Any], http_status: int = status.HTTP_400_BAD_REQUEST) -> Response:
     return Response({"error_detail": errors}, status=http_status)
 
 
-class AdminCohortCreateAPIView(APIView):
-    permission_classes = [AllowAny]
+class AdminCohortCreateAPIView(SubjectBaseAPIView):
+    permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
         tags=["subjects"],
@@ -64,9 +65,6 @@ class AdminCohortCreateAPIView(APIView):
         ],
     )
     def post(self, request: Request) -> Response:
-        permission_error = check_admin_role(request)
-        if permission_error:
-            return permission_error
 
         serializer = CohortCreateRequestSerializer(data=request.data)
         if not serializer.is_valid():
@@ -84,8 +82,8 @@ class AdminCohortCreateAPIView(APIView):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
-class AdminCohortUpdateAPIView(APIView):
-    permission_classes = [AllowAny]
+class AdminCohortUpdateAPIView(SubjectBaseAPIView):
+    permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
         tags=["subjects"],
@@ -100,9 +98,6 @@ class AdminCohortUpdateAPIView(APIView):
         },
     )
     def patch(self, request: Request, cohort_id: int) -> Response:
-        permission_error = check_admin_role(request)
-        if permission_error:
-            return permission_error
 
         from apps.subject.models.cohort_models import Cohort
 

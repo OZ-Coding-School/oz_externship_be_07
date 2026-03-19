@@ -1,15 +1,16 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from apps.subject.serializers.cohort_serializers import (
     CohortListItemSerializer,
     ErrorDetailStringSerializer,
 )
 from apps.subject.services.cohort_services import CohortService
+from apps.subject.core.error_base import SubjectBaseAPIView
+from apps.subject.views.cohort_permissions import CanViewCohortList
 
 ALLOWED_ADMIN_ROLES = {"TA", "LC", "OM", "ADMIN"}
 
@@ -41,8 +42,8 @@ def check_admin_role(request: Request) -> Response | None:
     return None
 
 
-class CohortListAPIView(APIView):
-    permission_classes = [AllowAny]
+class CohortListAPIView(SubjectBaseAPIView):
+    permission_classes = [IsAuthenticated, CanViewCohortList]
 
     @extend_schema(
         tags=["subjects"],
@@ -54,16 +55,6 @@ class CohortListAPIView(APIView):
         },
     )
     def get(self, request: Request, course_id: int) -> Response:
-        auth_error = check_authenticated(request)
-        if auth_error:
-            return auth_error
-
-        role = str(getattr(request.user, "role", "")).upper()
-        if role not in ALLOWED_ADMIN_ROLES:
-            return error_response(
-                message="이 리소스를 조회할 권한이 없습니다.",
-                http_status=status.HTTP_403_FORBIDDEN,
-            )
 
         cohorts = CohortService.get_cohorts_by_course_id(course_id=course_id)
 

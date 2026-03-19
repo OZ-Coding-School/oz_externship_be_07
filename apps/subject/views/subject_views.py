@@ -33,12 +33,30 @@ class SubjectListCreateAPIView(APIView):
         ],
         request=SubjectCreateRequestSerializer,
         responses={
-            201: OpenApiResponse(response=SubjectCreateResponseSerializer, description="Created"),
-            400: OpenApiResponse(response=ErrorResponseSerializer, description="Bad Request"),
-            401: OpenApiResponse(response=ErrorResponseSerializer, description="Unauthorized"),
-            403: OpenApiResponse(response=ErrorResponseSerializer, description="Forbidden"),
-            404: OpenApiResponse(response=ErrorResponseSerializer, description="Not Found"),
-            409: OpenApiResponse(response=ErrorResponseSerializer, description="Conflict"),
+            201: OpenApiResponse(
+                response=SubjectCreateResponseSerializer,
+                description="Created",
+            ),
+            400: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Bad Request",
+            ),
+            401: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Unauthorized",
+            ),
+            403: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Forbidden",
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Not Found",
+            ),
+            409: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Conflict",
+            ),
         },
         examples=[
             OpenApiExample(
@@ -118,9 +136,18 @@ class SubjectListCreateAPIView(APIView):
             ),
         ],
         responses={
-            200: OpenApiResponse(response=SubjectListItemSerializer(many=True), description="OK"),
-            401: OpenApiResponse(response=ErrorResponseSerializer, description="Unauthorized"),
-            403: OpenApiResponse(response=ErrorResponseSerializer, description="Forbidden"),
+            200: OpenApiResponse(
+                response=SubjectListItemSerializer(many=True),
+                description="OK",
+            ),
+            401: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Unauthorized",
+            ),
+            403: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Forbidden",
+            ),
         },
         examples=[
             OpenApiExample(
@@ -161,20 +188,32 @@ class SubjectScatterAPIView(APIView):
             ),
         ],
         responses={
-            200: OpenApiResponse(response=SubjectScatterPointSerializer(many=True), description="OK"),
-            401: OpenApiResponse(response=ErrorResponseSerializer, description="Unauthorized"),
-            403: OpenApiResponse(response=ErrorResponseSerializer, description="Forbidden"),
-            404: OpenApiResponse(response=ErrorResponseSerializer, description="Not Found"),
+            200: OpenApiResponse(
+                response=SubjectScatterPointSerializer(many=True),
+                description="OK",
+            ),
+            401: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Unauthorized",
+            ),
+            403: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Forbidden",
+            ),
+            404: OpenApiResponse(
+                response=ErrorResponseSerializer,
+                description="Not Found",
+            ),
         },
         examples=[
             OpenApiExample(
                 "Response Example",
                 value=[
-                    {"duration": 1.5, "score": 95},
-                    {"duration": 2.8, "score": 98},
-                    {"duration": 3.1, "score": 100},
-                    {"duration": 1.2, "score": 85},
-                    {"duration": 2.1, "score": 90},
+                    {"time": 1.5, "score": 95},
+                    {"time": 2.8, "score": 98},
+                    {"time": 3.1, "score": 100},
+                    {"time": 1.2, "score": 85},
+                    {"time": 2.1, "score": 90},
                 ],
                 response_only=True,
                 status_codes=["200"],

@@ -160,7 +160,7 @@ def post_image_delete(instance: Post) -> None:
 def post_file_save(instance: Post) -> None:
     image_url = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", instance.content)
     for is_image, name, url in image_url:
-        if is_image == '!':
+        if is_image == "!":
             PostImage.objects.create(post=instance, img_url=url)
         else:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)

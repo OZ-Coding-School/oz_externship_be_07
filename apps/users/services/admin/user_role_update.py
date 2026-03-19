@@ -18,14 +18,14 @@ def update_user_role(user_id: int, role_data: dict[str, Any]) -> None:
     TrainingAssistant.objects.filter(user=user).delete()
     OperationManager.objects.filter(user=user).delete()
     LearningCoach.objects.filter(user=user).delete()
-    CohortStudent.objects.filter(user=user).delete()  # type: ignore
+    CohortStudent.objects.filter(user=user).delete()
 
     user.role = new_role
     user.save()
 
     # [STUDENT] 수강생
     if new_role == UserRole.STUDENT:
-        CohortStudent.objects.create(user=user, cohort_id=role_data["cohort_id"])  # type: ignore
+        CohortStudent.objects.create(user=user, cohort_id=role_data["cohort_id"])
 
     # [TA] 조교
     elif new_role == UserRole.TA:

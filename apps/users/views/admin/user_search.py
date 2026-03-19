@@ -31,7 +31,7 @@ class StudentManagementViewSet(viewsets.ReadOnlyModelViewSet[User]):
 
     def get_queryset(self) -> QuerySet[User]:
         prefetch_payload = Prefetch(
-            "cohort_students", queryset=CohortStudent.objects.select_related("cohort__course").order_by("id")  # type: ignore
+            "cohort_students", queryset=CohortStudent.objects.select_related("cohort__course").order_by("id")
         )
         return User.objects.exclude(role=UserRole.ADMIN).prefetch_related(prefetch_payload).order_by("id")
 

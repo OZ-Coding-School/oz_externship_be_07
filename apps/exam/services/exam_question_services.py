@@ -1,12 +1,12 @@
 import json
 from typing import Any, Dict, Optional
 
+from rest_framework.permissions import BasePermission
+from rest_framework.request import Request
+
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
-
-
-class ExamQuestionConflictError(Exception):
-    pass
+from apps.users.choices import UserRole
 
 
 class ExamQuestionService:
@@ -62,3 +62,13 @@ class ExamQuestionService:
         question_id: int = question.id
         question.delete()
         return {"exam_id": exam_id, "question_id": question_id}
+
+
+class IsAdmin(BasePermission):
+
+    message = "관리자만 접근이 가능합니다."
+
+    def has_permission(self, request: Request, view: Any) -> bool:
+
+        user = request.user
+        return bool(user.is_authenticated and getattr(user, "role", None) == UserRole.ADMIN)

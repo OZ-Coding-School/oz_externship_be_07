@@ -3,7 +3,6 @@ from typing import Any
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,22 +16,11 @@ from apps.exam.serializers.exam_question_serializers import (
     ExamQuestionResponseSerializer,
     ExamQuestionUpdateSerializer,
 )
-from apps.exam.services.exam_question_services import ExamQuestionService
+from apps.exam.services.exam_question_services import ExamQuestionService, IsAdmin
 
 
-class ExamQuestionListCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @extend_schema(
-        tags=["exams"],
-        summary="쪽지시험 문제 목록 조회",
-        responses={200: ExamQuestionResponseSerializer(many=True), 404: ErrorDetailSerializer},
-    )
-    def get(self, request: Request, exam_id: int, *args: Any, **kwargs: Any) -> Response:
-        exam = get_object_or_404(Exam, pk=exam_id)
-        questions = ExamQuestion.objects.filter(exam=exam).order_by("id")
-        serializer = ExamQuestionResponseSerializer(questions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class ExamQuestionCreateAPIView(APIView):
+    permission_classes = [IsAdmin]
 
     @extend_schema(
         tags=["exams"],
@@ -91,18 +79,8 @@ class ExamQuestionListCreateAPIView(APIView):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
-class ExamQuestionDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @extend_schema(
-        tags=["exams"],
-        summary="쪽지시험 문제 상세 조회",
-        responses={200: ExamQuestionResponseSerializer, 404: ErrorDetailSerializer},
-    )
-    def get(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
-        question = get_object_or_404(ExamQuestion, id=question_id)
-        serializer = ExamQuestionResponseSerializer(question)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class ExamQuestionUpdateDeleteAPIView(APIView):
+    permission_classes = [IsAdmin]
 
     @extend_schema(
         tags=["exams"],
@@ -142,10 +120,10 @@ class ExamQuestionDetailAPIView(APIView):
             ),
         },
     )
-    def patch(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
+    def put(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
         question = get_object_or_404(ExamQuestion, id=question_id)
 
-        serializer = ExamQuestionUpdateSerializer(partial=True, data=request.data)
+        serializer = ExamQuestionUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error_detail": "요청 값이 올바르지 않음."}, status=status.HTTP_400_BAD_REQUEST)
 

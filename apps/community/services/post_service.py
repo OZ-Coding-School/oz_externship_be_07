@@ -185,7 +185,7 @@ def post_detail_file_presigned_url(content: str, token: str | None, base_url: st
     select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)", content)
     for is_image, name, url in select_file:
         if is_image != "!":
-            is_image = ''
+            is_image = ""
 
         if "?" in url:
             key_url = url.split("?")[0]
@@ -194,7 +194,7 @@ def post_detail_file_presigned_url(content: str, token: str | None, base_url: st
             key_url = url.split("com/")[1]
             get_url = presigned_url(key_url, token, base_url)
 
-            content =content.replace(f"{is_image}[{name}]({url})", f"{is_image}[{name}]({get_url})")
+            content = content.replace(f"{is_image}[{name}]({url})", f"{is_image}[{name}]({get_url})")
 
     return content
 

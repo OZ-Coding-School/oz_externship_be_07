@@ -7,12 +7,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.subject.serializers.subject_serializers import (
-    ErrorResponseSerializer,
     SubjectCreateRequestSerializer,
     SubjectCreateResponseSerializer,
     SubjectListItemSerializer,
     SubjectScatterPointSerializer,
 )
+
+from apps.subject.core.error_responses import ErrorResponseSerializer
 from apps.subject.services.subject_services import SubjectService
 
 

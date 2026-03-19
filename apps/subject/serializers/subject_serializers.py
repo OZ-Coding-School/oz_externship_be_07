@@ -96,16 +96,16 @@ class SubjectDetailResponseSerializer(serializers.ModelSerializer[Subject]):
 
 
 class SubjectScatterPointSerializer(serializers.ModelSerializer[ExamSubmission]):
-    duration = serializers.SerializerMethodField()
+    time = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamSubmission
         fields = [
-            "duration",
+            "time",
             "score",
         ]
 
-    def get_duration(self, obj: ExamSubmission) -> float:
+    def get_time(self, obj: ExamSubmission) -> float:
         duration = obj.created_at - obj.started_at
         hours = duration.total_seconds() / 3600
         return round(hours, 1)

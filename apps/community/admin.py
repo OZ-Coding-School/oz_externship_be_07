@@ -1,18 +1,22 @@
+import hashlib
 import time
-from typing import Any, cast
+from typing import Any, Literal, cast
 from urllib.parse import urlparse
 
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin, messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Count, Q, QuerySet
-from django.http import HttpRequest
+from django.db.models import PROTECT, Count, Q, QuerySet
+from django.http import HttpRequest, HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.comment_model import CommentTag, PostComment
 from apps.community.models.post_model import Post, PostAttachment, PostImage, PostLike
+
+ConfirmScope = Literal["bulk", "detail"]
 
 
 def _is_safe_external_url(url: str) -> bool:
@@ -230,8 +234,9 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
 @admin.register(PostCategory)
 class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
-    DELETE_CONFIRM_SESSION_KEY = "community_category_delete_confirm"
+    DELETE_CONFIRM_SESSION_KEY_PREFIX = "community_category_delete_confirm"
     DELETE_CONFIRM_TTL_SECONDS = 180
+    PREVIEW_LIMIT = 3
 
     list_display = ("id", "name", "status")
     list_display_links = ("id", "name")
@@ -270,6 +275,130 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 level=messages.WARNING,
             )
 
+    def _build_confirm_session_key(self, confirm_scope: ConfirmScope, token: str) -> str:
+        return f"{self.DELETE_CONFIRM_SESSION_KEY_PREFIX}:{confirm_scope}:{token}"
+
+    def _is_valid_confirmation_payload(
+        self,
+        payload: Any,
+        token: str,
+        now_ts: int,
+    ) -> bool:
+        if not isinstance(payload, dict):
+            return False
+
+        ts_raw = payload.get("ts")
+        if not isinstance(ts_raw, (int, str)):
+            return False
+
+        try:
+            ts = int(ts_raw)
+        except ValueError:
+            return False
+
+        payload_token = payload.get("token")
+        if payload_token != token:
+            return False
+
+        return now_ts - ts <= self.DELETE_CONFIRM_TTL_SECONDS
+
+    def _require_delete_confirmation(
+        self,
+        request: HttpRequest,
+        confirm_scope: ConfirmScope,
+        token: str,
+        message: str,
+    ) -> bool:
+        session_key = self._build_confirm_session_key(confirm_scope=confirm_scope, token=token)
+        now_ts = int(time.time())
+        payload = request.session.get(session_key)
+
+        if not self._is_valid_confirmation_payload(payload, token, now_ts):
+            request.session[session_key] = {"token": token, "ts": now_ts}
+            self.message_user(request, message, level=messages.WARNING)
+            return False
+
+        request.session.pop(session_key, None)
+        return True
+
+    def _delete_category_with_related_posts(self, category: PostCategory, post_count: int) -> int:
+        deleted_post_count = 0
+        with transaction.atomic():
+            if not category.status and post_count > 0:
+                Post.objects.filter(category_id=category.pk).delete()
+                deleted_post_count = post_count
+            category.delete()
+        return deleted_post_count
+
+    def _generate_token(self, selected_ids: list[int]) -> str:
+        token_raw = ",".join(str(pk) for pk in sorted(selected_ids))
+        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:32]
+
+    def _has_non_post_protected_relations(self, category: PostCategory) -> bool:
+        related_objects = cast(Any, category._meta).related_objects
+        for relation in related_objects:
+            if relation.on_delete is not PROTECT:
+                continue
+            if relation.related_model is Post:
+                continue
+
+            accessor_name = relation.get_accessor_name()
+            try:
+                related = getattr(category, accessor_name)
+            except ObjectDoesNotExist:
+                continue
+
+            if hasattr(related, "exists"):
+                if related.exists():
+                    return True
+            elif related is not None:
+                return True
+
+        return False
+
+    def get_deleted_objects(self, objs: Any, request: HttpRequest) -> tuple[Any, Any, Any, Any]:
+        deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+
+        if len(objs) == 1 and isinstance(objs[0], PostCategory):
+            category = objs[0]
+            post_count = Post.objects.filter(category_id=category.pk).count()
+
+            if category.status and post_count > 0:
+                protected = ["활성 카테고리이며 게시글이 있어 삭제할 수 없습니다"]
+            elif not category.status and post_count > 0:
+                if self._has_non_post_protected_relations(category):
+                    pass
+                else:
+                    protected = []
+                    notice = f"⚠️ 비활성 카테고리 삭제 시 게시글 {post_count}건이 함께 삭제됩니다."
+                    if notice not in deleted_objects:
+                        deleted_objects.append(notice)
+
+        return deleted_objects, model_count, perms_needed, protected
+
+    def delete_view(
+        self,
+        request: HttpRequest,
+        object_id: str,
+        extra_context: Any | None = None,
+    ) -> Any:
+        if request.method == "POST" and request.POST.get("post") == "yes":
+            token = f"detail:{object_id}"
+            confirmed = self._require_delete_confirmation(
+                request=request,
+                confirm_scope="detail",
+                token=token,
+                message="⚠️ 삭제 확인: 삭제 버튼을 3분 이내 다시 누르면 삭제됩니다.",
+            )
+            if not confirmed:
+                return HttpResponseRedirect(request.path)
+
+        return super().delete_view(request, object_id, extra_context)
+
+    def delete_model(self, request: HttpRequest, obj: PostCategory) -> None:
+        post_count = Post.objects.filter(category_id=obj.pk).count()
+        self._delete_category_with_related_posts(obj, post_count)
+
     def get_actions(self, request: HttpRequest) -> dict[str, Any]:
         actions = super().get_actions(request)
         actions.pop("delete_selected", None)
@@ -282,70 +411,44 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         queryset: QuerySet[PostCategory],
     ) -> None:
         selected_ids = sorted(queryset.values_list("id", flat=True))
-        now_ts = int(time.time())
-        confirm_payload = request.session.get(self.DELETE_CONFIRM_SESSION_KEY)
+        token = self._generate_token(selected_ids)
 
-        if isinstance(confirm_payload, dict):
-            ts = confirm_payload.get("ts")
-            if ts is None or now_ts - int(ts) > self.DELETE_CONFIRM_TTL_SECONDS:
-                request.session.pop(self.DELETE_CONFIRM_SESSION_KEY, None)
-                confirm_payload = None
+        selected_count = len(selected_ids)
+        preview_names = list(queryset.values_list("name", flat=True)[: self.PREVIEW_LIMIT])
+        safe_names = [name if name else "(이름 없음)" for name in preview_names]
 
-        is_confirmed = (
-                isinstance(confirm_payload, dict)
-                and confirm_payload.get("ids") == selected_ids
-                and now_ts - int(confirm_payload.get("ts", 0)) <= self.DELETE_CONFIRM_TTL_SECONDS
+        if selected_count > self.PREVIEW_LIMIT:
+            preview_text = f"{', '.join(safe_names)} 외 {selected_count - self.PREVIEW_LIMIT}개"
+        else:
+            preview_text = ", ".join(safe_names)
+
+        confirmed = self._require_delete_confirmation(
+            request=request,
+            confirm_scope="bulk",
+            token=token,
+            message=f"⚠️ 삭제 확인: [{preview_text}] 동일 항목 선택 후 다시 한 번 액션을 실행하면 삭제됩니다. (3분 이내)",
         )
-
-        if not is_confirmed:
-            request.session[self.DELETE_CONFIRM_SESSION_KEY] = {
-                "ids": selected_ids,
-                "ts": now_ts,
-            }
-
-            preview_limit = 3
-            selected_count = len(selected_ids)
-            preview_names = list(queryset.values_list("name", flat=True)[:preview_limit])
-            safe_names = [name if name else "(이름 없음)" for name in preview_names]
-
-            if selected_count > preview_limit:
-                preview_text = f"{', '.join(safe_names)} 외 {selected_count - preview_limit}개"
-            else:
-                preview_text = ", ".join(safe_names)
-
-            self.message_user(
-                request,
-                f"⚠️ 삭제 확인: [{preview_text}] 동일 항목 선택 후 다시 한 번 액션을 실행하면 삭제됩니다. (3분 이내)",
-                level=messages.WARNING,
-            )
+        if not confirmed:
             return
-
-        request.session.pop(self.DELETE_CONFIRM_SESSION_KEY, None)
 
         deleted_category_count = 0
         deleted_post_count = 0
         blocked_categories: list[str] = []
 
         for category in queryset:
-            post_queryset = Post.objects.filter(category=category)
-            post_count = post_queryset.count()
+            post_count = Post.objects.filter(category_id=category.pk).count()
 
             if category.status and post_count > 0:
                 blocked_categories.append(f"{category.name}({post_count}개)")
                 continue
 
-            with transaction.atomic():
-                if not category.status and post_count > 0:
-                    post_queryset.delete()
-                    deleted_post_count += post_count
-
-                category.delete()
-                deleted_category_count += 1
+            deleted_post_count += self._delete_category_with_related_posts(category, post_count)
+            deleted_category_count += 1
 
         if blocked_categories:
             self.message_user(
                 request,
-                f"활성 카테고리이며 게시글이 있어 삭제하지 않았습니다: " f"{', '.join(blocked_categories)}",
+                f"활성 카테고리이며 게시글이 있어 삭제할 수 없습니다: {', '.join(blocked_categories)}",
                 level=messages.WARNING,
             )
 
@@ -378,6 +481,7 @@ class PostLikeAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return False
 
     def has_delete_permission(self, request: HttpRequest, obj: PostLike | None = None) -> bool:
+        # Post 상세 삭제 과정에서는 PostLike 삭제가 필요하므로 허용
         if "/admin/community/post/" in request.path:
             return True
         return False

@@ -27,7 +27,7 @@ class QuestionListService:
         if answer_status == "answered":
             queryset = queryset.filter(answer_count__gt=0)
         elif answer_status == "unanswered":
-            queryset = queryset.filter(answer_count__gt=0)
+            queryset = queryset.filter(answer_count=0)
 
         if sort_by == "views":
             return queryset.order_by("-view_count", "-created_at")

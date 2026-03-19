@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.http import Http404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
@@ -40,6 +41,7 @@ class QuestionListView(APIView):
             OpenApiParameter(name="search", description="검색어", type=str),
             OpenApiParameter(name="answer_status", description="답변 상태(answered/unanswered)", type=str),
             OpenApiParameter(name="sort", description="정렬(latest: 최신순, views: 조회수순)", type=str),
+            OpenApiParameter(name="size", description="한 페이지 당 보여줄 개수", type=int),
             OpenApiParameter(name="page", description="페이지 번호", type=int),
         ],
         responses={200: QuestionListSerializer(many=True)},
@@ -111,7 +113,7 @@ class QuestionListDetailView(APIView):
             # 시리얼라이저 반환
             serializer = self.serializer_class(question)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception:
+        except Http404:
             return Response({"error_detail": "존재하지 않는 질문입니다."}, status=status.HTTP_404_NOT_FOUND)
 
     @extend_schema(

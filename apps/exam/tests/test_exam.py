@@ -1,26 +1,46 @@
-from typing import IO, Any, Dict
+import json
+from typing import IO, Any, Dict, cast
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
 
 from apps.exam.models.exam_models import Exam
+from apps.exam.models.exam_question_models import ExamQuestion
 from apps.subject.models.choices import SubjectStatus
 from apps.subject.models.course_models import Course
 from apps.subject.models.subject_models import Subject
-from apps.exam.models.exam_question_models import ExamQuestion
+from apps.users.models.models import User
 
 
 class ExamAPITest(APITestCase):
     # 속성 타입 선언 (attr-defined 에러 해결)
+    admin_user: User
     course: Course
     subject: Subject
+    cls_exam: Exam
+    question: ExamQuestion
     exam_data: Dict[str, Any]
     url: str
 
     @classmethod
     def setUpTestData(cls) -> None:  # 리턴 타입 명시
         """테스트 전체에서 사용할 기본 데이터 설정"""
+        user_manager: Any = User.objects
+        cls.admin_user = user_manager.create(
+            email="admin@example.com",
+            nickname="tadmin",
+            name="관리자",
+            role="ADMIN",
+            status="ACTIVATED",
+            birthday="1990-01-01",
+            phone_number="01000000000",
+        )
+        cls.admin_user.is_staff = True
+        cls.admin_user.save()
+
         cls.course = Course.objects.create(
             name="testcourse",
             tag="tst",
@@ -47,16 +67,13 @@ class ExamAPITest(APITestCase):
             question="testquestion",
             prompt="testprompt",
             blank_count=0,
-            options_json={
-                "정적 타이핑 언어",
-                "인터프리터 언어",
-                "컴파일 방식만을 지원",
-                "메모리 직접 관리 필요"
-            },
+            options_json=json.dumps(
+                ["정적 타이핑 언어", "인터프리터 언어", "컴파일 방식만을 지원", "메모리 직접 관리 필요"]
+            ),
             type="SINGLE_CHOICE",
             answer="testanswer",
             point=10,
-            explanation = "testexplanation",
+            explanation="testexplanation",
         )
 
         cls.exam_data = {
@@ -66,6 +83,10 @@ class ExamAPITest(APITestCase):
         }
 
         cls.url = reverse("exam-list-create")
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.client.force_authenticate(user=cast(AbstractBaseUser, self.admin_user))
 
     def test_create_exam_success(self) -> None:
         """쪽지시험 생성 성공 테스트 (POST)"""
@@ -134,9 +155,7 @@ class ExamAPITest(APITestCase):
             question="testquestion2",
             prompt="testprompt2",
             blank_count=0,
-            options_json={
-                "testoption1",
-            },
+            options_json=json.dumps(["testoption1"]),
             type="SINGLE_CHOICE",
             answer="testanswer2",
             point=5,
@@ -182,3 +201,8 @@ class ExamAPITest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_unauthenticated_access_fail(self) -> None:
+        """인증되지 않은 사용자의 접근 실패 테스트"""
+        self.client.force_authenticate(user=None)  # 인증 해제
+        response = self.client.post(self.url, self.exam_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

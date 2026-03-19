@@ -1,7 +1,8 @@
 from typing import Any
 
-from django.shortcuts import get_object_or_404
 from django.db.models import Count, QuerySet
+from django.shortcuts import get_object_or_404
+
 from apps.exam.models.exam_models import Exam
 from apps.subject.models.subject_models import Subject
 
@@ -11,34 +12,34 @@ class ExamService:
     # 쪽지시험 생성
     @staticmethod
     def create_exam(data: dict[str, Any]) -> Exam:
-        subject_data = data.pop('subject')
-        subject_id = subject_data['id']
+        subject_data = data.pop("subject")
+        subject_id = subject_data["id"]
         subject = get_object_or_404(Subject, id=subject_id)
         return Exam.objects.create(subject=subject, **data)
 
     # 쪽지시험 목록조회
     @staticmethod
     def get_exam_queryset(params: dict[str, Any]) -> QuerySet[Exam]:
-        queryset = Exam.objects.select_related('subject').annotate(
-            question_count=Count('examquestion', distinct=True),
-            submit_count=Count('id', distinct=True)  # 실제 운영 시 제출 모델 연결
+        queryset = Exam.objects.select_related("subject").annotate(
+            question_count=Count("examquestion", distinct=True),
+            submit_count=Count("id", distinct=True),  # 실제 운영 시 제출 모델 연결
         )
 
-        search_keyword = params.get('search_keyword')
+        search_keyword = params.get("search_keyword")
         if search_keyword:
             queryset = queryset.filter(title__icontains=search_keyword)
 
-        subject_id = params.get('subject_id')
+        subject_id = params.get("subject_id")
         if subject_id:
             queryset = queryset.filter(subject_id=subject_id)
 
-        sort_field = params.get('sort', 'created_at')
-        order = params.get('order', 'desc')
-        order_prefix = '-' if order == 'desc' else ''
+        sort_field = params.get("sort", "created_at")
+        order = params.get("order", "desc")
+        order_prefix = "-" if order == "desc" else ""
 
-        allowed_sorts = ['id', 'title', 'created_at', 'updated_at', 'question_count']
+        allowed_sorts = ["id", "title", "created_at", "updated_at", "question_count"]
         if sort_field not in allowed_sorts:
-            sort_field = 'created_at'
+            sort_field = "created_at"
 
         queryset = queryset.order_by(f"{order_prefix}{sort_field}")
 
@@ -48,8 +49,7 @@ class ExamService:
     @staticmethod
     def get_exam_detail(exam_id: int) -> Exam:
         return get_object_or_404(
-            Exam.objects.select_related('subject').prefetch_related('examquestion_set'),
-            id=exam_id
+            Exam.objects.select_related("subject").prefetch_related("examquestion_set"), id=exam_id
         )
 
     # 쪽지시험 수정
@@ -58,9 +58,9 @@ class ExamService:
         exam = get_object_or_404(Exam, id=exam_id)
 
         # subject_id가 포함된 경우 처리
-        if 'subject' in data:
-            subject_data = data.pop('subject')
-            subject_id = subject_data['id']
+        if "subject" in data:
+            subject_data = data.pop("subject")
+            subject_id = subject_data["id"]
             exam.subject = get_object_or_404(Subject, id=subject_id)
 
         # title, thumbnail_img_url(source 매핑됨) 등 나머지 필드 업데이트

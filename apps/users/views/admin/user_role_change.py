@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -35,6 +36,12 @@ class AdminUserRoleUpdateAPIView(APIView):
         if not serializer.is_valid():
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        update_user_role(user_id=account_id, role_data=serializer.validated_data)
+        try:
+            update_user_role(user_id=account_id, role_data=serializer.validated_data)
+        except IntegrityError:
+            return Response(
+                {"error_detail": "존재하지 않는 기수(cohort) 또는 코스(course) 정보입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response({"detail": "권한이 변경되었습니다."}, status=status.HTTP_200_OK)

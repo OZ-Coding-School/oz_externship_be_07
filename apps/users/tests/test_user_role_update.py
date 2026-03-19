@@ -84,7 +84,9 @@ class AdminUserRoleUpdateTest(TestCase):
         self.assertEqual(self.target_user.role, UserRole.TA)
 
         # TA 테이블 데이터 확인
-        self.assertTrue(TrainingAssistant.objects.filter(user=self.target_user, cohort=self.cohort).exists())
+        self.assertTrue(
+            TrainingAssistant.objects.filter(user_id=self.target_user.id, cohort_id=self.cohort.id).exists()
+        )
 
     def test_update_role_fail_400_bad_request(self) -> None:
         """400 Bad Request: 조교(TA) 변경 시 기수 정보가 없는 경우"""
@@ -93,14 +95,12 @@ class AdminUserRoleUpdateTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("cohort_id", response.json()["error_detail"])
-        self.assertEqual(
-            response.json()["error_detail"]["cohort_id"][0], "조교 또는 수강생으로 변경 시 필수 필드입니다."
-        )
+        self.assertEqual(response.json()["error_detail"]["cohort_id"][0], "기수 정보가 필요합니다.")
 
     def test_update_role_fail_401_unauthorized(self) -> None:
         """401 Unauthorized: 로그인을 하지 않고 접근하는 경우"""
         self.client.force_authenticate(user=None)  # 인증 해제
-        response = self.client.patch(self.url, data={"role": UserRole.STUDENT})
+        response = self.client.patch(self.url, data={"role": UserRole.STUDENT, "cohort_id": self.cohort.id})
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 

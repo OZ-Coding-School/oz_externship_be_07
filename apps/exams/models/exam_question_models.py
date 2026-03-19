@@ -1,8 +1,8 @@
 from django.db import models
 
 from apps.core.models import TimeStampModel
-from apps.exam.models.choices import QuestionType
-from apps.exam.models.exam_models import Exam
+from apps.exams.models.choices import QuestionType
+from apps.exams.models.exam_models import Exam
 
 
 class ExamQuestion(TimeStampModel):

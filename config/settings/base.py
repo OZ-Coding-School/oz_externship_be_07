@@ -38,7 +38,7 @@ CUSTOM_APPS: list[str] = [
     "apps.users",
     "apps.questions",
     "apps.chatbot",
-    "apps.exam",
+    "apps.exams",
     "apps.subject",
     "apps.community",
 ]
@@ -115,7 +115,7 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     },
-    "exam": {
+    "exams": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/2",
         "OPTIONS": {

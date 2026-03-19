@@ -1,21 +1,25 @@
-from typing import List
-
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
 
 from apps.questions.models import QuestionCategories, Questions
-from apps.questions.services.questions_create_services import QuestionCreateService
 from apps.users.choices import UserRole
 from apps.users.models.models import User
 
 
 class QuestionCreateTest(TestCase):
-    category: QuestionCategories
+    large_category: QuestionCategories
+    medium_category: QuestionCategories
+    small_category: QuestionCategories
     student: User
-    teacher: User
+    url: str
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.category = QuestionCategories.objects.create(name="Django")
+        cls.large_category = QuestionCategories.objects.create(name="백엔드", parent=None)
+        cls.medium_category = QuestionCategories.objects.create(name="Django", parent=cls.large_category)
+        cls.small_category = QuestionCategories.objects.create(name="ORM", parent=cls.medium_category)
         cls.student = User.objects.create_user(
             email="test@test.com",
             password="pw1234",
@@ -26,26 +30,40 @@ class QuestionCreateTest(TestCase):
             gender="MALE",
             role=UserRole.STUDENT,
         )
-        cls.teacher = User.objects.create_user(
-            email="testuser@test.com",
-            password="pw1234",
-            name="백엔드",
-            nickname="프론트",
-            phone_number="010-5678-1234",
-            birthday="2000-04-01",
-            gender="MALE",
-            role=UserRole.TA,
-        )
+        cls.url = reverse("questions:question_list_create")
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.student)
 
     # 질문 등록 성공 코드
-    def test_create_question_success(self) -> None:
-        image_urls: List[str] = ["http://test.com/img1.png"]
-
-        question: Questions = QuestionCreateService.create_question(
-            user=self.student,
-            category_id=self.category.id,
-            title="이것은 테스트입니다.",
-            content="테스트 코드 작성 어렵다.",
-            image_url_list=image_urls,
-        )
+    def test_create_question_view_success(self) -> None:
+        self.client.force_login(user=self.student)
+        data = {
+            "category_id": self.small_category.id,
+            "title": "Test Title",
+            "content": "test content",
+            "image_url": ["http://test.com/img1.png"],
+        }
+        response = self.client.post(self.url, data=data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Questions.objects.count(), 1)
+
+    # 대분류 선택만 하고 ValueError 발생
+    def test_create_question_view_fail_category(self) -> None:
+        self.client.force_login(user=self.student)
+        data = {
+            "category_id": self.large_category.id,
+            "title": "Fail Test",
+            "content": "중분류, 소분류도 선택해주셔야 합니다.",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error_detail", response.data if hasattr(response, "data") else response.json())
+
+    # serializer 검증실패
+    def test_create_view_validation_error(self) -> None:
+        self.client.force_login(user=self.student)
+        data = {"title": "필수 필드 누락 데이터"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

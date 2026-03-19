@@ -22,13 +22,19 @@ class QuestionCreateService:
 
         if user.is_authenticated == False:
             raise PermissionDenied("로그인이 필요한 서비스 입니다.")
-        # if user.role != "STUDENT":
-        #     raise PermissionDenied("질문 등록은 수강생 권한이 필요합니다.")
+        if user.role != "STUDENT":
+            raise PermissionDenied("질문 등록은 수강생 권한이 필요합니다.")
 
         category = get_object_or_404(QuestionCategories, id=category_id)
 
+        is_sub_category = category.parent is not None and category.parent.parent is not None
+
+        if not is_sub_category:
+            raise ValueError("대분류, 중뷴류, 소분류를 선택해주셔야 합니다.")
+
         question = Questions.objects.create(author=user, category=category, title=title, content=content)
         if image_url_list:
-            for url in image_url_list:
-                QuestionImages.objects.create(questions=question, img_url=url)
+            QuestionImages.objects.bulk_create(
+                [QuestionImages(questions=question, img_url=url) for url in image_url_list]
+            )
         return question

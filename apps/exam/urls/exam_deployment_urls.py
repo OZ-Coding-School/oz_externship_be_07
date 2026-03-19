@@ -8,8 +8,8 @@ from apps.exam.views.exam_deployment_views import (
 )
 
 urlpatterns = [
-    path("api/v1/exams/deployments", DeploymentListAPIView.as_view()),
-    path("api/v1/exams/deployments/<int:deployment_id>/check-code", DeploymentCheckCodeAPIView.as_view()),
-    path("api/v1/exams/deployments/<int:deployment_id>", DeploymentDetailAPIView.as_view()),
-    path("api/v1/exams/deployments/<int:deployment_id>/status", DeploymentStatusAPIView.as_view()),
+    path("exams/deployments", DeploymentListAPIView.as_view()),
+    path("exams/deployments/<int:deployment_id>/check-code", DeploymentCheckCodeAPIView.as_view()),
+    path("exams/deployments/<int:deployment_id>", DeploymentDetailAPIView.as_view()),
+    path("exams/deployments/<int:deployment_id>/status", DeploymentStatusAPIView.as_view()),
 ]

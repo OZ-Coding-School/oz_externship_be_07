@@ -91,11 +91,12 @@ class CommentViewSet(
             post_id=post_id,
             author=request.user,
             content=serializer.validated_data.get("content"),
-            tagged_user_ids=serializer.validated_data.get("tagged_user_ids", []),
         )
-        result_data = self.get_serializer(comment).data
 
-        return Response({"detail": "댓글이 등록되었습니다.", "data": result_data}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"detail": "댓글이 등록되었습니다.", "data": self.get_serializer(comment).data},
+            status=status.HTTP_201_CREATED,
+        )
 
     @extend_schema(
         summary="댓글 수정",
@@ -117,8 +118,16 @@ class CommentViewSet(
         },
     )
     def update(self, request: Request, post_id: int, comment_id: int) -> Response:
+        instance = self.get_object()
 
-        return Response({}, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        comment = CommentService.update_comment_tags(
+            comment_id=instance.id, content=serializer.validated_data.get("content")
+        )
+
+        return Response({"detail": "댓글이 수정되었습니다.", "data": self.get_serializer(comment).data})
 
     @extend_schema(
         summary="댓글 삭제",
@@ -131,5 +140,8 @@ class CommentViewSet(
         },
     )
     def destroy(self, request: Request, post_id: int, comment_id: int) -> Response:
+        instance = self.get_object()
 
-        return Response({}, status=status.HTTP_200_OK)
+        CommentService.delete_comment_tags(comment_id=instance.id)
+
+        return Response({"detail": "댓글이 삭제되었습니다."}, status=status.HTTP_200_OK)

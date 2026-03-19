@@ -1,7 +1,9 @@
-from typing import Any
+from typing import Any, cast
+from urllib.parse import urlparse
 
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
+from django.db.models import Count, Q, QuerySet
 from django.http import HttpRequest
 from django.utils.html import format_html
 from django.utils.text import Truncator
@@ -9,6 +11,11 @@ from django.utils.text import Truncator
 from apps.community.models.category_model import PostCategory
 from apps.community.models.comment_model import CommentTag, PostComment
 from apps.community.models.post_model import Post, PostAttachment, PostImage, PostLike
+
+
+def _is_safe_external_url(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
 class PostImageInline(admin.TabularInline):  # type: ignore[type-arg]
@@ -20,7 +27,7 @@ class PostImageInline(admin.TabularInline):  # type: ignore[type-arg]
 
     @admin.display(description="미리보기")
     def image_thumbnail(self, obj: PostImage) -> str:
-        if not obj.img_url:
+        if not obj.img_url or not _is_safe_external_url(obj.img_url):
             return "-"
         return format_html(
             '<a href="{}" target="_blank" rel="noopener noreferrer">'
@@ -41,7 +48,7 @@ class PostAttachmentInline(admin.TabularInline):  # type: ignore[type-arg]
 
     @admin.display(description="다운로드")
     def file_download(self, obj: PostAttachment) -> str:
-        if not obj.file_url:
+        if not obj.file_url or not _is_safe_external_url(obj.file_url):
             return "-"
         extension = obj.file_name.rsplit(".", 1)[-1].upper() if "." in obj.file_name else "FILE"
         display_name = Truncator(obj.file_name).chars(26)
@@ -56,22 +63,53 @@ class PostAttachmentInline(admin.TabularInline):  # type: ignore[type-arg]
         )
 
 
+class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
+    model = PostComment
+    extra = 0
+    fields = ("id", "author", "content_preview", "created_at")
+    readonly_fields = ("id", "author", "content_preview", "created_at")
+    show_change_link = True
+
+    @admin.display(description="댓글 내용")
+    def content_preview(self, obj: PostComment) -> str:
+        text = (obj.content or "").replace("\n", " ")
+        return Truncator(text).chars(16)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
+        queryset = cast(QuerySet[PostComment], super().get_queryset(request))
+        return queryset.select_related("author")
+
+
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
-    list_display = ("id", "title", "author", "view_count", "category", "is_notice", "is_visible", "created_at")
+    AUTOCOMPLETE_APP_LABEL = "community"
+    AUTOCOMPLETE_MODEL_NAME = "postcomment"
+    AUTOCOMPLETE_FIELD_NAME = "post"
+    AUTOCOMPLETE_LIMIT = 5
+
+    list_display = (
+        "id",
+        "title",
+        "author",
+        "view_count",
+        "like_count",
+        "category",
+        "is_notice",
+        "is_visible",
+        "created_at",
+    )
     list_display_links = ("id", "title")
     list_editable = ("is_notice", "is_visible")
     search_fields = ("title", "content", "author__nickname")
     list_filter = ("category", "is_notice", "is_visible")
-    list_select_related = ("author", "category")
     raw_id_fields = ("author",)
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("like_count", "created_at", "updated_at")
     fieldsets = (
         ("기본 정보", {"fields": ("title", "author", "category")}),
         ("내용", {"fields": ("content",)}),
-        ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
+        ("운영", {"fields": ("view_count", "like_count", "is_notice", "is_visible")}),
         ("일시", {"fields": ("created_at", "updated_at")}),
     )
 
@@ -84,31 +122,55 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             )
         return self.fieldsets
 
+    def _is_postcomment_post_autocomplete_request(self, request: HttpRequest) -> bool:
+        return (
+            request.path.endswith("/autocomplete/")
+            and request.GET.get("app_label") == self.AUTOCOMPLETE_APP_LABEL
+            and request.GET.get("model_name") == self.AUTOCOMPLETE_MODEL_NAME
+            and request.GET.get("field_name") == self.AUTOCOMPLETE_FIELD_NAME
+        )
+
     def get_search_results(
         self,
         request: HttpRequest,
-        queryset: Any,
+        queryset: QuerySet[Post],
         search_term: str,
-    ) -> tuple[Any, bool]:
-        is_post_filter_autocomplete = (
-            request.path.endswith("/autocomplete/")
-            and request.GET.get("app_label") == "community"
-            and request.GET.get("model_name") == "postcomment"
-            and request.GET.get("field_name") == "post"
-        )
+    ) -> tuple[QuerySet[Post], bool]:
+        if not self._is_postcomment_post_autocomplete_request(request):
+            base_qs, use_distinct = super().get_search_results(request, queryset, search_term)
+            return cast(QuerySet[Post], base_qs), use_distinct
 
-        if not is_post_filter_autocomplete:
-            return super().get_search_results(request, queryset, search_term)
-
-        queryset = queryset.order_by("-created_at", "-id")
+        ordered_qs = queryset.order_by("-created_at", "-id")
         keyword = search_term.strip()
 
         if keyword == "":
-            return queryset[:5], False
+            return ordered_qs[: self.AUTOCOMPLETE_LIMIT], False
 
-        return queryset.filter(title__icontains=keyword), False
+        return ordered_qs.filter(title__icontains=keyword), False
 
-    inlines = [PostAttachmentInline, PostImageInline]
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
+        queryset = (
+            super()
+            .get_queryset(request)
+            .select_related("author", "category")
+            .annotate(like_count_value=Count("likes", filter=Q(likes__is_liked=True), distinct=True))
+        )
+        return cast(QuerySet[Post], queryset)
+
+    @admin.display(description="좋아요 수", ordering="like_count_value")
+    def like_count(self, obj: Post) -> int:
+        return int(getattr(obj, "like_count_value", 0))
+
+    def get_deleted_objects(self, objs: Any, request: HttpRequest) -> tuple[Any, Any, Any, Any]:
+        deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
+
+        warning = "⚠️주의: 게시글 삭제 시 해당 게시글의 댓글이 함께 삭제되며 되돌릴 수 없습니다."
+        if warning not in deleted_objects:
+            deleted_objects.append(warning)
+
+        return deleted_objects, model_count, perms_needed, protected
+
+    inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
 
 
 class CommentTagInline(admin.TabularInline):  # type: ignore[type-arg]
@@ -131,7 +193,6 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     search_fields = ("content", "author__nickname", "post__title")
     list_filter = (PostCommentPostAutocompleteFilter,)
     show_facets = admin.ShowFacets.NEVER
-    list_select_related = ("author", "post")
     raw_id_fields = ("author", "post")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
@@ -149,6 +210,10 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 ("내용", {"fields": ("content",)}),
             )
         return self.fieldsets
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
+        queryset = super().get_queryset(request).select_related("author", "post")
+        return cast(QuerySet[PostComment], queryset)
 
     inlines = [CommentTagInline]
 
@@ -199,4 +264,6 @@ class PostLikeAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return False
 
     def has_delete_permission(self, request: HttpRequest, obj: PostLike | None = None) -> bool:
+        if "/admin/community/post/" in request.path:
+            return True
         return False

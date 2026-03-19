@@ -9,7 +9,7 @@ class CohortStudent(TimeStampModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cohort_students")
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE)
 
-    objects = models.Manager()
+    objects: models.Manager["CohortStudent"] = models.Manager()
 
     class Meta:
         db_table = "cohort_students"

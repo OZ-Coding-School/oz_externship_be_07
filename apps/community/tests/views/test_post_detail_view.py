@@ -64,8 +64,7 @@ class PostDetailAPIViewTest(TestCase):
         self.assertEqual(data["title"], self.post.title)
         self.assertEqual(data["content"], self.post.content)
         self.assertEqual(data["author"]["id"], self.user.id)
-        self.assertEqual(data["category"]["id"], self.category.id)
-        self.assertEqual(data["category"]["name"], self.category.name)
+        self.assertEqual(data["category_name"], self.category.name)
         for field in ("view_count", "like_count", "created_at", "updated_at"):
             self.assertIn(field, data)
 
@@ -88,10 +87,10 @@ class PostDetailAPIViewTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         url = reverse("post-detail", kwargs={"post_id": self.post.id})
-        data = {"title": "테스트 수정 title", "content": "테스트 수정 content", "category": self.category.pk}
+        data = {"title": "테스트 수정 title", "content": "테스트 수정 #content", "category_id": self.category.pk}
         response = self.client.put(url, data, content_type="application/json")
         get_data = response.json()
-
+        print(get_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_data["title"], data["title"])
         self.assertEqual(get_data["content"], data["content"])
@@ -112,6 +111,7 @@ class PostDetailAPIViewTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         url = reverse("post-detail", kwargs={"post_id": self.post.id})
+
         response = self.client.delete(url)
         get_data = response.json()
 

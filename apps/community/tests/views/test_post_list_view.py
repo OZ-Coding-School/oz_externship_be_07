@@ -164,12 +164,11 @@ class PostListAPIViewTest(TestCase):
         data = {
             "title": "테스트2 title",
             "content": "테스트2 content",
-            "category": self.category.pk,
+            "category_id": self.category.pk,
             "author": self.user.pk,
         }
         response = self.client.post(url, data, content_type="application/json")
         get_data = response.json()
-
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(get_data["detail"], "게시글이 성공적으로 등록되었습니다.")
         self.assertIn("pk", get_data)

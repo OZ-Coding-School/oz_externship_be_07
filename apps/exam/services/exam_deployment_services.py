@@ -157,9 +157,7 @@ class ExamDeploymentService:
     def get_user_deployments(cls, *, user_id: int, page: int, status: str, page_size: int = 10) -> dict[str, Any]:
         user = cls._get_user_or_raise(user_id=user_id)
 
-        cohort_ids = list(
-            CohortStudent.objects.filter(user=user).values_list("cohort_id", flat=True)
-        )
+        cohort_ids = list(CohortStudent.objects.filter(user=user).values_list("cohort_id", flat=True))
 
         if not cohort_ids:
             raise DeploymentForbiddenError("권한이 없습니다.")
@@ -263,9 +261,7 @@ class ExamDeploymentService:
                     "point": int(question.get("point", 0)),
                     "prompt": question.get("prompt"),
                     "blank_count": blank_count,
-                    "options": cls._parse_options(
-                        raw_options=question.get("options", question.get("options_json"))
-                    ),
+                    "options": cls._parse_options(raw_options=question.get("options", question.get("options_json"))),
                     "answer_input": answer_map.get(
                         question_id,
                         cls._get_default_answer_input(

@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class LogoutView(APIView):
@@ -27,11 +29,20 @@ class LogoutView(APIView):
         },
     )
     def post(self, request: Request) -> Response:
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)  # type: ignore
+                token.blacklist()
+            except TokenError:
+                pass
+
         response = Response(
             {"detail": "성공적으로 로그아웃 되었습니다."},
             status=status.HTTP_200_OK,
         )
 
-        response.delete_cookie(key="refresh_token", samesite="Lax")
+        response.delete_cookie(key="refresh_token", path="/", samesite="Lax")
 
         return response

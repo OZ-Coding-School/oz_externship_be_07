@@ -45,7 +45,7 @@ class StudentListItemSerializer(serializers.Serializer[Any]):
         choices=["ACTIVATED", "DEACTIVATED", "WITHDREW"],
     )
     role = serializers.ChoiceField(
-        choices=["USER", "ADMIN", "ST"],
+        choices=["U", "TA", "OM", "ADMIN", "ST"],
     )
     in_progress_course = StudentInProgressCourseWrapperSerializer(allow_null=True)
     created_at = serializers.DateTimeField()
@@ -69,7 +69,3 @@ class CohortStudentItemSerializer(serializers.Serializer[Any]):
     value = serializers.CharField()
     label = serializers.CharField()  # type: ignore[assignment]
 
-
-# 공통 에러 응답
-class ErrorDetailStringSerializer(serializers.Serializer[Any]):
-    error_detail = serializers.CharField()

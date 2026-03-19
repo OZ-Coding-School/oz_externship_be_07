@@ -8,6 +8,7 @@ from apps.users.views.re_token_views import ReTokenView
 from apps.users.views.send_email_views import EmailSendView
 from apps.users.views.send_sms_views import SmsSendView
 from apps.users.views.signup_views import SignUpView
+from apps.users.views.social_login_views import KakaoLoginView, NaverLoginView
 from apps.users.views.verify_email_views import EmailVerifyView
 from apps.users.views.verify_sms_views import SmsVerifyView
 
@@ -22,6 +23,8 @@ urlpatterns = [
     path("login", LoginView.as_view(), name="login"),
     path("me/refresh", ReTokenView.as_view(), name="token-refresh"),
     path("logout", LogoutView.as_view(), name="logout"),
+    path("social-login/kakao/callback", KakaoLoginView.as_view(), name="kakao-login"),
+    path("social-login/naver/callback", NaverLoginView.as_view(), name="naver-login"),
     path("find-email/", FindEmailView.as_view(), name="find-email"),
     path("enroll-student/", EnrollStudentAPIView.as_view(), name="enroll-student"),
 ]

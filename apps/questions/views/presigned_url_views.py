@@ -4,15 +4,14 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from apps.core.presigned_url import BasePresignedUrlView
-
-from ..serializers.answers_serializers import PresignedUrlRequestSerializer
+from apps.core.serializers.presigned_url_serializer import PresignedUrlRequestSerializer
+from apps.core.views.presigned_url import BasePresignedUrlView
 
 
 class AnswerPresignedUrlView(BasePresignedUrlView):
     folder = "answers"
 
-    # 답변 이미지 Presigned URL 발급ㄴ
+    # 답변 이미지 Presigned URL 발급
     @extend_schema(
         summary="답변 이미지 Presigned URL 발급",
         tags=["Answers"],
@@ -33,7 +32,7 @@ class QuestionPresignedUrlView(BasePresignedUrlView):
     # 질문 이미지 Presigned URL 발급
     @extend_schema(
         summary="질문 이미지 Presigned URL 발급",
-        tags=["qna"],
+        tags=["Questions"],
         request=PresignedUrlRequestSerializer,
         responses={
             200: OpenApiResponse(description="Presigned URL 발급 성공"),

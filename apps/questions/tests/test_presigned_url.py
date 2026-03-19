@@ -5,7 +5,6 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.questions.models import QuestionCategories, Questions
 from apps.users.models.models import User
 
 
@@ -54,7 +53,7 @@ class AnswerPresignedUrlTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error_detail"], "지원하지 않는 파일 형식입니다.")
 
-    # 파일명 x → 400
+    # 파일명 없음 → 400
     def test_presigned_url_no_file_name(self) -> None:
         response = self.client.put(
             "/api/v1/qna/answers/presigned-url",
@@ -73,7 +72,7 @@ class AnswerPresignedUrlTest(TestCase):
             {"Error": {"Code": "NoSuchBucket", "Message": "bucket not found"}},
             "generate_presigned_url",
         )
-        with patch("boto3.client", return_value=mock_s3):
+        with patch("apps.core.utils.s3_handler.boto3.client", return_value=mock_s3):
             response = self.client.put(
                 "/api/v1/qna/answers/presigned-url",
                 {"file_name": "test.png"},

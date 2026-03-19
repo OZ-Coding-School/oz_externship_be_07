@@ -1,3 +1,4 @@
+import time
 from typing import Any, cast
 from urllib.parse import urlparse
 
@@ -113,6 +114,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         ("운영", {"fields": ("view_count", "like_count", "is_notice", "is_visible")}),
         ("일시", {"fields": ("created_at", "updated_at")}),
     )
+    inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
 
     def get_fieldsets(self, request: HttpRequest, obj: Post | None = None) -> Any:
         if obj is None:
@@ -176,8 +178,6 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
         return deleted_objects, model_count, perms_needed, protected
 
-    inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
-
 
 class CommentTagInline(admin.TabularInline):  # type: ignore[type-arg]
     model = CommentTag
@@ -208,6 +208,7 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         ("내용", {"fields": ("content",)}),
         ("일시", {"fields": ("created_at", "updated_at")}),
     )
+    inlines = [CommentTagInline]
 
     def get_fieldsets(self, request: HttpRequest, obj: PostComment | None = None) -> Any:
         if obj is None:
@@ -221,8 +222,6 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         queryset = super().get_queryset(request).select_related("author", "post")
         return cast(QuerySet[PostComment], queryset)
 
-    inlines = [CommentTagInline]
-
     @admin.display(description="댓글내용", ordering="content")
     def content_preview(self, obj: PostComment) -> str:
         text = (obj.content or "").replace("\n", " ")
@@ -231,6 +230,9 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
 @admin.register(PostCategory)
 class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    DELETE_CONFIRM_SESSION_KEY = "community_category_delete_confirm"
+    DELETE_CONFIRM_TTL_SECONDS = 180
+
     list_display = ("id", "name", "status")
     list_display_links = ("id", "name")
     list_editable = ("status",)
@@ -268,12 +270,58 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 level=messages.WARNING,
             )
 
+    def get_actions(self, request: HttpRequest) -> dict[str, Any]:
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)
+        return actions
+
     @admin.action(description="카테고리 상태 및 게시글유무에 따른 삭제 처리")
     def delete_category_by_policy(
         self,
         request: HttpRequest,
         queryset: QuerySet[PostCategory],
     ) -> None:
+        selected_ids = sorted(queryset.values_list("id", flat=True))
+        now_ts = int(time.time())
+        confirm_payload = request.session.get(self.DELETE_CONFIRM_SESSION_KEY)
+
+        if isinstance(confirm_payload, dict):
+            ts = confirm_payload.get("ts")
+            if ts is None or now_ts - int(ts) > self.DELETE_CONFIRM_TTL_SECONDS:
+                request.session.pop(self.DELETE_CONFIRM_SESSION_KEY, None)
+                confirm_payload = None
+
+        is_confirmed = (
+                isinstance(confirm_payload, dict)
+                and confirm_payload.get("ids") == selected_ids
+                and now_ts - int(confirm_payload.get("ts", 0)) <= self.DELETE_CONFIRM_TTL_SECONDS
+        )
+
+        if not is_confirmed:
+            request.session[self.DELETE_CONFIRM_SESSION_KEY] = {
+                "ids": selected_ids,
+                "ts": now_ts,
+            }
+
+            preview_limit = 3
+            selected_count = len(selected_ids)
+            preview_names = list(queryset.values_list("name", flat=True)[:preview_limit])
+            safe_names = [name if name else "(이름 없음)" for name in preview_names]
+
+            if selected_count > preview_limit:
+                preview_text = f"{', '.join(safe_names)} 외 {selected_count - preview_limit}개"
+            else:
+                preview_text = ", ".join(safe_names)
+
+            self.message_user(
+                request,
+                f"⚠️ 삭제 확인: [{preview_text}] 동일 항목 선택 후 다시 한 번 액션을 실행하면 삭제됩니다. (3분 이내)",
+                level=messages.WARNING,
+            )
+            return
+
+        request.session.pop(self.DELETE_CONFIRM_SESSION_KEY, None)
+
         deleted_category_count = 0
         deleted_post_count = 0
         blocked_categories: list[str] = []
@@ -297,7 +345,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         if blocked_categories:
             self.message_user(
                 request,
-                f"🔺활성 카테고리이며 게시글이 있어 삭제하지 않았습니다: " f"{', '.join(blocked_categories)}",
+                f"활성 카테고리이며 게시글이 있어 삭제하지 않았습니다: " f"{', '.join(blocked_categories)}",
                 level=messages.WARNING,
             )
 
@@ -307,11 +355,6 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 f"삭제 완료: 카테고리 {deleted_category_count}개, 게시글 {deleted_post_count}개",
                 level=messages.SUCCESS,
             )
-
-    def get_actions(self, request: HttpRequest) -> dict[str, Any]:
-        actions = super().get_actions(request)
-        actions.pop("delete_selected", None)
-        return actions
 
 
 @admin.register(PostLike)

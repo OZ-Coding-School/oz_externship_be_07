@@ -27,8 +27,6 @@ from apps.community.services.post_service import (
     build_post_detail_response,
     file_synchronization,
     get_post_detail,
-    post_delete_sum,
-    update_post,
 )
 
 
@@ -98,7 +96,13 @@ class PostDetailAPIView(APIView):
         viewer_key = build_post_viewer_key(request)
         increase_post_view_count(post.id, viewer_key)
 
-        response_data = build_post_detail_response(post)
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(' ')[1]
+        else:
+            token = None
+
+        response_data = build_post_detail_response(post, token)
         response_data["view_count"] = get_merged_post_view_count(
             post.id,
             post.view_count,
@@ -145,19 +149,6 @@ class PostDetailAPIView(APIView):
 
         response_serializer = PostLikeResponseSerializer(dto)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(' ')[1]
-        else:
-            token = None
-        return (
-            Response({"error_detail": "게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-            if post is None
-            else Response(
-                PostDetailSerializer(build_post_detail_response(post,token)).data,
-                status=status.HTTP_200_OK,
-            )
-        )
 
     @extend_schema(
         summary="게시글 수정",
@@ -179,11 +170,19 @@ class PostDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        file_synchronization(post)
+
         updated_post = get_post_detail(post_id)
         if updated_post is None:
             return self._not_found_response()
 
-        response_serializer = PostDetailSerializer(build_post_detail_response(updated_post))
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(' ')[1]
+        else:
+            token = None
+
+        response_serializer = PostDetailSerializer(build_post_detail_response(updated_post), token)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(

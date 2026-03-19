@@ -140,36 +140,12 @@ def update_post(instance: Post, title: str, content: str, category: PostCategory
 
     instance.save()
 
-
-def delete_post(instance: Post) -> None:
-    """본문 삭제 실행 함수"""
-
-    instance.delete()
-
-
-def post_delete_sum(instance: Post) -> None:
-    """파일/이미지/게시판 삭제 함수 호출 함수"""
-
-    post_file_delete(instance)
-    post_image_delete(instance)
-    delete_post(instance)
-
-
-def post_file_delete(instance: Post) -> None:
-    """PostAttachment DB 데이터 삭제 함수"""
-
-    if instance:
-        attachments = PostAttachment.objects.filter(post=instance)
-        file_delete(list(attachments.values_list("file_url", flat=True)))
-        attachments.delete()
-
-
-def post_image_delete(instance: Post) -> None:
+def post_image_delete(instance: Post, token: str) -> None:
     """PostImage DB 데이터 삭제 함수"""
 
     if instance:
         images = PostImage.objects.filter(post=instance)
-        file_delete(list(images.values_list("img_url", flat=True)))
+        file_delete(list(images.values_list("img_url", flat=True)), token)
         images.delete()
 
 
@@ -184,14 +160,14 @@ def post_file_save(instance: Post) -> None:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 
-def file_synchronization(instance: Post) -> None:
+def file_synchronization(instance: Post, token: str) -> None:
     """본문 이미지 제거 및 추가시 삭제 추가 함수"""
 
     current_image_urls = re.findall(r"!\[.*?\]\((https?://[^\)]+)\)", instance.content)
     old_image_urls = re.findall(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
-    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=old_image_urls)
-    file_delete(list(delete_image.values_list("img_url", flat=True)))
 
+    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=old_image_urls)
+    file_delete(list(delete_image.values_list("img_url", flat=True)), token)
     delete_image.delete()
 
     existing_db_urls = PostImage.objects.filter(post=instance).values_list("img_url", flat=True)
@@ -200,10 +176,11 @@ def file_synchronization(instance: Post) -> None:
             PostImage.objects.create(post=instance, img_url=url)
 
     current_attachments = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^\)]+)\)", instance.content)
-    current_att_urls = [url for name, url in current_attachments]
+    old_file_urls = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
+    old_att_urls = [url for name, url in old_file_urls]
 
-    delete_filee = PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls)
-    file_delete(list(delete_filee.values_list("file_url", flat=True)))
+    delete_filee = PostAttachment.objects.filter(post=instance).exclude(file_url__in=old_att_urls)
+    file_delete(list(delete_filee.values_list("file_url", flat=True)), token)
 
     delete_filee.delete()
 
@@ -213,14 +190,15 @@ def file_synchronization(instance: Post) -> None:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 
-def file_delete(url: list[str]) -> None:
+def file_delete(url: list[str], token: str) -> None:
     """실제 파일 삭제 함수"""
 
     for file_url in url:
         key_url = file_url.split("com/")
         if len(key_url) > 1:
-            if default_storage.exists(key_url[1]):
-                default_storage.delete(key_url[1])
+            aws_url = presigned_url(key_url[1], token)
+            if default_storage.exists(aws_url):
+                default_storage.delete(aws_url)
 
 def post_detail_file_presigned_url(content: str, token: str) -> str:
     select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", content)
@@ -229,6 +207,7 @@ def post_detail_file_presigned_url(content: str, token: str) -> str:
         key_url = url.split("com/")[1]
         presigned_url(key_url, token)
         get_url = presigned_url(key_url, token)
+
         content.replace(f"{is_image}[{name}]({url})", f"![{name})]({get_url})")
 
     return content

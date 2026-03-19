@@ -92,8 +92,10 @@ class AdminUserRoleUpdateTest(TestCase):
         response = self.client.patch(self.url, data=data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("cohort", response.json()["error_detail"])
-        self.assertEqual(response.json()["error_detail"]["cohort"][0], "조교 권한으로 변경 시 필수 필드입니다.")
+        self.assertIn("cohort_id", response.json()["error_detail"])
+        self.assertEqual(
+            response.json()["error_detail"]["cohort_id"][0], "조교 또는 수강생으로 변경 시 필수 필드입니다."
+        )
 
     def test_update_role_fail_401_unauthorized(self) -> None:
         """401 Unauthorized: 로그인을 하지 않고 접근하는 경우"""

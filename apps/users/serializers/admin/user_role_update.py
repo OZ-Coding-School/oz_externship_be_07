@@ -17,7 +17,7 @@ class AdminUserRoleUpdateSerializer(serializers.Serializer[dict[str, Any]]):
 
         if role in [UserRole.TA, UserRole.STUDENT]:
             if not cohort_id:
-                raise serializers.ValidationError({"cohort_id": ["조교 또는 수강생 권한으로 변경 시 필수 필드입니다."]})
+                raise serializers.ValidationError({"cohort_id": ["조교 또는 수강생으로 변경 시 필수 필드입니다."]})
 
         elif role in [UserRole.LC, UserRole.OM]:
             if not assigned_courses:

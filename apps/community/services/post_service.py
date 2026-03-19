@@ -182,13 +182,19 @@ def file_delete(url: list[str], token: str, base_url: str) -> None:
 
 
 def post_detail_file_presigned_url(content: str, token: str | None, base_url: str) -> str:
-    select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", content)
-
+    select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)", content)
     for is_image, name, url in select_file:
-        key_url = url.split("com/")[1]
-        get_url = presigned_url(key_url, token, base_url)
+        if is_image != "!":
+            is_image = ''
 
-        content.replace(f"{is_image}[{name}]({url})", f"![{name})]({get_url})")
+        if "?" in url:
+            key_url = url.split("?")[0]
+            content = content.replace(f"{is_image}[{name}]({key_url})", f"{is_image}[{name}]({url})")
+        else:
+            key_url = url.split("com/")[1]
+            get_url = presigned_url(key_url, token, base_url)
+
+            content =content.replace(f"{is_image}[{name}]({url})", f"{is_image}[{name}]({get_url})")
 
     return content
 

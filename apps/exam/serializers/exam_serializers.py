@@ -18,14 +18,6 @@ class ExamCreateUpdateSerializer(serializers.ModelSerializer[Exam]):
         fields = ["id", "title", "subject_id", "thumbnail_img", "thumbnail_img_url"]
         read_only_fields = ["id", "thumbnail_img_url"]
 
-    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
-        title = data.get("title")
-        subject_id = data.get("subject_id")
-
-        if not title:
-            raise serializers.ValidationError({"error_detail": "유효하지 않은 시험 생성 요청입니다"})
-        if not subject_id:
-            raise serializers.ValidationError({"error_detail": "유효하지 않은 시험 생성 요청입니다"})
 
 # 쪽지시험 목록조회 API - page, size, total_count는 pagenation에서 제공
 class ExamListSerializer(serializers.ModelSerializer[Exam]):
@@ -73,7 +65,7 @@ class ExamSubjectDetailSerializer(serializers.ModelSerializer[Subject]):
 # 쪽지시험 상세 조회 API
 class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
     subject = ExamSubjectDetailSerializer(read_only=True)
-    questions = ExamQuestionDetailSerializer(many=True)
+    questions = ExamQuestionDetailSerializer(source="examquestion_set", many=True)
 
     class Meta:
         model = Exam

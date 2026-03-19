@@ -1,7 +1,12 @@
+from typing import Any
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
+from drf_spectacular.utils import OpenApiResponse, extend_schema, OpenApiParameter
 
 from apps.exam.services.exam_crud_services import ExamService
 from apps.exam.serializers.exam_serializers import (
@@ -17,16 +22,22 @@ class ExamPagination(PageNumberPagination):
     page_query_param = "page"
     max_page_size = 100
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, data: Any) -> Response:
+
+        page_number = self.page.number if self.page else 1
+        total_count = self.page.paginator.count if self.page else 0
+
         return Response({
-            'page': self.page.number,
-            'size': self.get_page_size(self.request),
-            'total_count': self.page.paginator.count,
+            'page': page_number,
+            'size': self.get_page_size(self.request) if self.request else self.page_size,
+            'total_count': total_count,
             'exams': data
         })
 
 
 class ExamListCreateAPIView(APIView):
+    permission_classes = [AllowAny]
+
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 목록 조회",
@@ -46,8 +57,8 @@ class ExamListCreateAPIView(APIView):
             403: OpenApiResponse(description="쪽지시험 목록 조회 권한이 없습니다."),
         }
     )
-    def get(self, request):
-        queryset = ExamService.get_exam_queryset(request.query_params)
+    def get(self, request: Request) -> Response:
+        queryset = ExamService.get_exam_queryset(request.query_params.dict())
         paginator = ExamPagination()
         page = paginator.paginate_queryset(queryset, request)
 
@@ -56,7 +67,13 @@ class ExamListCreateAPIView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = ExamListSerializer(queryset, many=True)
-        return Response({'exams': serializer.data})
+
+        return Response({
+            'page': 1,
+            'size': len(serializer.data),
+            'total_count': len(serializer.data),
+            'exams': serializer.data
+        }, status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=["exams"],
@@ -72,7 +89,7 @@ class ExamListCreateAPIView(APIView):
             409: "동일한 이름의 시험이 이미 존재합니다."
         }
     )
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         serializer = ExamCreateUpdateSerializer(data=request.data)
         if serializer.is_valid():
             exam = ExamService.create_exam(serializer.validated_data)
@@ -82,13 +99,15 @@ class ExamListCreateAPIView(APIView):
 
 
 class ExamDetailAPIView(APIView):
+    permission_classes = [AllowAny]
+
     @extend_schema(
         tags=["exams"],
         summary="쪽지시험 상세 조회",
         description="시험의 상세 정보와 포함된 질문 리스트를 조회합니다.",
         responses={200: ExamDetailSerializer}
     )
-    def get(self, request, exam_id):
+    def get(self, request: Request, exam_id: int) -> Response:
         exam = ExamService.get_exam_detail(exam_id)
         serializer = ExamDetailSerializer(exam)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -107,7 +126,7 @@ class ExamDetailAPIView(APIView):
             409: "동일한 이름의 시험이 이미 존재합니다."
         }
     )
-    def put(self, request, exam_id):
+    def put(self, request: Request, exam_id: int) -> Response:
         serializer = ExamCreateUpdateSerializer(data=request.data, partial=True)
         if serializer.is_valid():
             exam = ExamService.update_exam(exam_id, serializer.validated_data)
@@ -128,7 +147,5 @@ class ExamDetailAPIView(APIView):
 
         }
     )
-    def delete(self, request, exam_id):
-        """DELETE: 삭제"""
-        ExamService.delete_exam(exam_id)
-        return Response({"id": exam_id }, status=status.HTTP_201_CREATED)
+    def delete(self, request: Request, exam_id:int) -> Response:
+        return Response({"id": ExamService.delete_exam(exam_id)}, status=status.HTTP_201_CREATED)

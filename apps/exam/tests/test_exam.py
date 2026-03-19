@@ -37,7 +37,7 @@ class ExamAPITest(APITestCase):
 
         cls.exam_data = {
             "title": "testexam",
-            "subject": cls.subject,
+            "subject_id": cls.subject.pk,
             "thumbnail_img": "amazonaws.com/test_img_url",
         }
 
@@ -48,7 +48,7 @@ class ExamAPITest(APITestCase):
 
         data = self.exam_data.copy()
         data["title"] = "testtest"
-        data["subject"] = self.subject.pk
+        data["subject_id"] = self.subject.pk
         data["thumbnail_img"] = "oz_test/test_img_url"
 
         response = self.client.post(self.url, data, format="json")
@@ -92,7 +92,7 @@ class ExamAPITest(APITestCase):
 
     def test_get_exam_detail_success(self) -> None:
         """쪽지시험 상세 조회 성공 테스트"""
-        exam = Exam.objects.create(title="시험 1", subject=self.subject)
+        exam = Exam.objects.create(title="시험 1", subject_id=self.subject.pk)
         url = reverse("exam-detail", kwargs={"exam_id": exam.pk})
 
         response = self.client.get(url)
@@ -103,7 +103,7 @@ class ExamAPITest(APITestCase):
 
     def test_put_exam_detail_success(self) -> None:
         """쪽지시험 수정 성공 테스트 (제목 및 이미지 변경)"""
-        exam = Exam.objects.create(title="test시험", subject=self.subject)
+        exam = Exam.objects.create(title="test시험", subject_id=self.subject.pk)
 
         url = reverse("exam-detail", kwargs={"exam_id": exam.pk})
         img = "update_image/test_img_url"
@@ -118,11 +118,11 @@ class ExamAPITest(APITestCase):
 
     def test_delete_exam_success(self) -> None:
         """쪽지시험 삭제 성공 테스트"""
-        exam = Exam.objects.create(title="delete_test시험", subject=self.subject)
+        exam = Exam.objects.create(title="delete_test시험", subject_id=self.subject.pk)
         url = reverse("exam-detail", kwargs={"exam_id": exam.pk})
         response = self.client.delete(url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["id"], exam.pk)
         # 삭제 후 데이터베이스 확인
         self.assertFalse(Exam.objects.filter(pk=exam.pk).exists())

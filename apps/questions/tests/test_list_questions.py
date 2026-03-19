@@ -29,6 +29,9 @@ class QuestionListTest(TestCase):
             author=user, category=cls.cat1, title="백엔드 질문", content="백엔드는 어떤걸 의미하나요?"
         )
 
+    def setUp(self) -> None:
+        self.client = APIClient()
+
     def test_get_question_list_filtering(self) -> None:
         queryset: QuerySet[Questions] = QuestionListService.get_question_list(category_id=self.cat1.id)
         self.assertEqual(queryset.count(), 1)

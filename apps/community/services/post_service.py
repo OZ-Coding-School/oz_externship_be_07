@@ -97,19 +97,19 @@ def get_post_detail(post_id: int) -> Post | None:
     )
 
 
-def build_post_detail_response(post: Any) -> dict[str, Any]:
+def build_post_detail_response(post: Post) -> dict[str, Any]:
     return {
         "id": post.id,
-        "title": post.title,
         "author": {
             "id": post.author.id,
             "nickname": post.author.nickname,
             "profile_img_url": post.author.profile_img_url,
         },
-        "category": {"id": post.category.id, "name": post.category.name},
+        "category_name": post.category.name,
+        "title": post.title,
         "content": post.content,
         "view_count": post.view_count,
-        "like_count": post.like_count,
+        "like_count": getattr(post, "like_count", 0),
         "created_at": post.created_at,
         "updated_at": post.updated_at,
     }

@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import Count
 
 from apps.community.models.post_model import Post, PostLike
 from apps.community.serializers.post_like_serializer import PostLikeResponseDTO
@@ -21,7 +20,10 @@ def set_post_like(post_id: int, user_id: int, is_liked: bool) -> PostLikeRespons
         post_like.is_liked = is_liked
         post_like.save(update_fields=["is_liked", "updated_at"])
 
-    like_count = PostLike.objects.filter(post_id=post_id, is_liked=True).aggregate(count=Count("id"))["count"] or 0
+    like_count = PostLike.objects.filter(
+        post_id=post_id,
+        is_liked=True,
+    ).count()
 
     return PostLikeResponseDTO(
         post_id=post_id,

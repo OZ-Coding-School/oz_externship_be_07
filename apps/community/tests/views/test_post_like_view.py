@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any, ClassVar
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -13,21 +14,28 @@ User = get_user_model()
 
 
 class PostLikeAPIViewTest(APITestCase):
-    def setUp(self) -> None:
-        self.user = User.objects.create_user(
+    user: ClassVar[Any]
+    category: ClassVar[PostCategory]
+    post: ClassVar[Post]
+    url: ClassVar[str]
+    not_found_url: ClassVar[str]
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.user = User.objects.create_user(
             email="test@example.com",
             password="password123",
             birthday=date(2000, 1, 1),
         )
-        self.category = PostCategory.objects.create(name="테스트")
-        self.post = Post.objects.create(
-            author=self.user,
-            category=self.category,
+        cls.category = PostCategory.objects.create(name="테스트")
+        cls.post = Post.objects.create(
+            author=cls.user,
+            category=cls.category,
             title="테스트 게시글",
             content="내용",
         )
-        self.url = reverse("post-detail", kwargs={"post_id": self.post.id})
-        self.not_found_url = reverse("post-detail", kwargs={"post_id": 9999})
+        cls.url = reverse("post-detail", kwargs={"post_id": cls.post.id})
+        cls.not_found_url = reverse("post-detail", kwargs={"post_id": 9999})
 
     def _login(self) -> None:
         self.client.force_authenticate(user=self.user)
@@ -55,8 +63,8 @@ class PostLikeAPIViewTest(APITestCase):
         )
 
     def test_post_unlike_success(self) -> None:
-        self._login()
         PostLike.objects.create(post=self.post, user=self.user, is_liked=True)
+        self._login()
 
         response = self._post_like(False)
 
@@ -66,7 +74,6 @@ class PostLikeAPIViewTest(APITestCase):
 
     def test_post_like_unauthorized(self) -> None:
         response = self._post_like(True)
-
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_post_like_not_found(self) -> None:

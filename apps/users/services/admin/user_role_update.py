@@ -36,8 +36,9 @@ def update_user_role(user_id: int, role_data: dict[str, Any]) -> None:
 
     # [LC] 러닝코치
     elif new_role == UserRole.LC:
-        for course_id in role_data.get("assigned_courses", []):
-            LearningCoach.objects.create(user=user, course_id=course_id)
+        LearningCoach.objects.bulk_create(
+            [LearningCoach(user=user, course_id=cid) for cid in role_data.get("assigned_courses", [])]
+        )
 
     # [OM] 운영매니저
     elif new_role == UserRole.OM:

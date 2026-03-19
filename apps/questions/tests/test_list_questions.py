@@ -41,7 +41,7 @@ class QuestionListTest(TestCase):
         self.assertEqual(question.view_count, initial_views + 1)
 
     def test_get_questions_invalid_category_id(self) -> None:
-        url = reverse("questions:question_list")
+        url = reverse("questions:question_list_create")
         response: Response = self.api_client.get(url, {"category_id": "abc"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error_detail"], "유효하지 않은 카테고리 ID입니다.")

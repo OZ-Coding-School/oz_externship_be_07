@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 
 from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin, messages
+from django.db import transaction
 from django.db.models import Count, Q, QuerySet
 from django.http import HttpRequest
 from django.utils.html import format_html
@@ -130,12 +131,10 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             and request.GET.get("field_name") == self.AUTOCOMPLETE_FIELD_NAME
         )
 
-
     def formfield_for_foreignkey(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Any:
         if db_field.name == "category":
             kwargs["queryset"] = PostCategory.objects.filter(status=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
 
     def get_search_results(
         self,
@@ -171,9 +170,9 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     def get_deleted_objects(self, objs: Any, request: HttpRequest) -> tuple[Any, Any, Any, Any]:
         deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
 
-        warning = "⚠️주의: 게시글 삭제 시 해당 게시글의 댓글이 함께 삭제되며 되돌릴 수 없습니다."
-        if warning not in deleted_objects:
-            deleted_objects.append(warning)
+        warning_message = "⚠️주의: 게시글 삭제 시 해당 게시글의 댓글이 함께 삭제되며 되돌릴 수 없습니다."
+        if warning_message not in deleted_objects:
+            deleted_objects.append(warning_message)
 
         return deleted_objects, model_count, perms_needed, protected
 
@@ -239,6 +238,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_filter = ("status",)
     ordering = ("id",)
     readonly_fields = ("created_at", "updated_at")
+    actions = ("delete_category_by_policy",)
     fieldsets = (
         ("기본 정보", {"fields": ("name", "status")}),
         ("일시", {"fields": ("created_at", "updated_at")}),
@@ -250,23 +250,68 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return self.fieldsets
 
     def save_model(self, request: HttpRequest, obj: PostCategory, form: Any, change: bool) -> None:
-        should_warning = False
+        should_warn = False
         hidden_post_count = 0
 
         if change:
             previous_category = PostCategory.objects.filter(pk=obj.pk).only("status").first()
             if previous_category and previous_category.status and not obj.status:
                 hidden_post_count = Post.objects.filter(category_id=obj.pk, is_visible=True).count()
-                should_warning = hidden_post_count > 0
+                should_warn = hidden_post_count > 0
 
         super().save_model(request, obj, form, change)
 
-        if should_warning:
+        if should_warn:
             self.message_user(
                 request,
                 f"카테고리를 비활성화했습니다. ❗현재 공개 상태 게시글 {hidden_post_count}건은 사용자 화면에서 비노출됩니다.",
                 level=messages.WARNING,
             )
+
+    @admin.action(description="카테고리 상태 및 게시글유무에 따른 삭제 처리")
+    def delete_category_by_policy(
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[PostCategory],
+    ) -> None:
+        deleted_category_count = 0
+        deleted_post_count = 0
+        blocked_categories: list[str] = []
+
+        for category in queryset:
+            post_queryset = Post.objects.filter(category=category)
+            post_count = post_queryset.count()
+
+            if category.status and post_count > 0:
+                blocked_categories.append(f"{category.name}({post_count}개)")
+                continue
+
+            with transaction.atomic():
+                if not category.status and post_count > 0:
+                    post_queryset.delete()
+                    deleted_post_count += post_count
+
+                category.delete()
+                deleted_category_count += 1
+
+        if blocked_categories:
+            self.message_user(
+                request,
+                f"🔺활성 카테고리이며 게시글이 있어 삭제하지 않았습니다: " f"{', '.join(blocked_categories)}",
+                level=messages.WARNING,
+            )
+
+        if deleted_category_count > 0:
+            self.message_user(
+                request,
+                f"삭제 완료: 카테고리 {deleted_category_count}개, 게시글 {deleted_post_count}개",
+                level=messages.SUCCESS,
+            )
+
+    def get_actions(self, request: HttpRequest) -> dict[str, Any]:
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)
+        return actions
 
 
 @admin.register(PostLike)

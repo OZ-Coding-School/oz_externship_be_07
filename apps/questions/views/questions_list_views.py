@@ -51,9 +51,10 @@ class QuestionListView(APIView):
         if category_id_raw:
             try:
                 category_id = int(category_id_raw)
-            except ValueError:
+            except (ValueError, TypeError):
                 return Response(
-                    {"error_detail": "유효하지 않은 카테고리 ID입니다."}, status=status.HTTP_400_BAD_REQUEST
+                    {"error_detail": "유효하지 않은 카테고리 ID입니다. 숫자를 입력해주세요."},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         search_keyword = request.query_params.get("search")

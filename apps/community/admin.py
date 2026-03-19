@@ -2,7 +2,7 @@ from typing import Any, cast
 from urllib.parse import urlparse
 
 from admin_auto_filters.filters import AutocompleteFilter
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Count, Q, QuerySet
 from django.http import HttpRequest
 from django.utils.html import format_html
@@ -248,6 +248,25 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         if obj is None:
             return (("기본 정보", {"fields": ("name", "status")}),)
         return self.fieldsets
+
+    def save_model(self, request: HttpRequest, obj: PostCategory, form: Any, change: bool) -> None:
+        should_warning = False
+        hidden_post_count = 0
+
+        if change:
+            previous_category = PostCategory.objects.filter(pk=obj.pk).only("status").first()
+            if previous_category and previous_category.status and not obj.status:
+                hidden_post_count = Post.objects.filter(category_id=obj.pk, is_visible=True).count()
+                should_warning = hidden_post_count > 0
+
+        super().save_model(request, obj, form, change)
+
+        if should_warning:
+            self.message_user(
+                request,
+                f"카테고리를 비활성화했습니다. ❗현재 공개 상태 게시글 {hidden_post_count}건은 사용자 화면에서 비노출됩니다.",
+                level=messages.WARNING,
+            )
 
 
 @admin.register(PostLike)

@@ -40,11 +40,15 @@ class StudentListItemSerializer(serializers.Serializer[Any]):
     nickname = serializers.CharField()
     name = serializers.CharField()
     phone_number = serializers.CharField()
-    birthday = serializers.CharField()
-    status = serializers.CharField()
-    role = serializers.CharField()
+    birthday = serializers.DateField()
+    status = serializers.ChoiceField(
+        choices=["ACTIVATED", "DEACTIVATED", "WITHDREW"],
+    )
+    role = serializers.ChoiceField(
+        choices=["USER", "ADMIN", "ST"],
+    )
     in_progress_course = StudentInProgressCourseWrapperSerializer(allow_null=True)
-    created_at = serializers.CharField()
+    created_at = serializers.DateTimeField()
 
 
 class StudentListResponseSerializer(serializers.Serializer[Any]):

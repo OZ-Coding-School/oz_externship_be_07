@@ -117,6 +117,8 @@ def build_post_detail_response(post: Post) -> dict[str, Any]:
 
 
 def create_post(author: Any, title: str, content: str, category: PostCategory) -> Post:
+    """게시판 생성 함수"""
+
     return Post.objects.create(
         author=author,
         title=title,
@@ -126,6 +128,8 @@ def create_post(author: Any, title: str, content: str, category: PostCategory) -
 
 
 def update_post(instance: Post, title: str, content: str, category: PostCategory) -> None:
+    """게시판 수정 함수"""
+
     instance.title = title
     instance.content = content
     instance.category = category
@@ -134,16 +138,22 @@ def update_post(instance: Post, title: str, content: str, category: PostCategory
 
 
 def delete_post(instance: Post) -> None:
+    """본문 삭제 실행 함수"""
+
     instance.delete()
 
 
 def post_delete_sum(instance: Post) -> None:
+    """파일/이미지/게시판 삭제 함수 호출 함수"""
+
     post_file_delete(instance)
     post_image_delete(instance)
     delete_post(instance)
 
 
 def post_file_delete(instance: Post) -> None:
+    """PostAttachment DB 데이터 삭제 함수"""
+
     if instance:
         attachments = PostAttachment.objects.filter(post=instance)
         file_delete(list(attachments.values_list("file_url", flat=True)))
@@ -151,6 +161,8 @@ def post_file_delete(instance: Post) -> None:
 
 
 def post_image_delete(instance: Post) -> None:
+    """PostImage DB 데이터 삭제 함수"""
+
     if instance:
         images = PostImage.objects.filter(post=instance)
         file_delete(list(images.values_list("img_url", flat=True)))
@@ -158,6 +170,8 @@ def post_image_delete(instance: Post) -> None:
 
 
 def post_file_save(instance: Post) -> None:
+    """본문에서 마크다운 이미지/파일 url 추출 저장 함수"""
+
     image_url = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", instance.content)
     for is_image, name, url in image_url:
         if is_image == "!":
@@ -167,6 +181,8 @@ def post_file_save(instance: Post) -> None:
 
 
 def file_synchronization(instance: Post) -> None:
+    """본문 이미지 제거 및 추가시 삭제 추가 함수"""
+
     current_image_urls = re.findall(r"!\[.*?\]\((https?://[^\)]+)\)", instance.content)
     delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls)
     file_delete(list(delete_image.values_list("img_url", flat=True)))
@@ -193,6 +209,8 @@ def file_synchronization(instance: Post) -> None:
 
 
 def file_delete(url: list[str]) -> None:
+    """실제 파일 삭제 함수"""
+
     for file_url in url:
         key_url = file_url.split("com/")
         if len(key_url) > 1:

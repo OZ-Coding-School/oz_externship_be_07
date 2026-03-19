@@ -145,6 +145,19 @@ class PostDetailAPIView(APIView):
 
         response_serializer = PostLikeResponseSerializer(dto)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(' ')[1]
+        else:
+            token = None
+        return (
+            Response({"error_detail": "게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            if post is None
+            else Response(
+                PostDetailSerializer(build_post_detail_response(post,token)).data,
+                status=status.HTTP_200_OK,
+            )
+        )
 
     @extend_schema(
         summary="게시글 수정",

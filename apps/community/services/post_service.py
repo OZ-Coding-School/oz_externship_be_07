@@ -1,8 +1,12 @@
+import json
 import re
 from typing import Any, cast
 
+import requests
+from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
+from rest_framework.request import Request
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -98,7 +102,7 @@ def get_post_detail(post_id: int) -> Post | None:
     )
 
 
-def build_post_detail_response(post: Post) -> dict[str, Any]:
+def build_post_detail_response(post: Post, token: str) -> dict[str, Any]:
     return {
         "id": post.id,
         "author": {
@@ -108,7 +112,7 @@ def build_post_detail_response(post: Post) -> dict[str, Any]:
         },
         "category_name": post.category.name,
         "title": post.title,
-        "content": post.content,
+        "content": post_detail_file_presigned_url(post.content, token),
         "view_count": post.view_count,
         "like_count": getattr(post, "like_count", 0),
         "created_at": post.created_at,
@@ -184,7 +188,8 @@ def file_synchronization(instance: Post) -> None:
     """본문 이미지 제거 및 추가시 삭제 추가 함수"""
 
     current_image_urls = re.findall(r"!\[.*?\]\((https?://[^\)]+)\)", instance.content)
-    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls)
+    old_image_urls = re.findall(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
+    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=old_image_urls)
     file_delete(list(delete_image.values_list("img_url", flat=True)))
 
     delete_image.delete()
@@ -216,3 +221,30 @@ def file_delete(url: list[str]) -> None:
         if len(key_url) > 1:
             if default_storage.exists(key_url[1]):
                 default_storage.delete(key_url[1])
+
+def post_detail_file_presigned_url(content: str, token: str) -> str:
+    select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", content)
+
+    for is_image, name, url in select_file:
+        key_url = url.split("com/")[1]
+        presigned_url(key_url, token)
+        get_url = presigned_url(key_url, token)
+        content.replace(f"{is_image}[{name}]({url})", f"![{name})]({get_url})")
+
+    return content
+
+
+def presigned_url(url: str, token: str) -> Any:
+    api_url = f"{settings.API_BASE_URL}api/v1/qna/questions/presigned-url"
+    data = {"file_name": url}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    response = requests.put(api_url, data=data, headers=headers)
+
+    if response.status_code == 200:
+        read_url = response.json().get('presigned_url')
+        return read_url
+    else:
+        return ''

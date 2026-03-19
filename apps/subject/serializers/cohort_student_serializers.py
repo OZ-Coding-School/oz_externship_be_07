@@ -68,4 +68,3 @@ class StudentSubjectScoreItemSerializer(serializers.Serializer[Any]):
 class CohortStudentItemSerializer(serializers.Serializer[Any]):
     value = serializers.CharField()
     label = serializers.CharField()  # type: ignore[assignment]
-

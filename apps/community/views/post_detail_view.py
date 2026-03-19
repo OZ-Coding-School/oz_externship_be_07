@@ -98,11 +98,11 @@ class PostDetailAPIView(APIView):
 
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(' ')[1]
+            token = auth_header.split(" ")[1]
         else:
             token = None
-
-        response_data = build_post_detail_response(post, token)
+        base_url = request.build_absolute_uri("/")
+        response_data = build_post_detail_response(post, token, base_url)
         response_data["view_count"] = get_merged_post_view_count(
             post.id,
             post.view_count,
@@ -178,11 +178,11 @@ class PostDetailAPIView(APIView):
 
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(' ')[1]
+            token = auth_header.split(" ")[1]
         else:
             token = None
-
-        response_serializer = PostDetailSerializer(build_post_detail_response(updated_post), token)
+        base_url = request.build_absolute_uri("/")
+        response_serializer = PostDetailSerializer(build_post_detail_response(updated_post, token, base_url))
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(

@@ -102,7 +102,7 @@ def get_post_detail(post_id: int) -> Post | None:
     )
 
 
-def build_post_detail_response(post: Post, token: str) -> dict[str, Any]:
+def build_post_detail_response(post: Post, token: str | None, base_url: str) -> dict[str, Any]:
     return {
         "id": post.id,
         "author": {
@@ -112,7 +112,7 @@ def build_post_detail_response(post: Post, token: str) -> dict[str, Any]:
         },
         "category_name": post.category.name,
         "title": post.title,
-        "content": post_detail_file_presigned_url(post.content, token),
+        "content": post_detail_file_presigned_url(post.content, token, base_url),
         "view_count": post.view_count,
         "like_count": getattr(post, "like_count", 0),
         "created_at": post.created_at,
@@ -140,14 +140,6 @@ def update_post(instance: Post, title: str, content: str, category: PostCategory
 
     instance.save()
 
-def post_image_delete(instance: Post, token: str) -> None:
-    """PostImage DB 데이터 삭제 함수"""
-
-    if instance:
-        images = PostImage.objects.filter(post=instance)
-        file_delete(list(images.values_list("img_url", flat=True)), token)
-        images.delete()
-
 
 def post_file_save(instance: Post) -> None:
     """본문에서 마크다운 이미지/파일 url 추출 저장 함수"""
@@ -160,29 +152,17 @@ def post_file_save(instance: Post) -> None:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 
-def file_synchronization(instance: Post, token: str) -> None:
+def file_synchronization(instance: Post) -> None:
     """본문 이미지 제거 및 추가시 삭제 추가 함수"""
 
-    current_image_urls = re.findall(r"!\[.*?\]\((https?://[^\)]+)\)", instance.content)
-    old_image_urls = re.findall(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
-
-    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=old_image_urls)
-    file_delete(list(delete_image.values_list("img_url", flat=True)), token)
-    delete_image.delete()
+    current_image_urls = re.findall(r"!\[.*?\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
 
     existing_db_urls = PostImage.objects.filter(post=instance).values_list("img_url", flat=True)
     for url in current_image_urls:
         if url not in existing_db_urls:
             PostImage.objects.create(post=instance, img_url=url)
 
-    current_attachments = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^\)]+)\)", instance.content)
-    old_file_urls = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
-    old_att_urls = [url for name, url in old_file_urls]
-
-    delete_filee = PostAttachment.objects.filter(post=instance).exclude(file_url__in=old_att_urls)
-    file_delete(list(delete_filee.values_list("file_url", flat=True)), token)
-
-    delete_filee.delete()
+    current_attachments = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
 
     existing_att_urls = PostAttachment.objects.filter(post=instance).values_list("file_url", flat=True)
     for name, url in current_attachments:
@@ -190,31 +170,31 @@ def file_synchronization(instance: Post, token: str) -> None:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 
-def file_delete(url: list[str], token: str) -> None:
+def file_delete(url: list[str], token: str, base_url: str) -> None:
     """실제 파일 삭제 함수"""
 
     for file_url in url:
         key_url = file_url.split("com/")
         if len(key_url) > 1:
-            aws_url = presigned_url(key_url[1], token)
+            aws_url = presigned_url(key_url[1], token, base_url)
             if default_storage.exists(aws_url):
                 default_storage.delete(aws_url)
 
-def post_detail_file_presigned_url(content: str, token: str) -> str:
+
+def post_detail_file_presigned_url(content: str, token: str | None, base_url: str) -> str:
     select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", content)
 
     for is_image, name, url in select_file:
         key_url = url.split("com/")[1]
-        presigned_url(key_url, token)
-        get_url = presigned_url(key_url, token)
+        get_url = presigned_url(key_url, token, base_url)
 
         content.replace(f"{is_image}[{name}]({url})", f"![{name})]({get_url})")
 
     return content
 
 
-def presigned_url(url: str, token: str) -> Any:
-    api_url = f"{settings.API_BASE_URL}api/v1/qna/questions/presigned-url"
+def presigned_url(url: str, token: str | None, base_url: str) -> Any:
+    api_url = f"{base_url}api/v1/qna/questions/presigned-url"
     data = {"file_name": url}
     headers = {
         "Authorization": f"Bearer {token}",
@@ -223,7 +203,7 @@ def presigned_url(url: str, token: str) -> Any:
     response = requests.put(api_url, data=data, headers=headers)
 
     if response.status_code == 200:
-        read_url = response.json().get('presigned_url')
+        read_url = response.json().get("presigned_url")
         return read_url
     else:
-        return ''
+        return ""

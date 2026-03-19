@@ -28,6 +28,7 @@ class ExamQuestionUpdateSerializer(ExamQuestionCreateSerializer):
 
 class ExamQuestionResponseSerializer(serializers.ModelSerializer[ExamQuestion]):
     question_id = serializers.IntegerField(source="id")
+    exam_id = serializers.IntegerField(source="exam_id")
     correct_answer = serializers.JSONField(source="answer")
     options = serializers.SerializerMethodField()
 
@@ -35,6 +36,7 @@ class ExamQuestionResponseSerializer(serializers.ModelSerializer[ExamQuestion]):
         model = ExamQuestion
         fields = [
             "question_id",
+            "exam_id",
             "type",
             "question",
             "prompt",
@@ -50,7 +52,7 @@ class ExamQuestionResponseSerializer(serializers.ModelSerializer[ExamQuestion]):
             return None
         try:
             return json.loads(obj.options_json)
-        except (ValueError, TypeError, json.JSONDecodeError):
+        except ValueError:
             return None
 
 

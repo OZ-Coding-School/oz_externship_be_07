@@ -8,6 +8,7 @@ from apps.exam.models.exam_models import Exam
 from apps.subject.models.choices import SubjectStatus
 from apps.subject.models.course_models import Course
 from apps.subject.models.subject_models import Subject
+from apps.exam.models.exam_question_models import ExamQuestion
 
 
 class ExamAPITest(APITestCase):
@@ -35,6 +36,29 @@ class ExamAPITest(APITestCase):
             status=SubjectStatus.ACTIVATED,
         )
 
+        cls.cls_exam = Exam.objects.create(
+            title="testclsexam",
+            subject_id=cls.subject.pk,
+            thumbnail_img_url="amazonaws.com/test_img_url",
+        )
+
+        cls.question = ExamQuestion.objects.create(
+            exam=cls.cls_exam,
+            question="testquestion",
+            prompt="testprompt",
+            blank_count=0,
+            options_json={
+                "정적 타이핑 언어",
+                "인터프리터 언어",
+                "컴파일 방식만을 지원",
+                "메모리 직접 관리 필요"
+            },
+            type="SINGLE_CHOICE",
+            answer="testanswer",
+            point=10,
+            explanation = "testexplanation",
+        )
+
         cls.exam_data = {
             "title": "testexam",
             "subject_id": cls.subject.pk,
@@ -54,7 +78,7 @@ class ExamAPITest(APITestCase):
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Exam.objects.count(), 1)
+        self.assertEqual(Exam.objects.count(), 2)
         self.assertEqual(response.data["title"], "testtest")
         self.assertIn("oz_test", response.data["thumbnail_img_url"])
 
@@ -73,7 +97,7 @@ class ExamAPITest(APITestCase):
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["total_count"], 25)
+        self.assertEqual(response.data["total_count"], 26)
         self.assertEqual(len(response.data["exams"]), 10)
 
         response = self.client.get(self.url, {"page": 2, "size": 5})
@@ -100,6 +124,31 @@ class ExamAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], exam.pk)
         self.assertEqual(response.data["title"], "시험 1")
+
+    def test_get_cls_exam_detail_success(self) -> None:
+        """cls에 선언된 exam 상세조회 성공 테스트"""
+        url = reverse("exam-detail", kwargs={"exam_id": self.cls_exam.pk})
+
+        ExamQuestion.objects.create(
+            exam=self.cls_exam,
+            question="testquestion2",
+            prompt="testprompt2",
+            blank_count=0,
+            options_json={
+                "testoption1",
+            },
+            type="SINGLE_CHOICE",
+            answer="testanswer2",
+            point=5,
+            explanation="testexplanation2",
+        )
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], self.cls_exam.pk)
+        self.assertEqual(response.data["title"], self.cls_exam.title)
+        self.assertEqual(response.data["questions"][1]["question"], "testquestion2")
 
     def test_put_exam_detail_success(self) -> None:
         """쪽지시험 수정 성공 테스트 (제목 및 이미지 변경)"""

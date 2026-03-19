@@ -1,6 +1,7 @@
 import re
 from typing import Any, cast
 
+from django.core.files.storage import default_storage
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 
 from apps.community.models.category_model import PostCategory
@@ -136,24 +137,30 @@ def delete_post(instance: Post) -> None:
     instance.delete()
 
 
-def post_file_delete(instance: Post) -> None:
-    if not instance:
-        attachments = PostAttachment.objects.filter(post=instance)
+def post_delete_sum(instance: Post) -> None:
+    post_file_delete(instance)
+    post_image_delete(instance)
+    delete_post(instance)
 
+
+def post_file_delete(instance: Post) -> None:
+    if instance:
+        attachments = PostAttachment.objects.filter(post=instance)
+        file_delete(list(attachments.values_list("file_url", flat=True)))
         attachments.delete()
 
 
 def post_image_delete(instance: Post) -> None:
-    if not instance:
+    if instance:
         images = PostImage.objects.filter(post=instance)
-
+        file_delete(list(images.values_list("img_url", flat=True)))
         images.delete()
 
 
 def post_file_save(instance: Post) -> None:
     image_url = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", instance.content)
     for is_image, name, url in image_url:
-        if is_image:
+        if is_image == '!':
             PostImage.objects.create(post=instance, img_url=url)
         else:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
@@ -161,9 +168,10 @@ def post_file_save(instance: Post) -> None:
 
 def file_synchronization(instance: Post) -> None:
     current_image_urls = re.findall(r"!\[.*?\]\((https?://[^\)]+)\)", instance.content)
-    image_delete = PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls)
+    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls)
+    file_delete(list(delete_image.values_list("img_url", flat=True)))
 
-    PostImage.objects.filter(post=instance).exclude(img_url__in=current_image_urls).delete()
+    delete_image.delete()
 
     existing_db_urls = PostImage.objects.filter(post=instance).values_list("img_url", flat=True)
     for url in current_image_urls:
@@ -173,11 +181,20 @@ def file_synchronization(instance: Post) -> None:
     current_attachments = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^\)]+)\)", instance.content)
     current_att_urls = [url for name, url in current_attachments]
 
-    file_delete = PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls)
+    delete_filee = PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls)
+    file_delete(list(delete_filee.values_list("file_url", flat=True)))
 
-    PostAttachment.objects.filter(post=instance).exclude(file_url__in=current_att_urls).delete()
+    delete_filee.delete()
 
     existing_att_urls = PostAttachment.objects.filter(post=instance).values_list("file_url", flat=True)
     for name, url in current_attachments:
         if url not in existing_att_urls:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
+
+
+def file_delete(url: list[str]) -> None:
+    for file_url in url:
+        key_url = file_url.split("com/")
+        if len(key_url) > 1:
+            if default_storage.exists(key_url[1]):
+                default_storage.delete(key_url[1])

@@ -13,7 +13,7 @@ class QuestionListService:
         answer_status: str | None = None,
         sort_by: str = "latest",
     ) -> QuerySet[Questions]:
-        queryset = Questions.objects.select_related("category", "author").annotate(answer_count=Count("answer")).all()
+        queryset = Questions.objects.select_related("category", "author").annotate(answer_count=Count("answers")).all()
 
         if category_id:
             category_ids = QuestionCategories.objects.filter(

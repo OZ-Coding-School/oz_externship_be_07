@@ -74,7 +74,7 @@ class ExamService:
 
         title = data.get("title")
         if title and Exam.objects.filter(title=title).exclude(id=exam_id).exists():
-            raise ConflictException(detail="동일한 이름의 시험이 이미 존재합니다.")
+            raise ConflictException(detail="동일한 이름의 쪽지시험이 이미 존재합니다.")
 
         if "subject" in data:
             subject_data = data.pop("subject")

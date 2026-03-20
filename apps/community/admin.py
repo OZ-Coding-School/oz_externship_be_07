@@ -21,6 +21,7 @@ def _is_safe_external_url(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
+
 def _comment_preview(content: str, limit: int = 16) -> str:
     return Truncator((content or "").replace("\n", " ")).chars(limit)
 

@@ -1,14 +1,9 @@
-import json
 import os
-import time
-from collections.abc import Iterator
 from typing import Any
 
 from django.conf import settings
 from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
-from google import genai
-from google.genai import types
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import CursorPagination
@@ -21,7 +16,6 @@ from rest_framework.views import APIView
 from apps.chatbot.exceptions import SessionNotFoundError
 from apps.chatbot.services.chatbot_service import ChatbotService
 
-from .choices import MessageRoleChoices
 from .models import ChatbotCompletions, ChatbotSessions
 from .serializers import (
     ChatbotCompletionReadSerializer,
@@ -38,8 +32,10 @@ class ChatbotCursorPagination(CursorPagination):
 
 class ChatbotSessionListCreateView(generics.ListCreateAPIView[Any]):
     """
+    챗봇 세션 목록 조회 및 생성 API
+
     <GET> /api/v1/chatbot/sessions : 로그인한 사용자의 챗봇 세션 목록 조회
-    <POST> /api/v1/chatbot/sessions : 새 Q&A 챗봇 세션 생성
+    <POST> /api/v1/chatbot/sessions : 새 챗봇 세션 생성
     """
 
     permission_classes = [IsAuthenticated]
@@ -85,11 +81,9 @@ class ChatbotSessionDetailView(generics.DestroyAPIView[Any]):
 class ChatbotCompletionView(APIView):
     """
     <POST> /api/v1/chatbot/sessions/{session_id}/completions : AI 답변 생성, 스트리밍 방식
+    <GET> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 조회
+    <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 삭제 (초기화)
     """
-
-    # <GET> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 조회
-    # todo: <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 삭제 (초기화)
-    # 페이지네이션 할 때 수정
 
     permission_classes = [IsAuthenticated]
 
@@ -131,6 +125,8 @@ class ChatbotCompletionView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        user_message = serializer.validated_data.get("message")
+
         try:
             session = ChatbotService.get_user_sessions(session_id=session_id, user=request.user)
         except SessionNotFoundError as e:
@@ -143,42 +139,18 @@ class ChatbotCompletionView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        user_message = str(serializer.validated_data["message"])
-
         # 사용자 질문 DB에 저장
         ChatbotService.save_user_message(session, user_message)
 
+        # Gemini API와 통신하여 AI 답변을 스트리밍으로 받아옴
+        stream = ChatbotService.stream_gemini_response(
+            session=session,
+            user_message=user_message,
+            api_key=str(api_key),
+        )
+
         return StreamingHttpResponse(
-            self._stream_gemini_response(session, user_message, str(api_key)),
+            stream,
             content_type="text/event-stream",
             status=status.HTTP_201_CREATED,
         )
-
-    def _stream_gemini_response(self, session: ChatbotSessions, user_message: str, api_key: str) -> Iterator[str]:
-
-        client = genai.Client(api_key=api_key)
-        full_response = ""
-
-        try:
-            response = client.models.generate_content_stream(
-                model="gemini-2.5-flash",
-                contents=user_message,
-            )
-
-            for chunk in response:
-                if chunk.text:
-                    full_response += chunk.text
-                    yield f"data: {json.dumps({'content': chunk.text}, ensure_ascii=False)}\n\n"
-
-            ChatbotCompletions.objects.create(
-                session=session,
-                role=MessageRoleChoices.ASSISTANT,
-                message=full_response,
-            )
-
-            yield "data: [DONE]\n\n"
-
-        except Exception as e:
-            error_message = f"AI 모델과 통신 중 오류가 발생했습니다. {str(e)}"
-            yield f"data: {json.dumps({'error_detail': error_message}, ensure_ascii=False)}\n\n"
-            yield f"data: [DONE]\n\n"

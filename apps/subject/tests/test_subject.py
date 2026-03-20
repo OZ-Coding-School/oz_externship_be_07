@@ -10,15 +10,17 @@ from apps.subject.models.subject_models import Subject
 
 
 class SubjectAPITest(APITestCase):
+    """Subject API 테스트"""
 
-    # 클래스 속성 타입 선언
     course: Course
     subject: Subject
     subject_data: dict[str, Any]
-    url: str
+    list_create_url: str
+    scatter_url: str
 
     @classmethod
     def setUpTestData(cls) -> None:
+        """테스트 전체에서 공통으로 사용할 데이터 생성"""
 
         cls.course = Course.objects.create(
             name="testcourse",
@@ -44,7 +46,15 @@ class SubjectAPITest(APITestCase):
             "thumbnail_img_url": "amazonaws.com/test_img_url",
         }
 
-        cls.url = reverse("subject-list-create", kwargs={"course_id": cls.course.pk})
+        cls.list_create_url = reverse(
+            "subject-list-create",
+            kwargs={"course_id": cls.course.pk},
+        )
+
+        cls.scatter_url = reverse(
+            "subject-scatter",
+            kwargs={"subject_id": cls.subject.pk},
+        )
 
     def test_create_subject_success(self) -> None:
         """과목 생성 성공 테스트"""
@@ -54,7 +64,7 @@ class SubjectAPITest(APITestCase):
         data["number_of_days"] = 7
         data["thumbnail_img_url"] = "oz_test/test_img_url"
 
-        response = self.client.post(self.url, data, format="json")
+        response = self.client.post(self.list_create_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -70,7 +80,7 @@ class SubjectAPITest(APITestCase):
         data = self.subject_data.copy()
         data.pop("title")
 
-        response = self.client.post(self.url, data, format="json")
+        response = self.client.post(self.list_create_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -80,9 +90,8 @@ class SubjectAPITest(APITestCase):
         data = self.subject_data.copy()
         data.pop("course_id")
 
-        response = self.client.post(self.url, data, format="json")
+        response = self.client.post(self.list_create_url, data, format="json")
 
-        # course_id 누락 시 400 응답 확인
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_subject_list_success(self) -> None:
@@ -98,7 +107,7 @@ class SubjectAPITest(APITestCase):
                 status=SubjectStatus.ACTIVATED,
             )
 
-        response = self.client.get(self.url)
+        response = self.client.get(self.list_create_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -107,7 +116,7 @@ class SubjectAPITest(APITestCase):
     def test_get_subject_list_contains_created_subject(self) -> None:
         """과목 목록 조회 테스트 - 미리 생성한 과목이 포함되는지 확인"""
 
-        response = self.client.get(self.url)
+        response = self.client.get(self.list_create_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -118,3 +127,19 @@ class SubjectAPITest(APITestCase):
             titles = [item["title"] for item in results]
 
         self.assertIn("testsubject", titles)
+
+    def test_get_subject_scatter_success(self) -> None:
+        """과목 산점도 조회 성공 테스트"""
+
+        response = self.client.get(self.scatter_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_subject_scatter_not_found(self) -> None:
+        """과목 산점도 조회 실패 테스트 - 존재하지 않는 subject_id"""
+
+        url = reverse("subject-scatter", kwargs={"subject_id": 9999})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

@@ -28,10 +28,7 @@ class QuestionCreateService:
 
         category = QuestionCategories.objects.get(id=category_id)
 
-        is_sub_category = (
-            category.parent is not None and
-            category.parent.parent is not None
-        )
+        is_sub_category = category.parent is not None and category.parent.parent is not None
 
         if not is_sub_category:
             raise ValidationError("질문은 소분류 카테고리에 등록해야 합니다.")

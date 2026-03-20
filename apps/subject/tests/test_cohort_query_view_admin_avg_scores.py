@@ -8,7 +8,9 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, force_authenticate
 
-from apps.subject.views.cohort_admin_query_views import AdminCourseCohortAvgScoresAPIView
+from apps.subject.views.cohort_admin_query_views import (
+    AdminCourseCohortAvgScoresAPIView,
+)
 from apps.users.models.models import User
 
 

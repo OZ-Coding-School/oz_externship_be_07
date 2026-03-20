@@ -60,22 +60,26 @@ class AdminCohortCreateAPIViewTests(TestCase):
 
         fake_cohort = type("FakeCohort", (), {"id": 123})()
 
-        with patch(
-            "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.is_valid",
-            return_value=True,
-        ), patch(
-            "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.validated_data",
-            new_callable=lambda: {
-                "course": object(),
-                "number": 15,
-                "max_student": 30,
-                "start_date": date(2025, 11, 1),
-                "end_date": date(2026, 4, 30),
-                "status": "PREPARING",
-            },
-        ), patch(
-            "apps.subject.views.cohort_admin_command_views.CohortService.create_cohort",
-            return_value=fake_cohort,
+        with (
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.is_valid",
+                return_value=True,
+            ),
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.validated_data",
+                new_callable=lambda: {
+                    "course": object(),
+                    "number": 15,
+                    "max_student": 30,
+                    "start_date": date(2025, 11, 1),
+                    "end_date": date(2026, 4, 30),
+                    "status": "PREPARING",
+                },
+            ),
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortService.create_cohort",
+                return_value=fake_cohort,
+            ),
         ):
             response = AdminCohortCreateAPIView.as_view()(request)
 
@@ -96,14 +100,17 @@ class AdminCohortCreateAPIViewTests(TestCase):
         )
         force_authenticate(request, user=self.admin_user)
 
-        with patch(
-            "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.is_valid",
-            return_value=False,
-        ), patch(
-            "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.errors",
-            new_callable=lambda: {
-                "course_id": ["이 필드는 필수 항목입니다."],
-            },
+        with (
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.is_valid",
+                return_value=False,
+            ),
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.errors",
+                new_callable=lambda: {
+                    "course_id": ["이 필드는 필수 항목입니다."],
+                },
+            ),
         ):
             response = AdminCohortCreateAPIView.as_view()(request)
 
@@ -131,32 +138,32 @@ class AdminCohortCreateAPIViewTests(TestCase):
         )
         force_authenticate(request, user=self.admin_user)
 
-        with patch(
-            "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.is_valid",
-            return_value=True,
-        ), patch(
-            "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.validated_data",
-            new_callable=lambda: {
-                "course": object(),
-                "number": 15,
-                "max_student": 30,
-                "start_date": date(2025, 11, 1),
-                "end_date": date(2026, 4, 30),
-            },
-        ), patch(
-            "apps.subject.views.cohort_admin_command_views.CohortService.create_cohort",
-            side_effect=IntegrityError,
+        with (
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.is_valid",
+                return_value=True,
+            ),
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortCreateRequestSerializer.validated_data",
+                new_callable=lambda: {
+                    "course": object(),
+                    "number": 15,
+                    "max_student": 30,
+                    "start_date": date(2025, 11, 1),
+                    "end_date": date(2026, 4, 30),
+                },
+            ),
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortService.create_cohort",
+                side_effect=IntegrityError,
+            ),
         ):
             response = AdminCohortCreateAPIView.as_view()(request)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
-            {
-                "error_detail": {
-                    "number": ["이미 해당 과정에 동일한 기수가 존재합니다."]
-                }
-            },
+            {"error_detail": {"number": ["이미 해당 과정에 동일한 기수가 존재합니다."]}},
         )
 
     def test_returns_403_when_user_is_not_staff(self) -> None:

@@ -113,25 +113,22 @@ class AdminCohortUpdateAPIViewTests(TestCase):
         )
         force_authenticate(request, user=self.admin_user)
 
-        with patch(
-            "apps.subject.views.cohort_admin_command_views.CohortUpdateRequestSerializer.is_valid",
-            return_value=False,
-        ), patch(
-            "apps.subject.views.cohort_admin_command_views.CohortUpdateRequestSerializer.errors",
-            new_callable=lambda: {
-                "end_date": ["종료일은 시작일 이후여야 합니다."]
-            },
+        with (
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortUpdateRequestSerializer.is_valid",
+                return_value=False,
+            ),
+            patch(
+                "apps.subject.views.cohort_admin_command_views.CohortUpdateRequestSerializer.errors",
+                new_callable=lambda: {"end_date": ["종료일은 시작일 이후여야 합니다."]},
+            ),
         ):
             response = AdminCohortUpdateAPIView.as_view()(request, cohort_id=self.cohort.id)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
-            {
-                "error_detail": {
-                    "end_date": ["종료일은 시작일 이후여야 합니다."]
-                }
-            },
+            {"error_detail": {"end_date": ["종료일은 시작일 이후여야 합니다."]}},
         )
 
     def test_returns_400_when_duplicate_cohort_number_exists(self) -> None:
@@ -153,11 +150,7 @@ class AdminCohortUpdateAPIViewTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data,
-            {
-                "error_detail": {
-                    "number": ["이미 해당 과정에 동일한 기수가 존재합니다."]
-                }
-            },
+            {"error_detail": {"number": ["이미 해당 과정에 동일한 기수가 존재합니다."]}},
         )
 
     def test_returns_404_when_cohort_does_not_exist_before_serializer(self) -> None:

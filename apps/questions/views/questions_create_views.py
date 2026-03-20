@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+from django.core.exceptions import ValidationError
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -22,7 +23,7 @@ class QuestionCreateView(APIView):
     serializer_class = QuestionCreateSerializer
 
     @extend_schema(
-        tags=["qna"],
+        tags=["Questions"],
         summary="질문 등록",
         description="카테고리 ID, 제목, 내용, 선택적 이미지url 리시트를 입력해야 질문이 등록됩니다.",
         request=QuestionCreateSerializer,
@@ -52,11 +53,14 @@ class QuestionCreateView(APIView):
             response_serializer = QuestionCreateResponseSerializer(new_question)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-        except ValueError as e:
+        # 카테고리 계층 오류 및 비즈니스 제약 위반
+        except (ValidationError, ValueError) as e:
             return Response({"error_detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # 권한 부족
         except PermissionDenied as e:
             return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
+        # 예상치 못한 서버 에러
         except Exception as e:
             return Response(
-                {"error_detail": "알 수 없는 에러가 발생했습니다."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error_detail": f"에러: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

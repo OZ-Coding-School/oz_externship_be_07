@@ -18,7 +18,6 @@ class ExamBaseAPIView(APIView):
         "DELETE": "유효하지 않은 삭제 요청입니다.",
     }
     def handle_exception(self, exc: Exception) -> Response:
-        print(f"!!! 핸들러 작동 중: {type(exc)} !!!")
         if isinstance(exc, exceptions.ValidationError):
             method = self.request.method
             error_msg = self.validation_error_msgs.get(method, "유효하지 않은 요청입니다.")

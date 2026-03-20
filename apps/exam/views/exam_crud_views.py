@@ -104,7 +104,7 @@ class ExamListCreateAPIView(ExamBaseAPIView):
     )
     def post(self, request: Request) -> Response:
         serializer = ExamCreateUpdateSerializer(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             exam = ExamService.create_exam(serializer.validated_data)
             # 응답 형식: {id, title, subject_id, thumbnail_img_url}
             return Response(ExamCreateUpdateSerializer(exam).data, status=status.HTTP_201_CREATED)
@@ -150,7 +150,7 @@ class ExamDetailAPIView(ExamBaseAPIView):
     )
     def put(self, request: Request, exam_id: int) -> Response:
         serializer = ExamCreateUpdateSerializer(data=request.data, partial=True)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             exam = ExamService.update_exam(exam_id, serializer.validated_data)
             return Response(ExamCreateUpdateSerializer(exam).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -25,6 +25,16 @@ class S3Handler:
             ExpiresIn=expires_in,
         )
 
+    def generate_get_presigned_url(self, key: str, expires_in: int = 1800) -> str:
+        return self.client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": self.bucket_name,
+                "Key": key,
+            },
+            ExpiresIn=expires_in,
+        )
+
     # 이미지 URL 생성
     def get_img_url(self, key: str) -> str:
         return f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{key}"

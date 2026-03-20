@@ -179,7 +179,6 @@ def file_synchronization(instance: Post) -> None:
         if url not in existing_att_urls:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
-
 def post_delete_sum(instance: Post) -> None:
     post_file_delete(instance)
     post_delete(instance)
@@ -251,7 +250,6 @@ def post_update_file_presigned_url(instance: Post) -> None:
         file_delete(set(delete_file.values_list("file_url", flat=True)))
         delete_file.delete()
 
-
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
     try:
@@ -263,4 +261,4 @@ def s3_url(key_url: str) -> str:
     return s3_value
 
 def presigned_url_change(url: str) -> str:
-    return s3_url(url.split("com/")[1])
+    return s3_url(url)

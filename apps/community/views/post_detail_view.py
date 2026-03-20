@@ -96,13 +96,7 @@ class PostDetailAPIView(APIView):
         viewer_key = build_post_viewer_key(request)
         increase_post_view_count(post.id, viewer_key)
 
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-        else:
-            token = None
-        base_url = request.build_absolute_uri("/")
-        response_data = build_post_detail_response(post, token, base_url)
+        response_data = build_post_detail_response(post)
         response_data["view_count"] = get_merged_post_view_count(
             post.id,
             post.view_count,
@@ -176,13 +170,7 @@ class PostDetailAPIView(APIView):
         if updated_post is None:
             return self._not_found_response()
 
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-        else:
-            token = None
-        base_url = request.build_absolute_uri("/")
-        response_serializer = PostDetailSerializer(build_post_detail_response(updated_post, token, base_url))
+        response_serializer = PostDetailSerializer(build_post_detail_response(updated_post))
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(

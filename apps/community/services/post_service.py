@@ -1,12 +1,15 @@
 import json
+import logging
 import re
 from typing import Any, cast
 
+import boto3
 import requests
+from aiohttp import ClientError
+from botocore.config import Config
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
-from rest_framework.request import Request
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -102,7 +105,7 @@ def get_post_detail(post_id: int) -> Post | None:
     )
 
 
-def build_post_detail_response(post: Post, token: str | None, base_url: str) -> dict[str, Any]:
+def build_post_detail_response(post: Post) -> dict[str, Any]:
     return {
         "id": post.id,
         "author": {
@@ -112,7 +115,7 @@ def build_post_detail_response(post: Post, token: str | None, base_url: str) -> 
         },
         "category_name": post.category.name,
         "title": post.title,
-        "content": post_detail_file_presigned_url(post.content, token, base_url),
+        "content": post_detail_file_presigned_url(post.content),
         "view_count": post.view_count,
         "like_count": getattr(post, "like_count", 0),
         "created_at": post.created_at,
@@ -170,18 +173,18 @@ def file_synchronization(instance: Post) -> None:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 
-def file_delete(url: list[str], token: str, base_url: str) -> None:
+def file_delete(url: list[str]) -> None:
     """실제 파일 삭제 함수"""
 
     for file_url in url:
         key_url = file_url.split("com/")
         if len(key_url) > 1:
-            aws_url = presigned_url(key_url[1], token, base_url)
+            aws_url = s3_url(key_url[1])
             if default_storage.exists(aws_url):
                 default_storage.delete(aws_url)
 
 
-def post_detail_file_presigned_url(content: str, token: str | None, base_url: str) -> str:
+def post_detail_file_presigned_url(content: str) -> str:
     select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)", content)
     for is_image, name, url in select_file:
         if is_image != "!":
@@ -192,24 +195,32 @@ def post_detail_file_presigned_url(content: str, token: str | None, base_url: st
             content = content.replace(f"{is_image}[{name}]({key_url})", f"{is_image}[{name}]({url})")
         else:
             key_url = url.split("com/")[1]
-            get_url = presigned_url(key_url, token, base_url)
+            get_url = s3_url(key_url)
 
             content = content.replace(f"{is_image}[{name}]({url})", f"{is_image}[{name}]({get_url})")
 
     return content
 
 
-def presigned_url(url: str, token: str | None, base_url: str) -> Any:
-    api_url = f"{base_url}api/v1/qna/questions/presigned-url"
-    data = {"file_name": url}
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-    response = requests.put(api_url, data=data, headers=headers)
-
-    if response.status_code == 200:
-        read_url = response.json().get("presigned_url")
-        return read_url
-    else:
-        return ""
+def s3_url(key_url: str) -> str:
+    """AWS S3 Presigned url GET"""
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_S3_REGION,
+    )
+    try:
+        s3_value = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": settings.AWS_S3_BUCKET_NAME,
+                "Key": key_url,
+            },
+            ExpiresIn=3600,
+        )
+    except ClientError as e:
+        logger = logging.getLogger(__name__)
+        logger.error(e)
+        return key_url
+    return s3_value

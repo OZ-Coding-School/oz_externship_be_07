@@ -1,6 +1,7 @@
 import logging
 import re
 from typing import Any, cast
+
 from botocore.exceptions import ClientError
 from django.core.files.storage import default_storage
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
@@ -138,6 +139,7 @@ def update_post(instance: Post, title: str, content: str, category: PostCategory
 
     instance.save()
 
+
 def post_delete(instance: Post) -> None:
     instance.delete()
 
@@ -171,9 +173,11 @@ def file_synchronization(instance: Post) -> None:
         if url not in existing_att_urls:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
+
 def post_delete_sum(instance: Post) -> None:
     post_file_delete(instance)
     post_delete(instance)
+
 
 def post_file_delete(instance: Post) -> None:
     """PostImage DB 데이터 삭제 함수"""
@@ -187,6 +191,7 @@ def post_file_delete(instance: Post) -> None:
         file_delete(set(file.values_list("file_url", flat=True)))
         file.delete()
 
+
 def file_delete(url: set[str]) -> None:
     """실제 파일 삭제 함수"""
 
@@ -195,6 +200,7 @@ def file_delete(url: set[str]) -> None:
         if len(key_url) > 1:
             if default_storage.exists(key_url[1]):
                 default_storage.delete(key_url[1])
+
 
 def post_detail_file_presigned_url(content: str) -> str:
     """Presigned url 주소 변환"""
@@ -223,10 +229,11 @@ def post_detail_file_presigned_url(content: str) -> str:
 
     return content
 
+
 def post_update_file_presigned_url(instance: Post) -> None:
     old_file_urls = re.findall(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
-    image_urls = [match[2] for match in old_file_urls if match[0] == '!']
-    file_urls = [match[2] for match in old_file_urls if match[0] == '']
+    image_urls = [match[2] for match in old_file_urls if match[0] == "!"]
+    file_urls = [match[2] for match in old_file_urls if match[0] == ""]
 
     delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=image_urls)
     if delete_image:
@@ -242,7 +249,7 @@ def post_update_file_presigned_url(instance: Post) -> None:
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
     try:
-        s3_value = S3Handler.generate_get_presigned_url( key_url)
+        s3_value = S3Handler().generate_get_presigned_url(key_url)
     except ClientError as e:
         logger = logging.getLogger(__name__)
         logger.error(e)

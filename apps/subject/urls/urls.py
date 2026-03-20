@@ -7,7 +7,7 @@ from apps.subject.views.subject_views import (
 
 urlpatterns = [
     path(
-        "api/v1/<int:course_id>/subjects",
+        "<int:course_id>/subjects",
         SubjectListCreateAPIView.as_view(),
         name="subject-list-create",
     ),

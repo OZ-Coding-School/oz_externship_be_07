@@ -28,6 +28,22 @@ class ExamSubmissionCreateSerializer(serializers.ModelSerializer[ExamSubmission]
             "answers",
         ]
 
+class ExamSubmissionCreateResponseSerializer(serializers.ModelSerializer[ExamSubmission]):
+    submission_id = serializers.IntegerField(source="id", read_only=True)
+    redirect_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ExamSubmission
+        fields = [
+            "submission_id",
+            "score",
+            "correct_answer_count",
+            "redirect_url",
+        ]
+
+    def get_redirect_url(self, obj: ExamSubmission) -> str:
+        return f"/exam/result/{obj.id}"
+
 
 # 쪽지시험 결과 확인 - exam
 class ExamItemSerializer(serializers.ModelSerializer[Exam]):

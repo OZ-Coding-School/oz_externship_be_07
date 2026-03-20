@@ -26,6 +26,9 @@ class ExamListSerializer(serializers.ModelSerializer[Exam]):
     submit_count = serializers.IntegerField(read_only=True)
     detail_url = serializers.SerializerMethodField()
 
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+
     class Meta:
         model = Exam
         fields = [
@@ -65,7 +68,10 @@ class ExamSubjectDetailSerializer(serializers.ModelSerializer[Subject]):
 # 쪽지시험 상세 조회 API
 class ExamDetailSerializer(serializers.ModelSerializer[Exam]):
     subject = ExamSubjectDetailSerializer(read_only=True)
-    questions = ExamQuestionDetailSerializer(many=True)
+    questions = ExamQuestionDetailSerializer(source="examquestion_set", many=True)
+
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
         model = Exam

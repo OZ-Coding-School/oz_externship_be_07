@@ -1,19 +1,23 @@
 from django.http import Http404
-from drf_spectacular.utils import OpenApiExample, OpenApiParameter, OpenApiResponse, extend_schema
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.subject.core.error_responses import ErrorResponseSerializer
 from apps.subject.serializers.subject_serializers import (
     SubjectCreateRequestSerializer,
     SubjectCreateResponseSerializer,
     SubjectListItemSerializer,
     SubjectScatterPointSerializer,
 )
-
-from apps.subject.core.error_responses import ErrorResponseSerializer
 from apps.subject.services.subject_services import SubjectService
 
 

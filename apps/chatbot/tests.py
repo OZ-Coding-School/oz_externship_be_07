@@ -1,5 +1,6 @@
 import json
 from typing import Any, cast
+from unittest.mock import MagicMock, patch
 
 from django.http import StreamingHttpResponse
 from django.test import TestCase, override_settings
@@ -101,19 +102,33 @@ class ChatbotViewTest(APITestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    @override_settings(GEMINI_API_KEY="dummy_test_key_for_ci_pipeline")
-    def test_post_completion_streaming_success(self) -> None:
-        """AI 스트리밍 답변 생성 POST (201 Created 확인)"""
+    @patch("apps.chatbot.services.chatbot_service.genai.Client")
+    def test_post_completion_streaming_success(self, mock_client_class: MagicMock) -> None:
+        """AI 스트리밍 답변 생성 POST (201 Created 및 DB 저장 확인)"""
+
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+
+        mock_chunk = MagicMock()
+        mock_chunk.text = "답변이 생성되지 않아 DB에 저장되지 않았는데 "
+        mock_chunk2 = MagicMock()
+        mock_chunk2.text = "DB에 저장된 유저질문이 1개였음."
+
+        mock_client.models.generate_content_stream.return_value = [mock_chunk, mock_chunk2]
+
         url = reverse("chatbot:session-completions", kwargs={"session_id": self.session.id})
         data = {"message": "테스트 메시지"}
         response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         streaming_content = b"".join(cast(Any, response).streaming_content).decode()
+        self.assertIn("답변이 생성되지 않아 DB에 저장되지 않았는데 ", streaming_content)
+        self.assertIn("DB에 저장된 유저질문이 1개였음.", streaming_content)
+
         self.assertIn("[DONE]", streaming_content)
-        self.assertEqual(ChatbotCompletions.objects.filter(session=self.session).count(), 1)
+
+        self.assertEqual(ChatbotCompletions.objects.filter(session=self.session).count(), 2)
 
     def test_session_list_get(self) -> None:
         """세션 목록 조회"""

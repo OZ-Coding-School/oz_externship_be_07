@@ -30,16 +30,15 @@ class QuestionUpdateView(APIView):
         responses={200: QuestionUpdateResponseSerializer},
     )
     def put(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
-        # 시리얼라이저 검증
-        serializer = QuestionUpdateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # 타입 안전성을 위한 유저 캐스팅
-        user = cast(User, request.user)
-
-        validated_data = serializer.validated_data
-
         try:
+            # 시리얼라이저 검증
+            serializer = QuestionUpdateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            validated_data = serializer.validated_data
+
+            # 타입 안전성을 위한 유저 캐스팅
+            user = cast(User, request.user)
+
             # 서비스 호출
             updated_question = QuestionUpdateService.get_question_update(
                 question_id=question_id,
@@ -52,13 +51,15 @@ class QuestionUpdateView(APIView):
             response_serializer = QuestionUpdateResponseSerializer(updated_question)
             return Response(response_serializer.data, status=status.HTTP_200_OK)
 
+        except Questions.DoesNotExist as e:
+            return Response({"error_detail": "존재하지 않는 질문입니다."}, status=status.HTTP_404_NOT_FOUND)
+
         except PermissionDenied as e:
             return Response(
                 {"error_detail": str(e) or "질문을 수정할 권한이 없거나 오류가 발생했습니다."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        except Questions.DoesNotExist as e:
-            return Response({"error_detail": "존재하지 않는 질문입니다."}, status=status.HTTP_404_NOT_FOUND)
+
         except Exception as e:
             return Response(
                 {"error_detail": "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."},

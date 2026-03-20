@@ -342,6 +342,8 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 f'활성 카테고리 "{obj.name}(#{obj.pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.',
                 level=messages.WARNING,
             )
+            return
+
         post_count = Post.objects.filter(category_id=obj.pk).count()
         self._delete_category_with_related_posts(obj, post_count)
 

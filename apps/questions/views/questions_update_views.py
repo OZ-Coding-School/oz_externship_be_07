@@ -1,6 +1,7 @@
 from typing import Any, cast
 
-from drf_spectacular.utils import OpenApiExample, extend_schema
+from django.http import Http404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -8,7 +9,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.questions.models import Questions
 from apps.questions.serializers.questions_serializers import (
     QuestionUpdateResponseSerializer,
     QuestionUpdateSerializer,
@@ -51,7 +51,7 @@ class QuestionUpdateView(APIView):
             response_serializer = QuestionUpdateResponseSerializer(updated_question)
             return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-        except Questions.DoesNotExist as e:
+        except Http404:
             return Response({"error_detail": "존재하지 않는 질문입니다."}, status=status.HTTP_404_NOT_FOUND)
 
         except PermissionDenied as e:

@@ -13,6 +13,7 @@ from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
+from apps.core.utils.s3_handler import S3Handler
 
 
 def get_post_list_queryset(
@@ -143,6 +144,9 @@ def update_post(instance: Post, title: str, content: str, category: PostCategory
 
     instance.save()
 
+def post_delete(instance: Post) -> None:
+    instance.delete()
+
 
 def post_file_save(instance: Post) -> None:
     """본문에서 마크다운 이미지/파일 url 추출 저장 함수"""
@@ -201,25 +205,10 @@ def post_detail_file_presigned_url(content: str) -> str:
     return content
 
 
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-    region_name=settings.AWS_S3_REGION,
-)
-
-
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
     try:
-        s3_value = s3_client.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": settings.AWS_S3_BUCKET_NAME,
-                "Key": key_url,
-            },
-            ExpiresIn=3600,
-        )
+        s3_value = S3Handler.generate_get_presigned_url( key_url)
     except ClientError as e:
         logger = logging.getLogger(__name__)
         logger.error(e)

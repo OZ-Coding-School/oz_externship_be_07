@@ -26,7 +26,7 @@ from apps.community.services.post_metric_service import (
 from apps.community.services.post_service import (
     build_post_detail_response,
     file_synchronization,
-    get_post_detail,
+    get_post_detail, post_delete,
 )
 
 
@@ -193,8 +193,8 @@ class PostDetailAPIView(APIView):
             is_visible=True,
             category__status=True,
         )
-        post.is_visible = False
-        post.save(update_fields=["is_visible", "updated_at"])
+
+        post_delete(post)
 
         return Response(
             {"detail": "게시글이 삭제되었습니다."},

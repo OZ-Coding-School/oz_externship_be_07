@@ -2,9 +2,9 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.exam.models.exam_deployment_models import ExamDeployment
-from apps.exam.models.exam_models import Exam
-from apps.exam.models.exam_submission_models import ExamSubmission
+from apps.exams.models.exam_deployment_models import ExamDeployment
+from apps.exams.models.exam_models import Exam
+from apps.exams.models.exam_submission_models import ExamSubmission
 
 
 # 쪽지시험 제출 - answers

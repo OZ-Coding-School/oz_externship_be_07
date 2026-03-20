@@ -2,11 +2,11 @@ from django.http import Http404
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.users.choices import UserRole
 from apps.users.services.admin.user_management import delete_user_by_admin
 
@@ -16,9 +16,12 @@ class AdminUserDeleteAPIView(APIView):
     관리자 페이지에서 사용자를 삭제하는 API입니다.
     """
 
-    permission_classes = [IsSelfOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def check_permissions(self, request: Request) -> None:
+        """
+        관리자 권한 체크
+        """
         super().check_permissions(request)
 
         user_role = getattr(request.user, "role", None)

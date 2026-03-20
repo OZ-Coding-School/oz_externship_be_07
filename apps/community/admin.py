@@ -127,18 +127,19 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             )
         return self.fieldsets
 
-    def _is_postcomment_post_autocomplete_request(self, request: HttpRequest) -> bool:
-        return (
-            request.path.endswith("/autocomplete/")
-            and request.GET.get("app_label") == self.AUTOCOMPLETE_APP_LABEL
-            and request.GET.get("model_name") == self.AUTOCOMPLETE_MODEL_NAME
-            and request.GET.get("field_name") == self.AUTOCOMPLETE_FIELD_NAME
-        )
-
     def formfield_for_foreignkey(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Any:
         if db_field.name == "category":
             kwargs["queryset"] = PostCategory.objects.filter(status=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
+        queryset = (
+            super()
+            .get_queryset(request)
+            .select_related("author", "category")
+            .annotate(like_count_value=Count("likes", filter=Q(likes__is_liked=True), distinct=True))
+        )
+        return cast(QuerySet[Post], queryset)
 
     def get_search_results(
         self,
@@ -158,15 +159,6 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
         return ordered_qs.filter(title__icontains=keyword), False
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
-        queryset = (
-            super()
-            .get_queryset(request)
-            .select_related("author", "category")
-            .annotate(like_count_value=Count("likes", filter=Q(likes__is_liked=True), distinct=True))
-        )
-        return cast(QuerySet[Post], queryset)
-
     @admin.display(description="좋아요 수", ordering="like_count_value")
     def like_count(self, obj: Post) -> int:
         return int(getattr(obj, "like_count_value", 0))
@@ -178,6 +170,14 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         deleted_objects.append(warning_message)
 
         return deleted_objects, model_count, perms_needed, protected
+
+    def _is_postcomment_post_autocomplete_request(self, request: HttpRequest) -> bool:
+        return (
+            request.path.endswith("/autocomplete/")
+            and request.GET.get("app_label") == self.AUTOCOMPLETE_APP_LABEL
+            and request.GET.get("model_name") == self.AUTOCOMPLETE_MODEL_NAME
+            and request.GET.get("field_name") == self.AUTOCOMPLETE_FIELD_NAME
+        )
 
 
 class CommentTagInline(admin.TabularInline):  # type: ignore[type-arg]
@@ -272,57 +272,28 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 level=messages.WARNING,
             )
 
-    def _is_valid_confirmation_payload(
-        self,
-        payload: Any,
-        now_ts: int,
-    ) -> bool:
-        if not isinstance(payload, dict):
-            return False
+    def get_actions(self, request: HttpRequest) -> dict[str, Any]:
+        actions = super().get_actions(request)
+        actions.pop("delete_selected", None)
+        return actions
 
-        ts_raw = payload.get("ts")
-        if not isinstance(ts_raw, (int, str)):
-            return False
-
-        try:
-            ts = int(ts_raw)
-        except ValueError:
-            return False
-
-        return now_ts - ts <= self.DELETE_CONFIRM_TTL_SECONDS
-
-    def _require_delete_confirmation(
+    def delete_view(
         self,
         request: HttpRequest,
-        confirm_scope: str,
-        token: str,
-        message: str,
-    ) -> bool:
-        session_key = f"{self.DELETE_CONFIRM_SESSION_KEY_PREFIX}:{confirm_scope}:{token}"
-        now_ts = int(time.time())
-        payload = request.session.get(session_key)
+        object_id: str,
+        extra_context: Any | None = None,
+    ) -> Any:
+        obj = self.get_object(request, object_id)
+        if obj and obj.status:
+            self.message_user(
+                request,
+                f'활성 카테고리 "{obj.name}(#{obj.pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.',
+                level=messages.WARNING,
+            )
+            changelist_url = reverse("admin:community_postcategory_changelist")
+            return HttpResponseRedirect(changelist_url)
 
-        if not self._is_valid_confirmation_payload(payload, now_ts):
-            request.session[session_key] = {"ts": now_ts}
-            self.message_user(request, message, level=messages.WARNING)
-            return False
-
-        request.session.pop(session_key, None)
-        return True
-
-    def _delete_category_with_related_posts(self, category: PostCategory, post_count: int) -> int:
-        with transaction.atomic():
-            if not category.status and post_count > 0:
-                Post.objects.filter(category_id=category.pk).delete()
-                category.delete()
-                return post_count
-
-            category.delete()
-            return 0
-
-    def _generate_token(self, selected_ids: list[int]) -> str:
-        token_raw = ",".join(str(pk) for pk in selected_ids)
-        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:32]
+        return super().delete_view(request, object_id, extra_context)
 
     def get_deleted_objects(self, objs: Any, request: HttpRequest) -> tuple[Any, Any, Any, Any]:
         deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
@@ -362,32 +333,9 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
         return deleted_objects, model_count_dict.items(), perms_needed, protected
 
-    def delete_view(
-        self,
-        request: HttpRequest,
-        object_id: str,
-        extra_context: Any | None = None,
-    ) -> Any:
-        obj = self.get_object(request, object_id)
-        if obj and obj.status:
-            self.message_user(
-                request,
-                f'활성 카테고리 "{obj.name}(#{obj.pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.',
-                level=messages.WARNING,
-            )
-            changelist_url = reverse("admin:community_postcategory_changelist")
-            return HttpResponseRedirect(changelist_url)
-
-        return super().delete_view(request, object_id, extra_context)
-
     def delete_model(self, request: HttpRequest, obj: PostCategory) -> None:
         post_count = Post.objects.filter(category_id=obj.pk).count()
         self._delete_category_with_related_posts(obj, post_count)
-
-    def get_actions(self, request: HttpRequest) -> dict[str, Any]:
-        actions = super().get_actions(request)
-        actions.pop("delete_selected", None)
-        return actions
 
     @admin.action(description="카테고리 상태 및 게시글유무에 따른 삭제 처리")
     def delete_category_by_policy(
@@ -444,6 +392,58 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 f"삭제 완료: 카테고리 {deleted_category_count}개, 게시글 {deleted_post_count}개",
                 level=messages.SUCCESS,
             )
+
+    def _generate_token(self, selected_ids: list[int]) -> str:
+        token_raw = ",".join(str(pk) for pk in selected_ids)
+        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:32]
+
+    def _is_valid_confirmation_payload(
+        self,
+        payload: Any,
+        now_ts: int,
+    ) -> bool:
+        if not isinstance(payload, dict):
+            return False
+
+        ts_raw = payload.get("ts")
+        if not isinstance(ts_raw, (int, str)):
+            return False
+
+        try:
+            ts = int(ts_raw)
+        except ValueError:
+            return False
+
+        return now_ts - ts <= self.DELETE_CONFIRM_TTL_SECONDS
+
+    def _require_delete_confirmation(
+        self,
+        request: HttpRequest,
+        confirm_scope: str,
+        token: str,
+        message: str,
+    ) -> bool:
+        session_key = f"{self.DELETE_CONFIRM_SESSION_KEY_PREFIX}:{confirm_scope}:{token}"
+        now_ts = int(time.time())
+        payload = request.session.get(session_key)
+
+        if not self._is_valid_confirmation_payload(payload, now_ts):
+            request.session[session_key] = {"ts": now_ts}
+            self.message_user(request, message, level=messages.WARNING)
+            return False
+
+        request.session.pop(session_key, None)
+        return True
+
+    def _delete_category_with_related_posts(self, category: PostCategory, post_count: int) -> int:
+        with transaction.atomic():
+            if not category.status and post_count > 0:
+                Post.objects.filter(category_id=category.pk).delete()
+                category.delete()
+                return post_count
+
+            category.delete()
+            return 0
 
 
 @admin.register(PostLike)

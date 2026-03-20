@@ -1,13 +1,7 @@
-import json
 import logging
 import re
 from typing import Any, cast
-
-import boto3
-import requests
-from botocore.config import Config
 from botocore.exceptions import ClientError
-from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 
@@ -159,8 +153,10 @@ def post_file_save(instance: Post) -> None:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 
-def file_synchronization(instance: Post) -> None:
+def file_synchronization(instance: Post, check: str) -> None:
     """본문 이미지 제거 및 추가시 삭제 추가 함수"""
+    if check == "update":
+        post_update_file_presigned_url(instance)
 
     current_image_urls = re.findall(r"!\[.*?\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
 
@@ -176,6 +172,30 @@ def file_synchronization(instance: Post) -> None:
         if url not in existing_att_urls:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
+def post_delete_sum(instance: Post) -> None:
+    post_file_delete(instance)
+    post_delete(instance)
+
+def post_file_delete(instance: Post) -> None:
+    """PostImage DB 데이터 삭제 함수"""
+
+    if instance:
+        images = PostImage.objects.filter(post=instance)
+        file_delete(set(images.values_list("img_url", flat=True)))
+        images.delete()
+
+        file = PostAttachment.objects.filter(post=instance)
+        file_delete(set(file.values_list("file_url", flat=True)))
+        file.delete()
+
+def file_delete(url: set[str]) -> None:
+    """실제 파일 삭제 함수"""
+
+    for file_url in url:
+        key_url = file_url.split("com/")
+        if len(key_url) > 1:
+            if default_storage.exists(key_url[1]):
+                default_storage.delete(key_url[1])
 
 def post_detail_file_presigned_url(content: str) -> str:
     """Presigned url 주소 변환"""
@@ -203,6 +223,21 @@ def post_detail_file_presigned_url(content: str) -> str:
         content = content.replace(order_url, new_url)
 
     return content
+
+def post_update_file_presigned_url(instance: Post) -> None:
+    old_file_urls = re.findall(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
+    image_urls = [match[2] for match in old_file_urls if match[0] == '!']
+    file_urls = [match[2] for match in old_file_urls if match[0] == '']
+
+    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=image_urls)
+    if delete_image:
+        file_delete(set(delete_image.values_list("img_url", flat=True)))
+        delete_image.delete()
+
+    delete_filee = PostAttachment.objects.filter(post=instance).exclude(file_url__in=file_urls)
+    if delete_filee:
+        file_delete(set(delete_filee.values_list("file_url", flat=True)))
+        delete_filee.delete()
 
 
 def s3_url(key_url: str) -> str:

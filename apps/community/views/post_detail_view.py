@@ -26,7 +26,7 @@ from apps.community.services.post_metric_service import (
 from apps.community.services.post_service import (
     build_post_detail_response,
     file_synchronization,
-    get_post_detail, post_delete,
+    get_post_detail, post_delete, post_delete_sum,
 )
 
 
@@ -194,7 +194,7 @@ class PostDetailAPIView(APIView):
             category__status=True,
         )
 
-        post_delete(post)
+        post_delete_sum(post)
 
         return Response(
             {"detail": "게시글이 삭제되었습니다."},

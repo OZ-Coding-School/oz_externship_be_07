@@ -9,6 +9,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from apps.exam.core.error_base import ExamBaseAPIView
+from apps.exam.core.permissions import IsStaffUser
+
 from apps.exam.serializers.exam_serializers import (
     ExamCreateUpdateSerializer,
     ExamDetailSerializer,
@@ -18,9 +21,6 @@ from apps.exam.services.exam_crud_services import ExamService
 
 
 class ExamPagination(PageNumberPagination):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
     page_size = 10
     page_size_query_param = "size"
     page_query_param = "page"
@@ -41,9 +41,17 @@ class ExamPagination(PageNumberPagination):
         )
 
 
-class ExamListCreateAPIView(APIView):
+class ExamListCreateAPIView(ExamBaseAPIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStaffUser]
+    permission_error_msgs = {
+        "GET": "쪽지시험 목록 조회 권한이 없습니다.",
+        "POST": "쪽지시험 생성 권한이 없습니다."
+    }
+    validation_error_msgs = {
+        "GET": "유효하지 않은 조회 요청입니다.",
+        "POST": "유효하지 않은 시험 생성 요청입니다."
+    }
 
     @extend_schema(
         tags=["exams"],
@@ -103,8 +111,17 @@ class ExamListCreateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ExamDetailAPIView(APIView):
-    permission_classes = [AllowAny]
+class ExamDetailAPIView(ExamBaseAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsStaffUser]
+    permission_error_msgs = {
+        "PUT": "쪽지시험 수정 권한이 없습니다.",
+        "DELETE": "쪽지시험 삭제 권한이 없습니다."
+    }
+    validation_error_msgs = {
+        "PUT": "유효하지 않은 요청 데이터입니다.",
+        "DELETE": "유효하지 않은 요청입니다."
+    }
 
     @extend_schema(
         tags=["exams"],
@@ -124,10 +141,10 @@ class ExamDetailAPIView(APIView):
         request=ExamCreateUpdateSerializer,
         responses={
             200: ExamCreateUpdateSerializer,
-            400: "유효하지 않은 시험 생성 요청입니다.",
+            400: "유효하지 않은 요청 데이터입니다.",
             401: "자격 인증 데이터가 제공되지 않았습니다.",
-            403: "쪽지시험 생성 권한이 없습니다.",
-            404: "해당 과목 정보를 찾을 수 없습니다.",
+            403: "쪽지시험 수정 권한이 없습니다.",
+            404: "수정할 쪽지시험 정보를 찾을 수 없습니다.",
             409: "동일한 이름의 시험이 이미 존재합니다.",
         },
     )
@@ -144,7 +161,7 @@ class ExamDetailAPIView(APIView):
         description="특정 쪽지시험을 삭제합니다.",
         responses={
             201: "id",
-            400: "유효하지 않은 시험 생성 요청입니다.",
+            400: "유효하지 않은 요청입니다.",
             401: "자격 인증 데이터가 제공되지 않았습니다.",
             403: "쪽지시험 삭제 권한이 없습니다.",
             404: "삭제하려는 쪽지시험 정보를 찾을 수 없습니다.",

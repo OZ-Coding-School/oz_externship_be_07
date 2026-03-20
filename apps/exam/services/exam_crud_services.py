@@ -1,20 +1,30 @@
 from typing import Any
 
-from django.db.models import Count, QuerySet
+from django.db.models import Count, QuerySet, ProtectedError
 from django.shortcuts import get_object_or_404
+from django.http import Http404
+from rest_framework.exceptions import NotFound
 
+from apps.exam.core.error_custom_base import ConflictException
 from apps.exam.models.exam_models import Exam
 from apps.subject.models.subject_models import Subject
-
 
 class ExamService:
 
     # 쪽지시험 생성
     @staticmethod
     def create_exam(data: dict[str, Any]) -> Exam:
+        title = data.get("title")
+        if title and Exam.objects.filter(title=title).exists():
+            raise ConflictException(detail="동일한 이름의 시험이 이미 존재합니다.")
+
         subject_data = data.pop("subject")
-        subject_id = subject_data["id"]
-        subject = get_object_or_404(Subject, id=subject_id)
+        subject_id = subject_data.get("id")
+        try:
+            subject = get_object_or_404(Subject, id=subject_id)
+        except Http404:
+            raise NotFound("해당 과목 정보를 찾을 수 없습니다.")
+
         return Exam.objects.create(subject=subject, **data)
 
     # 쪽지시험 목록조회
@@ -55,15 +65,23 @@ class ExamService:
     # 쪽지시험 수정
     @staticmethod
     def update_exam(exam_id: int, data: dict[str, Any]) -> Exam:
-        exam = get_object_or_404(Exam, id=exam_id)
 
-        # subject_id가 포함된 경우 처리
+        try:
+            exam = get_object_or_404(Exam, id=exam_id)
+        except Http404:
+            raise NotFound("수정할 쪽지시험 정보를 찾을 수 없습니다.")
+
+        title = data.get("title")
+        if title and Exam.objects.filter(title=title).exclude(id=exam_id).exists():
+            raise ConflictException(detail="동일한 이름의 시험이 이미 존재합니다.")
+
         if "subject" in data:
             subject_data = data.pop("subject")
-            subject_id = subject_data["id"]
-            exam.subject = get_object_or_404(Subject, id=subject_id)
-
-        # title, thumbnail_img_url(source 매핑됨) 등 나머지 필드 업데이트
+            subject_id = subject_data.get("id")
+            try:
+                exam.subject = get_object_or_404(Subject, id=subject_id)
+            except Http404:
+                raise NotFound("해당 과목 정보를 찾을 수 없습니다.")
         for attr, value in data.items():
             setattr(exam, attr, value)
 
@@ -73,6 +91,16 @@ class ExamService:
     # 쪽지시험 삭제
     @staticmethod
     def delete_exam(exam_id: int) -> int:
-        exam = get_object_or_404(Exam, id=exam_id)
-        exam.delete()
+        try:
+            exam = get_object_or_404(Exam, id=exam_id)
+        except Http404:
+            raise NotFound("삭제하려는 쪽지시험 정보를 찾을 수 없습니다.")
+
+        try:
+            exam.delete()
+        except ProtectedError:
+            raise ConflictException(detail="쪽지시험 삭제 중 충돌이 발생했습니다.")
+        except Exception:
+            raise ConflictException(detail="쪽지시험 삭제 중 충돌이 발생했습니다.")
+
         return exam_id

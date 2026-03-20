@@ -50,7 +50,7 @@ class QuestionUpdateTest(TestCase):
     # 존재하지 않는 질문 ID
     def test_update_question_not_found(self) -> None:
         self.client.force_authenticate(user=self.author)
-        invalid_url = reverse("question-update", kwargs={"question_id": 99999})
+        invalid_url = reverse("questions:question_detail_update", kwargs={"question_id": 99999})
         data = {"title": "없는 제목"}
         response = self.client.put(invalid_url, data, format="json")
 

@@ -3,33 +3,20 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from django.db.models import QuerySet
+from django.db.models import Exists, OuterRef, QuerySet
 from django.utils import timezone
 
+from apps.exam.core.exceptions import (
+    DeploymentForbiddenError,
+    DeploymentGoneError,
+    DeploymentInvalidSessionError,
+    DeploymentNotFoundError,
+    UserNotFoundError,
+)
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.subject.models.cohort_student_models import CohortStudent
 from apps.users.models.models import User
-
-
-class DeploymentNotFoundError(Exception):
-    pass
-
-
-class DeploymentForbiddenError(Exception):
-    pass
-
-
-class DeploymentInvalidSessionError(Exception):
-    pass
-
-
-class DeploymentGoneError(Exception):
-    pass
-
-
-class UserNotFoundError(Exception):
-    pass
 
 
 class ExamDeploymentService:
@@ -162,16 +149,33 @@ class ExamDeploymentService:
         if not cohort_ids:
             raise DeploymentForbiddenError("권한이 없습니다.")
 
+        submission_subquery = ExamSubmission.objects.filter(
+            submitter=user,
+            deployment_id=OuterRef("id"),
+        )
+
         deployments: QuerySet[ExamDeployment] = (
             ExamDeployment.objects.select_related(
                 "exam",
                 "exam__subject",
             )
             .filter(cohort_id__in=cohort_ids)
+            .annotate(is_done=Exists(submission_subquery))
             .order_by("-created_at")
         )
 
-        deployment_ids = list(deployments.values_list("id", flat=True))
+        if status == "done":
+            deployments = deployments.filter(is_done=True)  # type: ignore[misc]
+        elif status == "pending":
+            deployments = deployments.filter(is_done=False)  # type: ignore[misc]
+
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        paged_deployments = list(deployments[start:end])
+        has_next = deployments.count() > end
+
+        deployment_ids = [deployment.id for deployment in paged_deployments]
         submissions = {
             submission.deployment_id: submission
             for submission in ExamSubmission.objects.filter(
@@ -182,14 +186,9 @@ class ExamDeploymentService:
 
         results: list[dict[str, Any]] = []
 
-        for deployment in deployments:
+        for deployment in paged_deployments:
             submission = submissions.get(deployment.id)
             is_done = submission is not None
-
-            if status == "done" and not is_done:
-                continue
-            if status == "pending" and is_done:
-                continue
 
             snapshot_questions = cls._extract_snapshot_questions(snapshot=deployment.questions_snapshot_json)
             total_score = sum(int(question.get("point", 0)) for question in snapshot_questions)
@@ -220,13 +219,10 @@ class ExamDeploymentService:
                 }
             )
 
-        start = (page - 1) * page_size
-        end = start + page_size
-
         return {
             "page": page,
-            "has_next": end < len(results),
-            "results": results[start:end],
+            "has_next": has_next,
+            "results": results,
         }
 
     @classmethod

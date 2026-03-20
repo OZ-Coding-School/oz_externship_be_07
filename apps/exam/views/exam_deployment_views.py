@@ -1,11 +1,17 @@
-from typing import Any
-
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.exam.core.common import error_response
+from apps.exam.core.exceptions import (
+    DeploymentForbiddenError,
+    DeploymentGoneError,
+    DeploymentInvalidSessionError,
+    DeploymentNotFoundError,
+    UserNotFoundError,
+)
 from apps.exam.serializers.deployment_serializers import (
     DeploymentDetailResponseSerializer,
     DeploymentListQuerySerializer,
@@ -15,20 +21,9 @@ from apps.exam.serializers.deployment_serializers import (
 from apps.exam.services.exam_deployment_access_services import (
     ExamDeploymentAccessService,
 )
-from apps.exam.services.exam_deployment_services import (
-    DeploymentForbiddenError,
-    DeploymentGoneError,
-    DeploymentInvalidSessionError,
-    DeploymentNotFoundError,
-    ExamDeploymentService,
-    UserNotFoundError,
-)
+from apps.exam.services.exam_deployment_services import ExamDeploymentService
 from apps.subject.core.error_base import SubjectBaseAPIView
 from apps.subject.serializers.cohort_serializers import ErrorDetailStringSerializer
-
-
-def error_response(*, message: str, http_status: int) -> Response:
-    return Response({"error_detail": message}, status=http_status)
 
 
 class DeploymentListAPIView(SubjectBaseAPIView):
@@ -47,7 +42,7 @@ class DeploymentListAPIView(SubjectBaseAPIView):
     )
     def get(self, request: Request) -> Response:
         query_serializer = DeploymentListQuerySerializer(data=request.query_params)
-        query_serializer.is_valid()
+        query_serializer.is_valid(raise_exception=True)
 
         validated_data = query_serializer.validated_data
 
@@ -56,11 +51,7 @@ class DeploymentListAPIView(SubjectBaseAPIView):
 
         try:
             user_id = request.user.id
-            if user_id is None:
-                return error_response(
-                    message="사용자 정보를 찾을 수 없습니다.",
-                    http_status=status.HTTP_404_NOT_FOUND,
-                )
+            assert user_id is not None
 
             result = ExamDeploymentService.get_user_deployments(
                 user_id=user_id,
@@ -97,11 +88,7 @@ class DeploymentDetailAPIView(SubjectBaseAPIView):
     )
     def get(self, request: Request, deployment_id: int) -> Response:
         user_id = request.user.id
-        if user_id is None:
-            return error_response(
-                message="사용자 정보를 찾을 수 없습니다.",
-                http_status=status.HTTP_404_NOT_FOUND,
-            )
+        assert user_id is not None
 
         try:
             result = ExamDeploymentService.get_deployment_detail(
@@ -153,11 +140,7 @@ class DeploymentStatusAPIView(SubjectBaseAPIView):
     )
     def get(self, request: Request, deployment_id: int) -> Response:
         user_id = request.user.id
-        if user_id is None:
-            return error_response(
-                message="사용자 정보를 찾을 수 없습니다.",
-                http_status=status.HTTP_404_NOT_FOUND,
-            )
+        assert user_id is not None
 
         try:
             result = ExamDeploymentService.get_deployment_status(

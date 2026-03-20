@@ -5,29 +5,16 @@ from datetime import datetime
 from django.core.cache import caches
 from django.utils import timezone
 
+from apps.exam.core.exceptions import (
+    CodeMismatchError,
+    DeploymentForbiddenError,
+    DeploymentLockedError,
+    DeploymentNotFoundError,
+    UserNotFoundError,
+)
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.subject.models.cohort_student_models import CohortStudent
 from apps.users.models.models import User
-
-
-class AccessDeploymentNotFoundError(Exception):
-    pass
-
-
-class AccessDeploymentForbiddenError(Exception):
-    pass
-
-
-class AccessDeploymentLockedError(Exception):
-    pass
-
-
-class AccessUserNotFoundError(Exception):
-    pass
-
-
-class AccessCodeMismatchError(Exception):
-    pass
 
 
 class ExamDeploymentAccessService:
@@ -55,14 +42,14 @@ class ExamDeploymentAccessService:
         try:
             return User.objects.get(pk=user_id)
         except User.DoesNotExist as exc:
-            raise AccessUserNotFoundError("사용자 정보를 찾을 수 없습니다.") from exc
+            raise UserNotFoundError("사용자 정보를 찾을 수 없습니다.") from exc
 
     @staticmethod
     def _get_deployment_or_raise(*, deployment_id: int) -> ExamDeployment:
         try:
             return ExamDeployment.objects.select_related("cohort").get(pk=deployment_id)
         except ExamDeployment.DoesNotExist as exc:
-            raise AccessDeploymentNotFoundError("배포 정보를 찾을 수 없습니다.") from exc
+            raise DeploymentNotFoundError("배포 정보를 찾을 수 없습니다.") from exc
 
     @classmethod
     def check_deployment_code(cls, *, user_id: int, deployment_id: int, code: str) -> None:
@@ -74,18 +61,18 @@ class ExamDeploymentAccessService:
             cohort_id=deployment.cohort_id,
         ).exists()
         if not exists:
-            raise AccessDeploymentForbiddenError("시험에 응시할 권한이 없습니다.")
+            raise DeploymentForbiddenError("시험에 응시할 권한이 없습니다.")
 
         now = timezone.now()
         if now < deployment.open_at:
-            raise AccessDeploymentLockedError("아직 응시할 수 없습니다.")
+            raise DeploymentLockedError("아직 응시할 수 없습니다.")
 
         status = str(deployment.status).upper()
         if status != "ACTIVATED" or now > deployment.close_at:
-            raise AccessDeploymentLockedError("아직 응시할 수 없습니다.")
+            raise DeploymentLockedError("아직 응시할 수 없습니다.")
 
         if deployment.access_code != code:
-            raise AccessCodeMismatchError("응시 코드가 일치하지 않습니다.")
+            raise CodeMismatchError("응시 코드가 일치하지 않습니다.")
 
         key = cls._get_access_key(
             deployment_id=deployment.id,

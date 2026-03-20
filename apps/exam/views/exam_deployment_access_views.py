@@ -6,15 +6,18 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.exam.core.common import error_response
+from apps.exam.core.exceptions import (
+    CodeMismatchError,
+    DeploymentForbiddenError,
+    DeploymentLockedError,
+    DeploymentNotFoundError,
+    UserNotFoundError,
+)
 from apps.exam.serializers.deployment_serializers import (
     DeploymentCheckCodeRequestSerializer,
 )
 from apps.exam.services.exam_deployment_access_services import (
-    AccessCodeMismatchError,
-    AccessDeploymentForbiddenError,
-    AccessDeploymentLockedError,
-    AccessDeploymentNotFoundError,
-    AccessUserNotFoundError,
     ExamDeploymentAccessService,
 )
 from apps.subject.core.error_base import SubjectBaseAPIView
@@ -22,10 +25,6 @@ from apps.subject.serializers.cohort_serializers import (
     ErrorDetailFieldSerializer,
     ErrorDetailStringSerializer,
 )
-
-
-def error_response(*, message: str, http_status: int) -> Response:
-    return Response({"error_detail": message}, status=http_status)
 
 
 def field_error_response(*, errors: dict[str, Any], http_status: int = status.HTTP_400_BAD_REQUEST) -> Response:
@@ -93,27 +92,27 @@ class DeploymentCheckCodeAPIView(SubjectBaseAPIView):
                 deployment_id=deployment_id,
                 code=serializer.validated_data["code"],
             )
-        except AccessCodeMismatchError as exc:
+        except CodeMismatchError as exc:
             return error_response(
                 message=str(exc),
                 http_status=status.HTTP_400_BAD_REQUEST,
             )
-        except AccessDeploymentForbiddenError as exc:
+        except DeploymentForbiddenError as exc:
             return error_response(
                 message=str(exc),
                 http_status=status.HTTP_403_FORBIDDEN,
             )
-        except AccessDeploymentNotFoundError:
+        except DeploymentNotFoundError:
             return error_response(
                 message="배포 정보를 찾을 수 없습니다.",
                 http_status=status.HTTP_404_NOT_FOUND,
             )
-        except AccessDeploymentLockedError as exc:
+        except DeploymentLockedError as exc:
             return error_response(
                 message=str(exc),
                 http_status=status.HTTP_423_LOCKED,
             )
-        except AccessUserNotFoundError as exc:
+        except UserNotFoundError as exc:
             return error_response(
                 message=str(exc),
                 http_status=status.HTTP_404_NOT_FOUND,

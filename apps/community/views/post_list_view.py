@@ -119,7 +119,7 @@ class PostListAPIView(APIView):
 
     @extend_schema(
         tags=["posts"],
-        summary="게시판 등록",
+        summary="게시글 등록",
         description="커뮤니 게시글 작성 API",
         request=PostCreateSerializer,
         examples=[value_list["201"], value_list["400"], value_list["401"]],

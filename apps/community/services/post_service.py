@@ -5,8 +5,8 @@ from typing import Any, cast
 
 import boto3
 import requests
-from aiohttp import ClientError
 from botocore.config import Config
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
@@ -173,45 +173,44 @@ def file_synchronization(instance: Post) -> None:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
 
-def file_delete(url: list[str]) -> None:
-    """실제 파일 삭제 함수"""
-
-    for file_url in url:
-        key_url = file_url.split("com/")
-        if len(key_url) > 1:
-            aws_url = s3_url(key_url[1])
-            if default_storage.exists(aws_url):
-                default_storage.delete(aws_url)
-
-
 def post_detail_file_presigned_url(content: str) -> str:
     """Presigned url 주소 변환"""
 
     select_file = set(re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)", content))
+    s3_url_change = {}
     for is_image, name, url in select_file:
         if is_image != "!":
             is_image = ""
 
         if "?" in url:
             key_url = url.split("?")[0]
-            content = content.replace(f"{is_image}[{name}]({key_url})", f"{is_image}[{name}]({url})")
+            ord = f"{is_image}[{name}]({url})"
+            new = f"{is_image}[{name}]({key_url})"
+
         else:
             key_url = url.split("com/")[1]
             get_url = s3_url(key_url)
+            ord = f"{is_image}[{name}]({url})"
+            new = f"{is_image}[{name}]({get_url})"
 
-            content = content.replace(f"{is_image}[{name}]({url})", f"{is_image}[{name}]({get_url})")
+        s3_url_change[ord] = new
+
+    for order_url, new_url in s3_url_change.items():
+        content = content.replace(order_url, new_url)
 
     return content
 
 
+s3_client = boto3.client(
+    "s3",
+    aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+    region_name=settings.AWS_S3_REGION,
+)
+
+
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
-    s3_client = boto3.client(
-        "s3",
-        aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_S3_REGION,
-    )
     try:
         s3_value = s3_client.generate_presigned_url(
             "get_object",

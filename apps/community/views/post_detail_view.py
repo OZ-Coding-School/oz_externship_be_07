@@ -164,6 +164,7 @@ class PostDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        post.refresh_from_db()
         file_synchronization(post)
 
         updated_post = get_post_detail(post_id)

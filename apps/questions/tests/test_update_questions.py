@@ -1,8 +1,9 @@
-from django.core.exceptions import PermissionDenied
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
 
 from apps.questions.models import QuestionCategories, Questions
-from apps.questions.services.questions_update_services import QuestionUpdateService
 from apps.users.models.models import User
 
 
@@ -10,6 +11,8 @@ class QuestionUpdateTest(TestCase):
     author: User
     other_user: User
     question: Questions
+    url: str
+    client: APIClient
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -23,24 +26,32 @@ class QuestionUpdateTest(TestCase):
         cls.question = Questions.objects.create(
             author=cls.author, category=category, title="Django의 기능", content="Django의 기능 설명와라라라"
         )
+        cls.url = reverse("question_detail_update", kwargs={"question_id": cls.question.id})
 
-    # 수정 성공 테스트
-    def test_update_question_success(self) -> None:
-        updated_q: Questions = QuestionUpdateService.get_question_update(
-            question_id=self.question.id,
-            user=self.author,
-            title="Django의 프레임워크",
-            content="Restframework 소개글 쏼라쏼라",
-        )
-        self.assertEqual(updated_q.title, "Django의 프레임워크")
-        self.assertEqual(updated_q.content, "Restframework 소개글 쏼라쏼라")
+    def setUp(self) -> None:
+        self.client = APIClient()
 
-    # 수정 실패 테스트
+    # 인증되지 않은 유저
+    def test_update_question_unauthorized(self) -> None:
+        data = {"title": "수정시도"}
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # 작성자가 아닌 유저
     def test_update_question_permission_denied(self) -> None:
-        with self.assertRaises(PermissionDenied):
-            QuestionUpdateService.get_question_update(
-                user=self.other_user,  # 작성자가 아닌 다른 유저
-                question_id=self.question.id,
-                title="수정 시도",
-                content="내용 수정 시도",
-            )
+        self.client.force_authenticate(user=self.other_user)
+        data = {"title": "해킹시도", "content": "내용 변경"}
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error_detail"], "본인이 작성한 질문만 수정 가능합니다.")
+
+    # 존재하지 않는 질문 ID
+    def test_update_question_not_found(self) -> None:
+        self.client.force_authenticate(user=self.author)
+        invalid_url = reverse("question-update", kwargs={"question_id": 99999})
+        data = {"title": "없는 제목"}
+        response = self.client.put(invalid_url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

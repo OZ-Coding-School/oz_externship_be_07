@@ -48,6 +48,6 @@ class QuestionListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_question_detail_not_found(self) -> None:
-        url = reverse("questions:question_detail", kwargs={"question_id": 99999})
+        url = reverse("questions:question_detail_update", kwargs={"question_id": 99999})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

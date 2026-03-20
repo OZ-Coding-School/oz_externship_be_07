@@ -46,11 +46,14 @@ class AdminUserDeleteTest(TestCase):
         )
 
         # 삭제 대상 유저 생성
-        cls.target_user = user_manager.create(
+        cls.regular_user = user_manager.create(
             email="target@example.com",
-            nickname="target_test",
+            nickname="너무나",
+            name="쉬고싶다",
             role=UserRole.USER,
             status=UserStatus.ACTIVATED,
+            birthday="1990-01-01",
+            phone_number="01000000002",
         )
 
     def setUp(self) -> None:
@@ -64,10 +67,7 @@ class AdminUserDeleteTest(TestCase):
         response = self.client.delete(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response.json()["detail"],
-            f"유저 데이터가 삭제되었습니다. - pk: {self.target_user.id}"
-        )
+        self.assertEqual(response.json()["detail"], f"유저 데이터가 삭제되었습니다. - pk: {self.target_user.id}")
         # DB에서 실제로 삭제되었는지 확인
         self.assertFalse(User.objects.filter(id=self.target_user.id).exists())
 
@@ -92,7 +92,7 @@ class AdminUserDeleteTest(TestCase):
     def test_delete_user_fail_404_not_found(self) -> None:
         """404 Not Found: 존재하지 않는 유저 ID를 삭제하려는 경우"""
         self.client.force_authenticate(user=cast(AbstractBaseUser, self.admin_user))
-        invalid_url = f"{self.base_url}9999/" # 존재하지 않는 ID
+        invalid_url = f"{self.base_url}9999/"  # 존재하지 않는 ID
 
         response = self.client.delete(invalid_url)
 

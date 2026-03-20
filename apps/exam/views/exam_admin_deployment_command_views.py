@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.exam.core.exceptions import AdminDeploymentDuplicateError
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_models import Exam
 from apps.exam.serializers.admin_deployment_command_serializers import (
@@ -18,10 +19,7 @@ from apps.exam.serializers.admin_deployment_command_serializers import (
     ExamDeploymentUpdateResponseSerializer,
     ExamDeploymentUpdateSerializer,
 )
-from apps.exam.services.exam_admin_deployment_services import (
-    DuplicateDeploymentError,
-    ExamDeploymentService,
-)
+from apps.exam.services.exam_admin_deployment_services import ExamDeploymentService
 from apps.exam.views.exam_admin_deployment_permissions import (
     CanCreateExamDeployment,
     CanDeleteExamDeployment,
@@ -86,7 +84,7 @@ class AdminExamDeploymentCreateAPIView(AdminExamDeploymentCommandBaseAPIView):
 
         try:
             deployment = ExamDeploymentService.create_deployment(validated_data)
-        except DuplicateDeploymentError:
+        except AdminDeploymentDuplicateError:
             return error_response(
                 message="동일한 조건의 배포가 이미 존재합니다.",
                 http_status=status.HTTP_409_CONFLICT,

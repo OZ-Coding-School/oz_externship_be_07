@@ -9,9 +9,7 @@ class BaseAdminExamDeploymentPermission(permissions.BasePermission):
     message = "권한이 없습니다."
 
     def has_permission(self, request: Request, view: APIView) -> bool:
-        return bool(
-            request.user and request.user.is_authenticated and getattr(request.user, "role", None) in STAFF_ROLES
-        )
+        return getattr(request.user, "role", None) in STAFF_ROLES
 
 
 class CanCreateExamDeployment(BaseAdminExamDeploymentPermission):

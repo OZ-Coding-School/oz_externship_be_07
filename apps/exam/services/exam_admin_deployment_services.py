@@ -6,15 +6,12 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Avg, Count, QuerySet
 
+from apps.exam.core.exceptions import AdminDeploymentDuplicateError
 from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.subject.models.cohort_student_models import CohortStudent
-
-
-class DuplicateDeploymentError(Exception):
-    """동일한 시험-기수 배포가 이미 존재하는 경우"""
 
 
 class ExamDeploymentService:
@@ -51,7 +48,7 @@ class ExamDeploymentService:
         cohort = validated_data["cohort"]
 
         if ExamDeployment.objects.filter(exam=exam, cohort=cohort).exists():
-            raise DuplicateDeploymentError("동일한 조건의 배포가 이미 존재합니다.")
+            raise AdminDeploymentDuplicateError
 
         return ExamDeployment.objects.create(
             exam=exam,

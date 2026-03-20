@@ -1,7 +1,8 @@
-from typing import Any, cast
+from typing import cast
 
-from drf_spectacular.utils import OpenApiExample, extend_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -18,26 +19,16 @@ from apps.users.models.models import User
 # 질문 등록
 class QuestionCreateView(APIView):
     permission_classes = [IsAuthenticated]
-
     serializer_class = QuestionCreateSerializer
 
     @extend_schema(
-        tags=["qna"],
+        tags=["Questions"],
         summary="질문 등록",
-        description="카테고리 ID, 제목, 내용을 입력해야 질문이 등록됩니다.",
+        description="카테고리 ID, 제목, 내용, 선택적 이미지url 리시트를 입력해야 질문이 등록됩니다.",
         request=QuestionCreateSerializer,
         responses={201: QuestionCreateResponseSerializer},
-        examples=[
-            # MOCK데이터
-            OpenApiExample(
-                "성공예시",
-                value={"message": "질문이 성공적으로 등록되었습니다.", "question_id": 10501},
-                response_only=True,
-                status_codes=["201"],
-            )
-        ],
     )
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def post(self, request: Request) -> Response:
         # 검증
         serializer = QuestionCreateSerializer(data=request.data)
 
@@ -61,5 +52,16 @@ class QuestionCreateView(APIView):
             response_serializer = QuestionCreateResponseSerializer(new_question)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-        except Exception as e:
-            return Response({"error_detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        # 카테고리 계층 오류 및 비즈니스 제약 위반
+        except (ValidationError, ValueError) as e:
+            error_msg = getattr(e, "message", str(e))
+            return Response({"error_detail": error_msg}, status=status.HTTP_400_BAD_REQUEST)
+        # 권한 부족
+        except PermissionDenied as e:
+            return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
+        # 예상치 못한 서버 에러
+        except Exception:
+            return Response(
+                {"error_detail": "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

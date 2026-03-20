@@ -335,6 +335,12 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return deleted_objects, model_count_dict.items(), perms_needed, protected
 
     def delete_model(self, request: HttpRequest, obj: PostCategory) -> None:
+        if obj.status:
+            self.message_user(
+                request,
+                f'활성 카테고리 "{obj.name}(#{obj.pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.',
+                level=messages.WARNING,
+            )
         post_count = Post.objects.filter(category_id=obj.pk).count()
         self._delete_category_with_related_posts(obj, post_count)
 
@@ -437,8 +443,11 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return True
 
     def _delete_category_with_related_posts(self, category: PostCategory, post_count: int) -> int:
+        if category.status:
+            return 0
+
         with transaction.atomic():
-            if not category.status and post_count > 0:
+            if post_count > 0:
                 Post.objects.filter(category_id=category.pk).delete()
                 category.delete()
                 return post_count

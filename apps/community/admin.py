@@ -21,6 +21,9 @@ def _is_safe_external_url(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
+def _comment_preview(content: str, limit: int = 16) -> str:
+    return Truncator((content or "").replace("\n", " ")).chars(limit)
+
 
 class PostImageInline(admin.TabularInline):  # type: ignore[type-arg]
     model = PostImage
@@ -76,8 +79,7 @@ class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
 
     @admin.display(description="댓글 내용")
     def content_preview(self, obj: PostComment) -> str:
-        text = (obj.content or "").replace("\n", " ")
-        return Truncator(text).chars(16)
+        return _comment_preview(obj.content)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
         queryset = cast(QuerySet[PostComment], super().get_queryset(request))
@@ -129,7 +131,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
     def formfield_for_foreignkey(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Any:
         if db_field.name == "category":
-            kwargs["queryset"] = PostCategory.objects.filter(status=True)
+            kwargs["queryset"] = PostCategory.objects.filter(status=True).order_by("id")
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
@@ -225,8 +227,7 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
     @admin.display(description="댓글내용", ordering="content")
     def content_preview(self, obj: PostComment) -> str:
-        text = (obj.content or "").replace("\n", " ")
-        return Truncator(text).chars(16)
+        return _comment_preview(obj.content)
 
 
 @admin.register(PostCategory)

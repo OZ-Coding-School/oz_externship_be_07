@@ -13,13 +13,11 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/posts/", include("apps.community.urls")),
     path("api/v1/accounts/", include("apps.users.urls.urls")),
     path("api/v1/admin/", include("apps.users.urls.admin_urls")),
-    path("api/v1/qna/", include("apps.questions.qna_urls")),
+    path("api/v1/qna/", include("apps.questions.urls.qna_urls")),
     path("api/v1/", include("apps.subject.urls.cohort_urls")),
-    path("api/v1/", include("apps.subject.urls.urls")),
     path("api/v1/", include("apps.exam.urls.exam_deployment_urls")),
     path("api/v1/", include("apps.exam.urls.exam_urls")),
-    path("api/v1/", include("apps.exam.urls.exam_admin_deployment_urls")),
-    path("api/v1/", include("apps.exam.urls.exam_user_submission_urls")),
+    path("api/v1/admin/", include("apps.questions.urls.admin_urls")),
 ]
 
 if settings.DEBUG:

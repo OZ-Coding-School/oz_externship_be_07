@@ -2,7 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.exams.models.exam_submission_models import ExamSubmission
+from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.subject.models.subject_models import Subject
 
 

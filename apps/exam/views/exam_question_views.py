@@ -7,16 +7,16 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.exams.models.exam_models import Exam
-from apps.exams.models.exam_question_models import ExamQuestion
-from apps.exams.serializers.exam_question_serializers import (
+from apps.exam.models.exam_models import Exam
+from apps.exam.models.exam_question_models import ExamQuestion
+from apps.exam.serializers.exam_question_serializers import (
     ErrorDetailSerializer,
     ExamQuestionCreateSerializer,
     ExamQuestionDeleteResponseSerializer,
     ExamQuestionResponseSerializer,
     ExamQuestionUpdateSerializer,
 )
-from apps.exams.services.exam_question_services import ExamQuestionService, IsAdmin
+from apps.exam.services.exam_question_services import ExamQuestionService, IsAdmin
 
 
 class ExamQuestionCreateAPIView(APIView):

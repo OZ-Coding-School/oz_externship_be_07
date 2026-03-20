@@ -4,8 +4,8 @@ from typing import Any, Dict, Optional
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 
-from apps.exams.models.exam_models import Exam
-from apps.exams.models.exam_question_models import ExamQuestion
+from apps.exam.models.exam_models import Exam
+from apps.exam.models.exam_question_models import ExamQuestion
 from apps.users.choices import UserRole
 
 

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.exams.views.exam_question_views import (
+from apps.exam.views.exam_question_views import (
     ExamQuestionCreateAPIView,
     ExamQuestionUpdateDeleteAPIView,
 )

@@ -21,8 +21,6 @@ class QuestionCreateService:
         image_url_list: Optional[List[str]] = None,
     ) -> Questions:
 
-        if not user.is_authenticated:
-            raise PermissionDenied("로그인이 필요한 서비스 입니다.")
         if user.role != "STUDENT":
             raise PermissionDenied("질문 등록은 수강생 권한이 필요합니다.")
 

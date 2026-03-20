@@ -8,7 +8,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.questions.models import QuestionCategories
 from apps.questions.serializers.questions_serializers import (
     QuestionCreateResponseSerializer,
     QuestionCreateSerializer,
@@ -54,12 +53,12 @@ class QuestionCreateView(APIView):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
         # 카테고리 계층 오류 및 비즈니스 제약 위반
-        except (ValidationError, ValueError, QuestionCategories.DoesNotExist) as e:
+        except (ValidationError, ValueError) as e:
             error_msg = getattr(e, "message", str(e))
             return Response({"error_detail": error_msg}, status=status.HTTP_400_BAD_REQUEST)
         # 권한 부족
         except PermissionDenied as e:
             return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
         # 예상치 못한 서버 에러
-        except Exception as e:
-            return Response({"error_detail": f"에러: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            return Response({"error_detail": "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

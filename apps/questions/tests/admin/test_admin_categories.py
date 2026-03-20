@@ -34,7 +34,6 @@ class AdminCategoryTests(TestCase):
             self.url = "/api/v1/admin/qna/categories/"
 
     def test_create_category_success(self) -> None:
-        """[성공] 정상적인 카테고리 등록 확인"""
         data: dict[str, Any] = {
             "name": "신규 카테고리",
             "category_type": "medium",
@@ -44,7 +43,6 @@ class AdminCategoryTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_category_required_fields_missing(self) -> None:
-        """[실패] 필수 입력값(name) 누락 시 400 에러 확인"""
         data: dict[str, Any] = {
             "category_type": "medium",
             "parent_id": self.parent_category.id,
@@ -53,7 +51,6 @@ class AdminCategoryTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_category_parent_not_found(self) -> None:
-        """[실패] 존재하지 않는 부모 ID 입력 시 404 에러 확인"""
         non_existent_id = self.parent_category.id + 9999
         data: dict[str, Any] = {
             "name": "하위 카테고리",
@@ -64,7 +61,6 @@ class AdminCategoryTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_category_duplicate_name(self) -> None:
-        """[실패] 동일한 부모 아래 동일한 이름 존재 시 409 에러 확인"""
         data: dict[str, Any] = {
             "name": "기본 카테고리",
             "category_type": "large",

@@ -24,7 +24,6 @@ from apps.questions.models import QuestionCategories
 class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
     category_id = serializers.IntegerField(source="id", read_only=True)
 
-    # 모델에 없는 필드이므로 write_only=True 설정하여 AttributeError 방지
     category_type = serializers.ChoiceField(
         choices=["large", "medium", "small"], help_text="카테고리 종류 (대분류, 중분류, 소분류)", write_only=True
     )

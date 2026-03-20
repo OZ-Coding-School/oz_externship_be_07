@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("exams", "0003_alter_examdeployment_status_alter_examquestion_type"),
+        ("exam", "0003_alter_examdeployment_status_alter_examquestion_type"),
     ]
 
     operations = [

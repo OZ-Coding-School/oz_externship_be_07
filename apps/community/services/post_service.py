@@ -261,3 +261,6 @@ def s3_url(key_url: str) -> str:
         logger.error(e)
         return key_url
     return s3_value
+
+def presigned_url_change(url: str) -> str:
+    return s3_url(url.split("com/")[1])

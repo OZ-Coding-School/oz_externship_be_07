@@ -17,7 +17,7 @@ from apps.community.services.post_service import (
     create_post,
     get_post_list_queryset,
     get_post_list_values,
-    post_file_save,
+    post_file_save, presigned_url_change,
 )
 
 
@@ -109,7 +109,13 @@ class PostListAPIView(APIView):
         response_data = build_post_list_response(page_items)
 
         serializer = PostListSerializer(cast(Any, response_data), many=True)
+
         data = serializer.data
+
+        for post_data in data:
+            if post_data.get("thumbnail_img_url"):
+                post_data["thumbnail_img_url"] = presigned_url_change(post_data.get("thumbnail_img_url"))
+
 
         return (
             paginator.get_paginated_response(data)

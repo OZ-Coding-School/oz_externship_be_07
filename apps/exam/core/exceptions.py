@@ -1,6 +1,3 @@
-"""normal"""
-
-
 class DeploymentNotFoundError(Exception):
     pass
 
@@ -25,28 +22,5 @@ class DeploymentLockedError(Exception):
     pass
 
 
-""" access """
-
-
 class CodeMismatchError(Exception):
-    pass
-
-
-class AccessDeploymentNotFoundError(Exception):
-    pass
-
-
-class AccessDeploymentForbiddenError(Exception):
-    pass
-
-
-class AccessDeploymentLockedError(Exception):
-    pass
-
-
-class AccessUserNotFoundError(Exception):
-    pass
-
-
-class AccessCodeMismatchError(Exception):
     pass

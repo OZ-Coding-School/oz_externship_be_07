@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.users.views.find_email_views import FindEmailView
 from apps.users.views.login_views import LoginView
 from apps.users.views.logout_views import LogoutView
 from apps.users.views.re_token_views import ReTokenView
@@ -20,4 +21,5 @@ urlpatterns = [
     path("login", LoginView.as_view(), name="login"),
     path("me/refresh", ReTokenView.as_view(), name="token-refresh"),
     path("logout", LogoutView.as_view(), name="logout"),
+    path("find-email/", FindEmailView.as_view(), name="find-email"),
 ]

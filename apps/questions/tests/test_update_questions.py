@@ -26,7 +26,7 @@ class QuestionUpdateTest(TestCase):
         cls.question = Questions.objects.create(
             author=cls.author, category=category, title="Django의 기능", content="Django의 기능 설명와라라라"
         )
-        cls.url = reverse("questions: question_detail_update", kwargs={"question_id": cls.question.id})
+        cls.url = reverse("questions:question_detail_update", kwargs={"question_id": cls.question.id})
 
     def setUp(self) -> None:
         self.client = APIClient()

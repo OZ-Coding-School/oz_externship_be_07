@@ -185,6 +185,8 @@ def file_delete(url: list[str]) -> None:
 
 
 def post_detail_file_presigned_url(content: str) -> str:
+    """Presigned url 주소 변환"""
+
     select_file = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)", content)
     for is_image, name, url in select_file:
         if is_image != "!":

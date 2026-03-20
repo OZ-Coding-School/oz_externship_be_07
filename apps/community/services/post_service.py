@@ -213,16 +213,16 @@ def post_detail_file_presigned_url(content: str) -> str:
 
         if "?" in url:
             key_url = url.split("?")[0]
-            ord = f"{is_image}[{name}]({url})"
+            original = f"{is_image}[{name}]({url})"
             new = f"{is_image}[{name}]({key_url})"
 
         else:
             key_url = url.split("com/")[1]
             get_url = s3_url(key_url)
-            ord = f"{is_image}[{name}]({url})"
+            original = f"{is_image}[{name}]({url})"
             new = f"{is_image}[{name}]({get_url})"
 
-        s3_url_change[ord] = new
+        s3_url_change[original] = new
 
     for order_url, new_url in s3_url_change.items():
         content = content.replace(order_url, new_url)
@@ -240,10 +240,10 @@ def post_update_file_presigned_url(instance: Post) -> None:
         file_delete(set(delete_image.values_list("img_url", flat=True)))
         delete_image.delete()
 
-    delete_filee = PostAttachment.objects.filter(post=instance).exclude(file_url__in=file_urls)
-    if delete_filee:
-        file_delete(set(delete_filee.values_list("file_url", flat=True)))
-        delete_filee.delete()
+    delete_file = PostAttachment.objects.filter(post=instance).exclude(file_url__in=file_urls)
+    if delete_file:
+        file_delete(set(delete_file.values_list("file_url", flat=True)))
+        delete_file.delete()
 
 
 def s3_url(key_url: str) -> str:

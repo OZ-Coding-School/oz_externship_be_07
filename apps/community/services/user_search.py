@@ -1,11 +1,11 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from apps.community.core.redis import RedisClient
 
 
 class UserSearchService:
     @staticmethod
-    def search_users(nickname: str) -> List[Dict[str, Any]]:
+    def search_users(nickname: str) -> list[dict[str, Any]]:
         if not nickname:
             return []
 

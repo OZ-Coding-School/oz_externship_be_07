@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -16,7 +15,7 @@ class AnswerService:
     # 답변 등록
     @staticmethod
     @transaction.atomic
-    def create_answer(user: User, question_id: int, content: str, image_urls: Optional[list[str]] = None) -> Answers:
+    def create_answer(user: User, question_id: int, content: str, image_urls: list[str] | None = None) -> Answers:
         question = get_object_or_404(Questions, id=question_id)
         answer = Answers.objects.create(author=user, questions=question, content=content)
 
@@ -27,7 +26,7 @@ class AnswerService:
     # 답변 수정
     @staticmethod
     @transaction.atomic
-    def update_answer(user: User, answer_id: int, content: str, image_urls: Optional[list[str]] = None) -> Answers:
+    def update_answer(user: User, answer_id: int, content: str, image_urls: list[str] | None = None) -> Answers:
         answer = get_object_or_404(Answers, id=answer_id)
 
         if answer.author != user:

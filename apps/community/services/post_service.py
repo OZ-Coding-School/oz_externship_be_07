@@ -10,6 +10,12 @@ from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 from apps.core.utils.s3_handler import S3Handler
 
+# 마크다운 이미지/링크 정규식
+RE_MARKDOWN_LINK = re.compile(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)")
+RE_IMAGE_URL = re.compile(r"!\[.*?\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
+RE_ATTACHMENT_URL = re.compile(r"(?<!\!)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
+RE_FILE_URL_STRIP_QS = re.compile(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
+
 
 def get_post_list_queryset(
     search: str,
@@ -147,7 +153,7 @@ def post_delete(instance: Post) -> None:
 def post_file_save(instance: Post) -> None:
     """본문에서 마크다운 이미지/파일 url 추출 저장 함수"""
 
-    image_url = re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)", instance.content)
+    image_url = RE_MARKDOWN_LINK.findall(instance.content)
     for is_image, name, url in image_url:
         if is_image == "!":
             PostImage.objects.create(post=instance, img_url=url)
@@ -159,14 +165,14 @@ def file_synchronization(instance: Post) -> None:
     """본문 이미지 제거 및 추가시 삭제 추가 함수"""
     post_update_file_presigned_url(instance)
 
-    current_image_urls = re.findall(r"!\[.*?\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
+    current_image_urls = RE_IMAGE_URL.findall(instance.content)
 
     existing_db_urls = PostImage.objects.filter(post=instance).values_list("img_url", flat=True)
     for url in current_image_urls:
         if url not in existing_db_urls:
             PostImage.objects.create(post=instance, img_url=url)
 
-    current_attachments = re.findall(r"(?<!\!)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
+    current_attachments = RE_ATTACHMENT_URL.findall(instance.content)
 
     existing_att_urls = PostAttachment.objects.filter(post=instance).values_list("file_url", flat=True)
     for name, url in current_attachments:
@@ -205,7 +211,7 @@ def file_delete(url: set[str]) -> None:
 def post_detail_file_presigned_url(content: str) -> str:
     """Presigned url 주소 변환"""
 
-    select_file = set(re.findall(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)", content))
+    select_file = set(RE_MARKDOWN_LINK.findall(content))
     s3_url_change = {}
     for is_image, name, url in select_file:
         if is_image != "!":
@@ -231,7 +237,7 @@ def post_detail_file_presigned_url(content: str) -> str:
 
 
 def post_update_file_presigned_url(instance: Post) -> None:
-    old_file_urls = re.findall(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)", instance.content)
+    old_file_urls = RE_FILE_URL_STRIP_QS.findall(instance.content)
     image_urls = [match[2] for match in old_file_urls if match[0] == "!"]
     file_urls = [match[2] for match in old_file_urls if match[0] == ""]
 

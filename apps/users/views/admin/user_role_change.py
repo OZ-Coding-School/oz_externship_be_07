@@ -6,9 +6,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.permissions import IsStaffUser
 from apps.users.serializers.admin.user_role_update import AdminUserRoleUpdateSerializer
 from apps.users.services.admin.user_role_update import update_user_role
-from apps.users.views.admin.user_enrollment import IsStaffUser
 
 
 class AdminUserRoleUpdateAPIView(APIView):

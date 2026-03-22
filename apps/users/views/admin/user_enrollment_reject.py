@@ -5,11 +5,11 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.permissions import IsStaffUser
 from apps.users.serializers.admin.user_enrollment_reject import (
     AdminEnrollmentRejectSerializer,
 )
 from apps.users.services.admin.user_enrollment_action import reject_enrollment_requests
-from apps.users.views.admin.user_enrollment import IsStaffUser
 
 
 class AdminEnrollmentRejectAPIView(APIView):

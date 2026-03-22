@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core.cache import cache
 from twilio.rest import Client  # type: ignore
 
+from apps.users.constants import SMS_TOKEN_TIMEOUT
+
 
 class VerifySmsService:
     def verify_code(self, phone_number: str, code: str) -> str:
@@ -18,12 +20,9 @@ class VerifySmsService:
                 raise ValueError("인증번호가 올바르지 않습니다.")
 
             sms_token = secrets.token_urlsafe(32)
-            cache.set(f"sms_token:{sms_token}", phone_number, timeout=300)
+            cache.set(f"sms_token:{sms_token}", phone_number, timeout=SMS_TOKEN_TIMEOUT)
 
             return sms_token
-
-        except ValueError:
-            raise
 
         except Exception as e:
             error_msg = str(e).lower()

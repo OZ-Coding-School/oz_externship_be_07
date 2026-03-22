@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from django.core.cache import cache
 from rest_framework.exceptions import ValidationError
@@ -11,7 +11,7 @@ class DuplicateUserError(Exception):
 
 
 class UserService:
-    def create_user(self, validated_data: Dict[str, Any]) -> User:
+    def create_user(self, validated_data: dict[str, Any]) -> User:
         email_token = validated_data.pop("email_token")
         sms_token = validated_data.pop("sms_token")
 

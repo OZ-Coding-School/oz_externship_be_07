@@ -1,15 +1,15 @@
-
 from typing import Any
-from django.db import transaction
 
+from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound
 
 from apps.exam.core.error_custom_base import ConflictException
-from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.exam.models.exam_deployment_models import ExamDeployment
+from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.users.models.models import User
+
 
 class ExamUserSubmissionService:
     @staticmethod
@@ -28,8 +28,7 @@ class ExamUserSubmissionService:
         submitted_answers = data.get("answers", [])
 
         score, correct_count = ExamUserSubmissionService._calculate_score(
-            deployment.questions_snapshot_json,
-            submitted_answers
+            deployment.questions_snapshot_json, submitted_answers
         )
 
         submission = ExamSubmission.objects.create(
@@ -39,7 +38,7 @@ class ExamUserSubmissionService:
             cheating_count=data.get("cheating_count", 0),
             answers_json=submitted_answers,
             score=score,
-            correct_answer_count=correct_count
+            correct_answer_count=correct_count,
         )
         return submission
 

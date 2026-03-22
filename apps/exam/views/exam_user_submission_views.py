@@ -1,22 +1,20 @@
 from typing import cast
 
-from rest_framework.views import APIView
-from rest_framework.request import Request
-from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
-
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from drf_spectacular.utils import OpenApiResponse, extend_schema
 
 from apps.exam.core.error_base import ExamBaseAPIView
 from apps.exam.serializers.exam_submission_serializers import (
+    ExamSubmissionCreateResponseSerializer,
     ExamSubmissionCreateSerializer,
     ExamSubmissionResultSerializer,
-    ExamSubmissionCreateResponseSerializer
 )
-
 from apps.exam.services.exam_user_submission_services import ExamUserSubmissionService
 from apps.users.models.models import User
 
@@ -26,7 +24,6 @@ class ExamSubmissionAPIView(ExamBaseAPIView):
     permission_classes = [IsAuthenticated]
     permission_error_msgs = {"POST": "권한이 없습니다."}
     validation_error_msgs = {"POST": "유효하지 않은 시험 응시 세션입니다."}
-
 
     @extend_schema(
         tags=["exams"],
@@ -46,8 +43,7 @@ class ExamSubmissionAPIView(ExamBaseAPIView):
         serializer = ExamSubmissionCreateSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             submission = ExamUserSubmissionService.create_submission(
-                user=cast(User, request.user),
-                data=serializer.validated_data
+                user=cast(User, request.user), data=serializer.validated_data
             )
 
             response_serializer = ExamSubmissionCreateResponseSerializer(submission)

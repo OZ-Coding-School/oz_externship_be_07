@@ -6,8 +6,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_deployment_models import ExamDeployment
+from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
 from apps.exam.models.exam_submission_models import ExamSubmission
 from apps.subject.models.choices import SubjectStatus

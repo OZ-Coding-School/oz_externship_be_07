@@ -102,6 +102,7 @@ class ChatbotViewTest(APITestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+    @override_settings(GEMINI_API_KEY="dummy_test_key_for_CI")
     @patch("apps.chatbot.services.chatbot_service.genai.Client")
     def test_post_completion_streaming_success(self, mock_client_class: MagicMock) -> None:
         """AI 스트리밍 답변 생성 POST (201 Created 및 DB 저장 확인)"""

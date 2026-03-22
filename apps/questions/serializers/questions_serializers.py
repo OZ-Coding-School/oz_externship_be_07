@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from rest_framework import serializers
 
@@ -68,7 +68,7 @@ class QuestionListSerializer(serializers.ModelSerializer[Questions]):
             return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
         return ""
 
-    def get_thumbnail_img_url(self, obj: Questions) -> Optional[str]:
+    def get_thumbnail_img_url(self, obj: Questions) -> str | None:
         first_image = obj.images.first()
         return first_image.img_url if first_image else None
 
@@ -113,7 +113,7 @@ class QuestionUpdateSerializer(serializers.Serializer[Any]):
     content = serializers.CharField(min_length=5, required=False)
     image_urls = serializers.ListField(child=serializers.URLField(), required=False)
 
-    def validate_category_id(self, value: Optional[int]) -> Optional[int]:
+    def validate_category_id(self, value: int | None) -> int | None:
         if value is not None and not QuestionCategories.objects.filter(id=value).exists():
             raise serializers.ValidationError("존재하지 않는 카테고리입니다.")
         return value

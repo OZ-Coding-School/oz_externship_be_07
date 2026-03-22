@@ -14,7 +14,6 @@ class SmsVerifyView(APIView):
     permission_classes = [AllowAny]
     serializer_class = SmsVerifySerializer
     service = VerifySmsService()
-    authentication_classes = []
 
     @extend_schema(
         summary="SMS 인증 확인 API",

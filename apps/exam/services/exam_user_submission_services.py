@@ -2,21 +2,32 @@
 from typing import Any
 from django.db import transaction
 
-from django.db.shortcuts import get_object_or_404
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import NotFound
 
+from apps.exam.core.error_custom_base import ConflictException
 from apps.exam.models.exam_submission_models import ExamSubmission
-
+from apps.exam.models.exam_deployment_models import ExamDeployment
+from apps.users.models.models import User
 
 class ExamUserSubmissionService:
     @staticmethod
     @transaction.atomic
-    def create_submission(user: User, data: Dict[str, Any]) -> ExamSubmission:
+    def create_submission(user: User, data: dict[str, Any]) -> ExamSubmission:
         deployment_id = data.get("deployment_id")
-        deployment = ExamDeployment.objects.get(id=deployment_id)
+
+        if deployment_id and ExamSubmission.objects.filter(submitter=user).filter(deployment_id=deployment_id).exists():
+            raise ConflictException(detail="이미 제출된 시험입니다.")
+
+        try:
+            deployment = get_object_or_404(ExamDeployment, id=deployment_id)
+        except Http404:
+            raise NotFound("해당 시험 정보를 찾을 수 없습니다.")
 
         submitted_answers = data.get("answers", [])
 
-        score, correct_count = _calculate_score(
+        score, correct_count = ExamUserSubmissionService._calculate_score(
             deployment.questions_snapshot_json,
             submitted_answers
         )
@@ -24,7 +35,7 @@ class ExamUserSubmissionService:
         submission = ExamSubmission.objects.create(
             submitter=user,
             deployment=deployment,
-            started_at=data.get("started_at"),
+            started_at=data.get("started_at", 0),
             cheating_count=data.get("cheating_count", 0),
             answers_json=submitted_answers,
             score=score,
@@ -33,7 +44,7 @@ class ExamUserSubmissionService:
         return submission
 
     @staticmethod
-    def _calculate_score(snapshot: list[dict[str, Any]], submitted_answers: list[dict[str, Any]]) -> (int, int):
+    def _calculate_score(snapshot: list[dict[str, Any]], submitted_answers: list[dict[str, Any]]) -> tuple[int, int]:
         answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
         total_score = 0
         correct_count = 0
@@ -51,8 +62,8 @@ class ExamUserSubmissionService:
 
     @staticmethod
     def get_submission_detail(submission_id: int) -> ExamSubmission:
-        """
-        제출 ID로 상세 내역을 조회합니다.
-        존재하지 않을 경우 404 에러를 발생시킵니다.
-        """
-        return get_object_or_404(ExamSubmission, id=submission_id)
+        try:
+            submission = get_object_or_404(ExamSubmission, id=submission_id)
+        except Http404:
+            raise NotFound("해당 시험 정보를 찾을 수 없습니다.")
+        return submission

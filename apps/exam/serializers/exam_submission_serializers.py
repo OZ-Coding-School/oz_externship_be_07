@@ -15,18 +15,12 @@ class AnswerItemSerializer(serializers.Serializer[dict[str, Any]]):
 
 
 # 쪽지시험 제출
-class ExamSubmissionCreateSerializer(serializers.ModelSerializer[ExamSubmission]):
-    answers = AnswerItemSerializer(many=True, source="answers_json")
-    deployment_id = serializers.IntegerField(source="deployment.id")
+class ExamSubmissionCreateSerializer(serializers.Serializer[dict[str, Any]]):
+    deployment_id = serializers.IntegerField()
+    started_at = serializers.DateTimeField()
+    cheating_count = serializers.IntegerField(default=0)
+    answers = AnswerItemSerializer(many=True)
 
-    class Meta:
-        model = ExamSubmission
-        fields = [
-            "deployment_id",
-            "started_at",
-            "cheating_count",
-            "answers",
-        ]
 
 class ExamSubmissionCreateResponseSerializer(serializers.ModelSerializer[ExamSubmission]):
     submission_id = serializers.IntegerField(source="id", read_only=True)
@@ -58,10 +52,10 @@ class ExamItemSerializer(serializers.ModelSerializer[Exam]):
 
 # 쪽지시험 결과 확인
 class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]):
-    id = serializers.IntegerField(source="id", read_only=True)
+    id = serializers.IntegerField(read_only=True)
     submitter_id = serializers.IntegerField(source="submitter.id", read_only=True)
     deployment_id = serializers.IntegerField(source="deployment.id", read_only=True)
-    exam = ExamItemSerializer()
+    exam = ExamItemSerializer(source="deployment.exam", read_only=True)
     questions = serializers.SerializerMethodField()
     total_score = serializers.IntegerField(source="score", read_only=True)
     elapsed_time = serializers.SerializerMethodField()

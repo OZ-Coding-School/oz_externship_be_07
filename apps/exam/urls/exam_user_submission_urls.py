@@ -5,5 +5,5 @@ from apps.exam.views.exam_user_submission_views import ExamSubmissionAPIView, Ex
 
 urlpatterns = [
     path("exams/submissions", ExamSubmissionAPIView.as_view(), name="exam-submission-create"),
-    path("exams/submissions/{subbmission_id}", ExamSubmissionAPIView.as_view(), name="exam-submission-detail"),
+    path("exams/submissions/<submission_id>", ExamSubmissionDetailAPIView.as_view(), name="exam-submission-detail"),
 ]

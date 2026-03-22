@@ -1,31 +1,52 @@
+from typing import cast
+
 from rest_framework.views import APIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import get_object_with_status_code, get_object_or_404
 
-from apps.exam.models.exam_submission_models import ExamSubmission
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+
+from apps.exam.core.error_base import ExamBaseAPIView
 from apps.exam.serializers.exam_submission_serializers import (
     ExamSubmissionCreateSerializer,
     ExamSubmissionResultSerializer,
     ExamSubmissionCreateResponseSerializer
 )
 
-from apps.exam.services.exam_user_submission_services import ExamSubmissionService
+from apps.exam.services.exam_user_submission_services import ExamUserSubmissionService
+from apps.users.models.models import User
 
 
-class ExamSubmissionAPIView(APIView):
+class ExamSubmissionAPIView(ExamBaseAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    permission_error_msgs = {"POST": "권한이 없습니다."}
+    validation_error_msgs = {"POST": "유효하지 않은 시험 응시 세션입니다."}
+
+
     @extend_schema(
         tags=["exams"],
-        summary="쪽지시험 제출",
-        description="사용자가 작성한 답안을 제출하고 채점 결과를 반환합니다.",
+        summary="쪽지시험 제출 API",
+        description="시험 응시를 완료하고 답안을 제출합니다. 제출 시 자동 채점이 이루어집니다.",
         request=ExamSubmissionCreateSerializer,
-        responses={201: ExamSubmissionCreateResponseSerializer}
+        responses={
+            201: ExamSubmissionCreateResponseSerializer,
+            400: OpenApiResponse(description="유효하지 않은 시험 응시 세션입니다."),
+            401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),
+            403: OpenApiResponse(description="권한이 없습니다."),
+            404: OpenApiResponse(description="해당 시험 정보를 찾을 수 없습니다."),
+            409: OpenApiResponse(description="이미 제출된 시험입니다."),
+        },
     )
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         serializer = ExamSubmissionCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            submission = ExamSubmissionService.create_submission(
-                user=request.user,
+        if serializer.is_valid(raise_exception=True):
+            submission = ExamUserSubmissionService.create_submission(
+                user=cast(User, request.user),
                 data=serializer.validated_data
             )
 
@@ -35,15 +56,29 @@ class ExamSubmissionAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ExamSubmissionDetailAPIView(APIView):
+class ExamSubmissionDetailAPIView(ExamBaseAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    permission_error_msgs = {"GET": "권한이 없습니다."}
+    validation_error_msgs = {"GET": "유효하지 않은 시험 응시 세션입니다."}
+
     @extend_schema(
         tags=["exams"],
-        summary="쪽지시험 결과 상세 조회",
-        description="특정 제출 건에 대한 상세 결과 및 채점 내역을 조회합니다.",
-        responses={200: ExamSubmissionResultSerializer}
+        summary="쪽지시험 결과 확인 API",
+        description="특정 제출 건에 대한 상세 결과와 채점 내역을 조회합니다.",
+        responses={
+            200: ExamSubmissionResultSerializer,  # 명세서 구조 반영
+            400: OpenApiResponse(description="유효하지 않은 시험 응시 세션입니다."),
+            401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),
+            403: OpenApiResponse(description="권한이 없습니다."),
+            404: OpenApiResponse(description="해당 시험 정보를 찾을 수 없습니다."),
+        },
     )
-    def get(self, request, submission_id):
-        submission = ExamSubmissionService.get_submission_detail(submission_id)
+    def get(self, request: Request, submission_id: int) -> Response:
+        submission = ExamUserSubmissionService.get_submission_detail(submission_id)
+
+        if submission.submitter != request.user:
+            raise PermissionDenied("권한이 없습니다.")
 
         serializer = ExamSubmissionResultSerializer(submission)
         return Response(serializer.data, status=status.HTTP_200_OK)

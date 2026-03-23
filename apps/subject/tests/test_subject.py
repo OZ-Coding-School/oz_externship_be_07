@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -7,11 +8,13 @@ from rest_framework.test import APITestCase
 from apps.subject.models.choices import SubjectStatus
 from apps.subject.models.course_models import Course
 from apps.subject.models.subject_models import Subject
+from apps.users.models.models import User
 
 
 class SubjectAPITest(APITestCase):
     """Subject API 테스트"""
 
+    user: User
     course: Course
     subject: Subject
     subject_data: dict[str, Any]
@@ -21,6 +24,16 @@ class SubjectAPITest(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         """테스트 전체에서 공통으로 사용할 데이터 생성"""
+
+        User = get_user_model()
+        cls.user = User.objects.create_user(
+            email="admin@example.com",
+            password="test1234",
+            name="관리자",
+            nickname="admin",
+            phone_number="01012345678",
+            birthday="1999-01-01",
+        )
 
         cls.course = Course.objects.create(
             name="testcourse",
@@ -55,6 +68,9 @@ class SubjectAPITest(APITestCase):
             "subject-scatter",
             kwargs={"subject_id": cls.subject.pk},
         )
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(user=self.user)
 
     def test_create_subject_success(self) -> None:
         """과목 생성 성공 테스트"""
@@ -110,7 +126,6 @@ class SubjectAPITest(APITestCase):
         response = self.client.get(self.list_create_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         self.assertTrue(len(response.data) >= 1)
 
     def test_get_subject_list_contains_created_subject(self) -> None:

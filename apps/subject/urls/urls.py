@@ -12,7 +12,7 @@ urlpatterns = [
         name="subject-list-create",
     ),
     path(
-        "api/v1/admin/subjects/<int:subject_id>/scatter",
+        "admin/subjects/<int:subject_id>/scatter",
         SubjectScatterAPIView.as_view(),
         name="subject-scatter",
     ),

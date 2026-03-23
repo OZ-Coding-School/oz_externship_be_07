@@ -6,7 +6,7 @@ from drf_spectacular.utils import (
 )
 from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,7 +22,7 @@ from apps.subject.services.subject_services import SubjectService
 
 
 class SubjectListCreateAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         tags=["subjects"],
@@ -178,7 +178,7 @@ class SubjectListCreateAPIView(APIView):
 
 
 class SubjectScatterAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         tags=["subjects"],

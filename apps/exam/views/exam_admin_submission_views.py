@@ -2,14 +2,15 @@ from typing import Any
 
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from apps.exam.core.permissions import IsStaffUser
 
 from apps.exam.core.error_base import ExamBaseAPIView
+from apps.exam.core.permissions import IsStaffUser
 from apps.exam.serializers.exam_submission_serializers import (
     ExamSubmissionDetailSerializer,
     ExamSubmissionListSerializer,
@@ -41,7 +42,7 @@ class ExamAdminSubmissionListAPIView(ExamBaseAPIView):
     validation_error_msgs = {"GET": "유효하지 않은 조회 요청입니다."}
 
     @extend_schema(
-        tags=["admin-exams"],
+        tags=["exams"],
         summary="쪽지시험 응시 내역 목록 조회",
         description="관리자용 쪽지시험 응시 내역 목록을 페이지네이션하여 반환합니다.",
         parameters=[
@@ -63,6 +64,10 @@ class ExamAdminSubmissionListAPIView(ExamBaseAPIView):
     )
     def get(self, request: Request) -> Response:
         queryset = ExamAdminSubmissionService.get_submission_queryset(request.query_params.dict())
+
+        if not queryset.exists():
+            raise NotFound("조회된 응시 내역이 없습니다.")
+
         paginator = ExamAdminSubmissionPagination()
         page = paginator.paginate_queryset(queryset, request)
 
@@ -95,7 +100,7 @@ class ExamAdminSubmissionDetailAPIView(ExamBaseAPIView):
     }
 
     @extend_schema(
-        tags=["admin-exams"],
+        tags=["exams"],
         summary="쪽지시험 응시 내역 상세 조회",
         description="특정 응시 내역의 상세 정보와 채점 결과를 조회합니다.",
         responses={
@@ -112,7 +117,7 @@ class ExamAdminSubmissionDetailAPIView(ExamBaseAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["admin-exams"],
+        tags=["exams"],
         summary="쪽지시험 응시 내역 삭제",
         description="특정 응시 내역을 삭제합니다.",
         responses={

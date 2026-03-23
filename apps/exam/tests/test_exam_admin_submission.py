@@ -142,10 +142,6 @@ class ExamAdminSubmissionAPITest(APITestCase):
     def _get_detail_url(self, submission_id: int) -> str:
         return reverse("exam-submission-admin-detail", kwargs={"submission_id": submission_id})
 
-    # ──────────────────────────────────────────────
-    # GET /api/v1/admin/exams/submissions
-    # ──────────────────────────────────────────────
-
     def test_get_submission_list_success(self) -> None:
         """쪽지시험 응시 내역 목록 조회 성공 테스트 (GET)"""
         response = self.client.get(self.list_url)
@@ -169,19 +165,11 @@ class ExamAdminSubmissionAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
 
-        response = self.client.get(self.list_url, {"search_keyword": "존재하지않는이름"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["count"], 0)
-
     def test_get_submission_list_cohort_filter(self) -> None:
         """쪽지시험 응시 내역 목록 조회 - cohort_id 필터 테스트"""
         response = self.client.get(self.list_url, {"cohort_id": self.cohort.pk})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
-
-        response = self.client.get(self.list_url, {"cohort_id": 99999})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["count"], 0)
 
     def test_get_submission_list_exam_filter(self) -> None:
         """쪽지시험 응시 내역 목록 조회 - exam_id 필터 테스트"""
@@ -189,9 +177,19 @@ class ExamAdminSubmissionAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
 
+    def test_get_submission_list_not_found(self) -> None:
+        """쪽지시험 응시 내역 목록 조회 404 에러코드 테스트 : 조회 결과 없음"""
+        response = self.client.get(self.list_url, {"search_keyword": "존재하지않는이름"})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["error_detail"], "조회된 응시 내역이 없습니다.")
+
+        response = self.client.get(self.list_url, {"cohort_id": 99999})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["error_detail"], "조회된 응시 내역이 없습니다.")
+
         response = self.client.get(self.list_url, {"exam_id": 99999})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["count"], 0)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["error_detail"], "조회된 응시 내역이 없습니다.")
 
     def test_get_submission_list_sort_and_order(self) -> None:
         """쪽지시험 응시 내역 목록 조회 - 정렬 테스트"""
@@ -234,10 +232,6 @@ class ExamAdminSubmissionAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data["error_detail"], "쪽지시험 응시 내역 조회 권한이 없습니다.")
-
-    # ──────────────────────────────────────────────
-    # GET /api/v1/admin/exams/submissions/{submission_id}
-    # ──────────────────────────────────────────────
 
     def test_get_submission_detail_success(self) -> None:
         """쪽지시험 응시 내역 상세 조회 성공 테스트 (GET)"""
@@ -282,10 +276,6 @@ class ExamAdminSubmissionAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["error_detail"], "해당 응시 내역을 찾을 수 없습니다.")
-
-    # ──────────────────────────────────────────────
-    # DELETE /api/v1/admin/exams/submissions/{submission_id}
-    # ──────────────────────────────────────────────
 
     def test_delete_submission_success(self) -> None:
         """쪽지시험 응시 내역 삭제 성공 테스트 (DELETE)"""

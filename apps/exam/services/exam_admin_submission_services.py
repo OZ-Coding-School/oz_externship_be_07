@@ -42,7 +42,6 @@ class ExamAdminSubmissionService:
         if sort_field not in allowed_sorts:
             sort_field = "created_at"
 
-        # finished_at은 모델의 created_at으로 매핑
         if sort_field == "finished_at":
             sort_field = "created_at"
 

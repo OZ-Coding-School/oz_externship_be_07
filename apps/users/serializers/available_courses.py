@@ -1,0 +1,26 @@
+from typing import Any
+
+from rest_framework import serializers
+
+from apps.subject.models.cohort_models import Cohort
+from apps.subject.models.course_models import Course
+
+
+class CourseSimpleSerializer(serializers.ModelSerializer[Course]):
+    class Meta:
+        model = Course
+        fields = ["id", "name"]
+
+
+class CohortSimpleSerializer(serializers.ModelSerializer[Cohort]):
+    class Meta:
+        model = Cohort
+        fields = ["id", "number", "start_date", "end_date", "status"]
+
+
+class AvailableCourseSerializer(serializers.Serializer[Any]):
+    cohort = CohortSimpleSerializer()
+    course = CourseSimpleSerializer()
+
+    def to_representation(self, instance: Cohort) -> dict[str, Any]:
+        return {"cohort": CohortSimpleSerializer(instance).data, "course": CourseSimpleSerializer(instance.course).data}

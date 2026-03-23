@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from rest_framework import serializers
@@ -175,7 +176,7 @@ class ExamDeploymentItemSerializer(serializers.ModelSerializer[ExamDeployment]):
 
 # 쪽지시험 응시 내역 상세 조회 API
 class ExamSubmissionDetailSerializer(serializers.ModelSerializer[ExamSubmission]):
-    exam = ExamDeploymentItemSerializer()
+    exam = ExamDeploymentItemSerializer(source="deployment", read_only=True)
     student = serializers.SerializerMethodField()
     result = serializers.SerializerMethodField()
     questions = serializers.SerializerMethodField()
@@ -197,6 +198,10 @@ class ExamSubmissionDetailSerializer(serializers.ModelSerializer[ExamSubmission]
         elapsed_time = int(elapsed_delta.total_seconds() // 60)
 
         snapshot = obj.deployment.questions_snapshot_json
+
+        if isinstance(snapshot, str):
+            snapshot = json.loads(snapshot)
+
         total_questions = len(snapshot) if isinstance(snapshot, list) else 0
 
         return {

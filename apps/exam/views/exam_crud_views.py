@@ -21,7 +21,7 @@ from apps.exam.services.exam_crud_services import ExamService
 
 class ExamPagination(PageNumberPagination):
     page_size = 10
-    page_size_query_param = "size"
+    page_size_query_param = "page_size"
     page_query_param = "page"
     max_page_size = 100
 

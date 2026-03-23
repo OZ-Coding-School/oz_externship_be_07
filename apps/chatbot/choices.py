@@ -18,3 +18,8 @@ class MessageRoleChoices(models.TextChoices):
 
     USER = "user", "사용자"
     ASSISTANT = "assistant", "AI"
+
+
+class BotTypeChoices(models.TextChoices):
+    QNA = "qna", "QnA챗봇"
+    SUPPORT = "support", "고객지원 챗봇"

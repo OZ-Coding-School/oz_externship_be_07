@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.subject.core.error_responses import ErrorResponseSerializer
+from apps.subject.core.permissions import IsStaffUser
 from apps.subject.serializers.subject_serializers import (
     SubjectCreateRequestSerializer,
     SubjectCreateResponseSerializer,
@@ -22,7 +23,7 @@ from apps.subject.services.subject_services import SubjectService
 
 
 class SubjectListCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStaffUser]
 
     @extend_schema(
         tags=["subjects"],
@@ -178,7 +179,7 @@ class SubjectListCreateAPIView(APIView):
 
 
 class SubjectScatterAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStaffUser]
 
     @extend_schema(
         tags=["subjects"],

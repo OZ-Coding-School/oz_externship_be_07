@@ -1,9 +1,9 @@
-from typing import Any
+from typing import Any, cast
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
 
 from apps.subject.models.choices import SubjectStatus
 from apps.subject.models.course_models import Course
@@ -14,7 +14,7 @@ from apps.users.models.models import User
 class SubjectAPITest(APITestCase):
     """Subject API 테스트"""
 
-    user: User
+    admin_user: User
     course: Course
     subject: Subject
     subject_data: dict[str, Any]
@@ -25,15 +25,18 @@ class SubjectAPITest(APITestCase):
     def setUpTestData(cls) -> None:
         """테스트 전체에서 공통으로 사용할 데이터 생성"""
 
-        User = get_user_model()
-        cls.user = User.objects.create_user(
+        user_manager: Any = User.objects
+        cls.admin_user = user_manager.create(
             email="admin@example.com",
-            password="test1234",
+            nickname="tadmin",
             name="관리자",
-            nickname="admin",
-            phone_number="01012345678",
-            birthday="1999-01-01",
+            role="ADMIN",
+            status="ACTIVATED",
+            birthday="1990-01-01",
+            phone_number="01000000000",
         )
+        cls.admin_user.is_staff = True
+        cls.admin_user.save()
 
         cls.course = Course.objects.create(
             name="testcourse",
@@ -70,7 +73,8 @@ class SubjectAPITest(APITestCase):
         )
 
     def setUp(self) -> None:
-        self.client.force_authenticate(user=self.user)
+        self.client = APIClient()
+        self.client.force_authenticate(user=cast(AbstractBaseUser, self.admin_user))
 
     def test_create_subject_success(self) -> None:
         """과목 생성 성공 테스트"""

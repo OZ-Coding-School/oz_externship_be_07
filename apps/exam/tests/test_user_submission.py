@@ -18,7 +18,6 @@ from apps.users.models.models import User
 
 
 class ExamSubmissionAPITest(APITestCase):
-    # 속성 타입 선언 (attr-defined 에러 해결)
     admin_user: User
     student_user: User
     other_student_user: User
@@ -34,7 +33,6 @@ class ExamSubmissionAPITest(APITestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        """테스트 전체에서 사용할 기본 데이터 설정"""
         user_manager: Any = User.objects
 
         cls.admin_user = user_manager.create(
@@ -136,10 +134,6 @@ class ExamSubmissionAPITest(APITestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=cast(AbstractBaseUser, self.student_user))
 
-    # ──────────────────────────────────────────────
-    # POST /api/v1/exams/submissions
-    # ──────────────────────────────────────────────
-
     def test_create_submission_success(self) -> None:
         """쪽지시험 제출 성공 테스트 (POST)"""
         data = self.submission_data.copy()
@@ -190,18 +184,12 @@ class ExamSubmissionAPITest(APITestCase):
         """쪽지시험 제출 409 에러 코드 테스트 : 이미 제출한 시험 재제출 시"""
         data = self.submission_data.copy()
 
-        # 첫 번째 제출
         self.client.post(self.list_url, data, format="json")
 
-        # 동일 시험 재제출
         response = self.client.post(self.list_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.data["error_detail"], "이미 제출된 시험입니다.")
-
-    # ──────────────────────────────────────────────
-    # GET /api/v1/exams/submissions/{submission_id}
-    # ──────────────────────────────────────────────
 
     def _get_detail_url(self, submission_id: int) -> str:
         return reverse("exam-submission-detail", kwargs={"submission_id": submission_id})

@@ -27,7 +27,6 @@ class AdminCategoryService:
             except QuestionCategories.DoesNotExist:
                 raise NotFound({"error_detail": "부모 카테고리를 찾을 수 없습니다."})
 
-        # 중복 체크 시 409 에러 발생
         if QuestionCategories.objects.filter(name=name, parent=parent).exists():
             raise Conflict({"error_detail": "동일한 이름의 카테고리가 이미 존재합니다."})
 

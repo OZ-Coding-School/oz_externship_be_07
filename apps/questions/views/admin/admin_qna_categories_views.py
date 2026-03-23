@@ -13,7 +13,6 @@ from apps.questions.services.admin.questions_admin_category_services import (
     AdminCategoryService,
 )
 
-
 class AdminCategoryCreateAPIView(APIView):
     @extend_schema(
         summary="관리자 카테고리 등록",

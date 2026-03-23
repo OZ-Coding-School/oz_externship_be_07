@@ -4,7 +4,6 @@ from apps.questions.views.admin.admin_qna_categories_views import (
     AdminCategoryCreateAPIView,
 )
 
-# "questions" 중복 에러를 피하기 위해 이름을 고유하게 변경합니다.
 app_name = "admin_questions"
 
 urlpatterns = [

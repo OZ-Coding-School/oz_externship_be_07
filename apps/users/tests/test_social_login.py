@@ -14,7 +14,7 @@ class SocialLoginTest(APITestCase):
         self.kakao_callback_url = reverse("users:kakao-callback")
         self.naver_callback_url = reverse("users:naver-callback")
 
-        self.user = User.objects.create(email="boss@test.com", nickname="선생님", birthday="2000-01-01")
+        self.user = User.objects.create(email="boss@test.com", nickname="생님", birthday="2000-01-01")
 
     @patch("apps.users.services.social_login_services.KakaoOAuthService.get_access_token")
     @patch("apps.users.services.social_login_services.KakaoOAuthService.get_user_info")

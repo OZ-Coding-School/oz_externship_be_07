@@ -70,7 +70,7 @@ class AnswerService:
             raise ValidationError("이미 AI가 답변을 생성했습니다.")
 
         client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-        model_name = "gemini-2.5-pro"
+        model_name = "gemini-2.5-flash"
         prompt = f"질문 제목: {question.title}\n내용: {question.content}\n전문가로서 답변해줘."
 
         response = client.models.generate_content(model=model_name, contents=prompt)

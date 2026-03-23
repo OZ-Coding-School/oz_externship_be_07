@@ -32,7 +32,7 @@ class QuestionPresignedUrlView(BasePresignedUrlView):
     # 질문 이미지 Presigned URL 발급
     @extend_schema(
         summary="질문 이미지 Presigned URL 발급",
-        tags=["Questions"],
+        tags=["qna"],
         request=PresignedUrlRequestSerializer,
         responses={
             200: OpenApiResponse(description="Presigned URL 발급 성공"),

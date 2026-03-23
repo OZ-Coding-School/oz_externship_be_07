@@ -121,7 +121,7 @@ class NaverOAuthService:
 
         if birthday and birthyear:
             try:
-                return date(int(birthyear), int(birthday[:2]), int(birthday[3:]))  # type: ignore
+                return date(int(birthyear), int(birthday[:2]), int(birthday[3:]))
             except (ValueError, IndexError):
                 pass
         return None

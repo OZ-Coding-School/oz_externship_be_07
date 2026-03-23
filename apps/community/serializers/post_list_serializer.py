@@ -2,7 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.community.services.post_service import RE_IMAGE_URL, presigned_url_change
+from apps.community.services.post_service import RE_IMAGE_URL, s3_url
 
 
 class PostListAuthorSerializer(serializers.Serializer[dict[str, Any]]):
@@ -35,6 +35,6 @@ class PostListSerializer(serializers.Serializer[dict[str, Any]]):
 
         img_urls = RE_IMAGE_URL.findall(content)
         for img_url in img_urls:
-            return presigned_url_change(img_url.split("com/")[1])
+            return s3_url(img_url.split("com/")[1])
 
         return None

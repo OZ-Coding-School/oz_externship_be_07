@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from botocore.exceptions import ClientError
 from django.core.files.storage import default_storage
-from django.db.models import CharField, Count, OuterRef, Q, QuerySet, Subquery, Value
+from django.db.models import CharField, Count, Q, QuerySet, Value
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -80,7 +80,7 @@ def build_post_list_response(page_items: list[dict[str, Any]]) -> list[dict[str,
             "author": {
                 "id": post["author_id"],
                 "nickname": post["author__nickname"],
-                "profile_img_url": post["author__profile_img_url"],
+                "profile_img_url": s3_url(post["author__profile_img_url"]),
             },
             "title": post["title"],
             "thumbnail_img_url": post["thumbnail_img_url"],
@@ -253,6 +253,8 @@ def post_update_file_presigned_url(instance: Post) -> None:
 
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
+    if not key_url:
+        return key_url
     try:
         s3_value = S3Handler().generate_get_presigned_url(key_url)
     except ClientError as e:
@@ -261,9 +263,6 @@ def s3_url(key_url: str) -> str:
         return key_url
     return s3_value
 
-
-def presigned_url_change(url: str) -> str:
-    return s3_url(url)
 
 def content_img_not_url(content: str) -> str:
     not_url_content = RE_MARKDOWN_LINK.sub("", content)

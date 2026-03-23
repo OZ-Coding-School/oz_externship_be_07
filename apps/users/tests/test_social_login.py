@@ -6,9 +6,6 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.users.choices import SocialProvider
-from apps.users.models import SocialUser
-
 User = get_user_model()
 
 
@@ -17,60 +14,58 @@ class SocialLoginTest(APITestCase):
         self.kakao_callback_url = reverse("users:kakao-callback")
         self.naver_callback_url = reverse("users:naver-callback")
 
-    @patch("apps.users.services.social_login_services.requests.get")
-    @patch("apps.users.services.social_login_services.requests.post")
-    def test_kakao_login_success(self, mock_post: Any, mock_get: Any) -> None:
+        self.user = User.objects.create(email="boss@test.com", nickname="선생님", birthday="2000-01-01")
+
+    @patch("apps.users.services.social_login_services.KakaoOAuthService.get_access_token")
+    @patch("apps.users.services.social_login_services.KakaoOAuthService.get_user_info")
+    @patch("apps.users.services.social_login_services.KakaoOAuthService.get_or_create_user")
+    def test_kakao_login_success(
+        self, mock_get_or_create_user: Any, mock_get_user_info: Any, mock_get_access_token: Any
+    ) -> None:
+        mock_get_or_create_user.return_value = self.user
+
         session = self.client.session
         session["social_login_state"] = "test_state"
         session.save()
 
-        mock_post.return_value.ok = True
-        mock_post.return_value.json.return_value = {"access_token": "fake_kakao_token"}
+        response: Any = self.client.get(self.kakao_callback_url, {"code": "test_code", "state": "test_state"})
 
-        mock_get.return_value.ok = True
-        mock_get.return_value.json.return_value = {"id": 123456789, "kakao_account": {"email": "test@kakao.com"}}
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertIn("is_success=true", response.url)
+        self.assertIn("access_token", response.cookies)
 
-        response = self.client.get(self.kakao_callback_url, {"code": "test_code", "state": "test_state"})
+    @patch("apps.users.services.social_login_services.KakaoOAuthService.get_access_token")
+    def test_kakao_login_failure_invalid_code(self, mock_token: Any) -> None:
+        mock_token.side_effect = Exception("Invalid Code")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("access_token", response.data)
+        response: Any = self.client.get(self.kakao_callback_url, {"code": "wrong_code", "state": "any"})
 
-        self.assertTrue(SocialUser.objects.filter(provider=SocialProvider.KAKAO, provider_id="123456789").exists())
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertIn("is_success=false", response.url)
 
-    @patch("apps.users.services.social_login_services.requests.post")
-    def test_kakao_login_failure_invalid_code(self, mock_post: Any) -> None:
-        mock_post.return_value.ok = False
+    @patch("apps.users.services.social_login_services.NaverOAuthService.get_access_token")
+    @patch("apps.users.services.social_login_services.NaverOAuthService.get_user_info")
+    @patch("apps.users.services.social_login_services.NaverOAuthService.get_or_create_user")
+    def test_naver_login_success(self, mock_get_user: Any, mock_get_user_info: Any, mock_get_access_token: Any) -> None:
+        mock_get_user.return_value = self.user
 
-        response = self.client.get(self.kakao_callback_url, {"code": "wrong_code"})
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    @patch("apps.users.services.social_login_services.requests.get")
-    @patch("apps.users.services.social_login_services.requests.post")
-    def test_naver_login_success(self, mock_post: Any, mock_get: Any) -> None:
         session = self.client.session
         session["social_login_state"] = "test_state"
         session.save()
 
-        mock_post.return_value.ok = True
-        mock_post.return_value.json.return_value = {"access_token": "fake_naver_token"}
+        response: Any = self.client.get(self.naver_callback_url, {"code": "test_code", "state": "test_state"})
 
-        mock_get.return_value.ok = True
-        mock_get.return_value.json.return_value = {
-            "response": {"id": "naver_12345", "email": "test@naver.com", "name": "팀장님"}
-        }
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertIn("provider=naver", response.url)
+        self.assertIn("is_success=true", response.url)
+        self.assertIn("access_token", response.cookies)
 
-        response = self.client.get(self.naver_callback_url, {"code": "test_code", "state": "test_state"})
+    @patch("apps.users.services.social_login_services.NaverOAuthService.get_access_token")
+    def test_naver_login_failure_invalid_code(self, mock_token: Any) -> None:
+        mock_token.side_effect = Exception("Naver Error")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("access_token", response.data)
+        response: Any = self.client.get(self.naver_callback_url, {"code": "wrong_code", "state": "any"})
 
-        self.assertTrue(SocialUser.objects.filter(provider=SocialProvider.NAVER, provider_id="naver_12345").exists())
-
-    @patch("apps.users.services.social_login_services.requests.post")
-    def test_naver_login_failure_invalid_code(self, mock_post: Any) -> None:
-        mock_post.return_value.ok = False
-
-        response = self.client.get(self.naver_callback_url, {"code": "wrong_code"})
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertIn("provider=naver", response.url)
+        self.assertIn("is_success=false", response.url)

@@ -49,8 +49,6 @@ class ExamSubmissionAPIView(ExamBaseAPIView):
             response_serializer = ExamSubmissionCreateResponseSerializer(submission)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ExamSubmissionDetailAPIView(ExamBaseAPIView):
     authentication_classes = [JWTAuthentication]

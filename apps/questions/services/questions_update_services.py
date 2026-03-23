@@ -19,6 +19,7 @@ class QuestionUpdateService:
     ) -> Questions:
         question = get_object_or_404(Questions, id=question_id)
 
+        # 본인인지 확인하는 로직
         if question.author != user:
             raise PermissionDenied("본인이 작성한 질문만 수정 가능합니다.")
 

@@ -87,8 +87,7 @@ class QuestionListView(APIView):
         responses={201: QuestionCreateResponseSerializer},
     )
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        view = QuestionCreateView.as_view()
-        return view(request._request, *args, **kwargs)
+        return QuestionCreateView.create_question(request)
 
 
 # 2. 상세 조회(GET) 및 수정(PUT) 통합 관리
@@ -124,5 +123,4 @@ class QuestionListDetailView(APIView):
         responses={200: QuestionUpdateResponseSerializer},
     )
     def put(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
-        view = QuestionUpdateView.as_view()
-        return view(request._request, question_id=question_id, *args, **kwargs)
+        return QuestionUpdateView.update_question(request, question_id)

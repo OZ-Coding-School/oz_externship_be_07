@@ -45,7 +45,7 @@ class QuestionUpdateTest(TestCase):
         response = self.client.put(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.data["error_detail"], "본인이 작성한 질문만 수정 가능합니다.")
+        self.assertEqual(response.data["detail"], "본인이 작성한 질문만 수정 가능합니다.")
 
     # 존재하지 않는 질문 ID
     def test_update_question_not_found(self) -> None:

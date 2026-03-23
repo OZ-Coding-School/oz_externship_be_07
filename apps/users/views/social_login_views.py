@@ -46,6 +46,7 @@ class KakaoLoginStartView(APIView):
         auth_url, state = service.get_access_url()
 
         request.session["social_login_state"] = state
+        request.session.save()
 
         return redirect(auth_url)
 
@@ -101,6 +102,7 @@ class NaverLoginStartView(APIView):
         auth_url, state = service.get_access_url()
 
         request.session["social_login_state"] = state
+        request.session.save()
 
         return redirect(auth_url)
 

@@ -1,5 +1,5 @@
-from typing import Any
 import json
+from typing import Any
 
 from django.db import transaction
 from django.http import Http404
@@ -66,12 +66,14 @@ class ExamUserSubmissionService:
     @staticmethod
     def get_submission_detail(submission_id: int) -> ExamSubmission:
         try:
-            submission = get_object_or_404(ExamSubmission.objects.select_related(
-                "submitter",
-                "deployment__exam",
-                "deployment__cohort__course",
-            ),
-            id=submission_id)
+            submission = get_object_or_404(
+                ExamSubmission.objects.select_related(
+                    "submitter",
+                    "deployment__exam",
+                    "deployment__cohort__course",
+                ),
+                id=submission_id,
+            )
         except Http404:
             raise NotFound("해당 시험 정보를 찾을 수 없습니다.")
         return submission

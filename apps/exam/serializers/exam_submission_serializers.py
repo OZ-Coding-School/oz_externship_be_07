@@ -6,6 +6,7 @@ from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_submission_models import ExamSubmission
 
+
 # questions의 공통헬퍼
 def _build_questions(
     snapshot: list[dict[str, Any]],
@@ -43,6 +44,7 @@ def _build_questions(
         questions.append(question_data)
 
     return questions
+
 
 # 쪽지시험 제출 - answers
 class AnswerItemSerializer(serializers.Serializer[dict[str, Any]]):

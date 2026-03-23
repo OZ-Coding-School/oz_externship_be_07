@@ -12,5 +12,4 @@ urlpatterns = [
         StudentScoreAPIView.as_view(),
         name="student-score",
     ),
-
 ]

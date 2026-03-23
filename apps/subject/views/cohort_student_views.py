@@ -1,6 +1,6 @@
 from django.core.paginator import Paginator
 from django.http import Http404
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -86,4 +86,3 @@ class StudentScoreAPIView(APIView):
 
         serializer = StudentSubjectScoreItemSerializer(data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-

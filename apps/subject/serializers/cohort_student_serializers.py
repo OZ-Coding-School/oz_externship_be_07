@@ -62,4 +62,3 @@ class StudentListResponseSerializer(serializers.Serializer[Any]):
 class StudentSubjectScoreItemSerializer(serializers.Serializer[Any]):
     subject = serializers.CharField()
     score = serializers.IntegerField()
-

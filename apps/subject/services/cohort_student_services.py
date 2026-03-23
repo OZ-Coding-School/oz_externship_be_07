@@ -30,12 +30,9 @@ class CohortStudentService:
     def get_student_scores(*, student_id: int) -> List[Dict[str, Any]]:
         user = get_object_or_404(User, id=student_id)
 
-        submissions = (
-            ExamSubmission.objects.filter(submitter=user)
-            .select_related("deployment__exam__subject")
-        )
+        submissions = ExamSubmission.objects.filter(submitter=user).select_related("deployment__exam__subject")
 
-        result = {}
+        result: Dict[str, List[int]] = {}
 
         for sub in submissions:
             subject = sub.deployment.exam.subject.title

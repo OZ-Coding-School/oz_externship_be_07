@@ -45,9 +45,7 @@ class CommentService:
         """
         댓글과 태그 유저 수정
         """
-        update_comment = PostComment.objects.filter(id=comment_id).update(content=content)
-        if not update_comment:
-            raise ValidationError("해당 댓글을 찾을 수 없습니다.")
+        PostComment.objects.filter(id=comment_id).update(content=content)
 
         CommentService._update_tag_logic(comment_id, content, True)
 

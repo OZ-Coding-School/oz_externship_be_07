@@ -2,8 +2,6 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.community.services.post_service import RE_IMAGE_URL, s3_url
-
 
 class PostListAuthorSerializer(serializers.Serializer[dict[str, Any]]):
     """게시글 목록 작성자 Serializer"""

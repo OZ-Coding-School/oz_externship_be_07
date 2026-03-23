@@ -91,7 +91,6 @@ def build_post_list_response(page_items: list[dict[str, Any]]) -> list[dict[str,
             "created_at": post["created_at"],
             "updated_at": post["updated_at"],
             "category_name": post["category__name"],
-            "content": post["content"],
         }
         for post in page_items
     ]

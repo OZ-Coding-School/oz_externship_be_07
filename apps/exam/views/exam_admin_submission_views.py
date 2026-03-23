@@ -2,7 +2,6 @@ from typing import Any
 
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -64,9 +63,6 @@ class ExamAdminSubmissionListAPIView(ExamBaseAPIView):
     )
     def get(self, request: Request) -> Response:
         queryset = ExamAdminSubmissionService.get_submission_queryset(request.query_params.dict())
-
-        if not queryset.exists():
-            raise NotFound("조회된 응시 내역이 없습니다.")
 
         paginator = ExamAdminSubmissionPagination()
         page = paginator.paginate_queryset(queryset, request)

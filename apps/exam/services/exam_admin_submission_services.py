@@ -1,6 +1,6 @@
 from typing import Any
 
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound
@@ -21,10 +21,10 @@ class ExamAdminSubmissionService:
         )
 
         search_keyword = params.get("search_keyword")
-        if search_keyword:
-            queryset = queryset.filter(submitter__name__icontains=search_keyword) | queryset.filter(
-                submitter__nickname__icontains=search_keyword
-            )
+        queryset = queryset.filter(
+            Q(submitter__name__icontains=search_keyword) |
+            Q(submitter__nickname__icontains=search_keyword)
+        )
 
         cohort_id = params.get("cohort_id")
         if cohort_id:

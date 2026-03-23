@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
@@ -103,7 +103,7 @@ class AnswerViewSet(viewsets.GenericViewSet[Any]):
         },
     )
     @action(detail=True, methods=["post"], url_path="accept")
-    def accept(self, request: Request, pk: Optional[int] = None) -> Response:
+    def accept(self, request: Request, pk: int | None = None) -> Response:
         assert isinstance(request.user, User)
         assert pk is not None
         try:
@@ -136,7 +136,7 @@ class AnswerViewSet(viewsets.GenericViewSet[Any]):
         },
     )
     @action(detail=True, methods=["post"], url_path="comments")
-    def comment(self, request: Request, pk: Optional[int] = None) -> Response:
+    def comment(self, request: Request, pk: int | None = None) -> Response:
         assert isinstance(request.user, User)
         assert pk is not None
         serializer = self.get_serializer(data=request.data)
@@ -171,7 +171,7 @@ class AIAnswerViewSet(viewsets.GenericViewSet[Any]):
             409: OpenApiResponse(description="이미 AI가 답변을 생성했습니다."),
         },
     )
-    def retrieve(self, request: Request, question_id: Optional[int] = None) -> Response:
+    def retrieve(self, request: Request, question_id: int | None = None) -> Response:
         assert question_id is not None
         try:
             ai_answer = AnswerService.get_or_create_ai_answer(int(question_id))

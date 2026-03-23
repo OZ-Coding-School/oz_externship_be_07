@@ -33,10 +33,7 @@ class QuestionCreateView(APIView):
         serializer = QuestionCreateSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(
-                {"error_detail": "입력 값이 유효하지 않습니다.", "errors": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         user = cast(User, request.user)
 

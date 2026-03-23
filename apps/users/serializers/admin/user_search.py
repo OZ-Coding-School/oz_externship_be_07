@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -8,22 +8,19 @@ from apps.subject.models.course_models import Course
 from apps.users.models.models import User
 
 
-# Course
 class CourseSimpleSerializer(serializers.ModelSerializer[Course]):
     class Meta:
         model = Course
         fields = ["id", "name", "tag"]
 
 
-# Cohort
 class CohortSimpleSerializer(serializers.ModelSerializer[Cohort]):
     class Meta:
         model = Cohort
         fields = ["id", "number"]
 
 
-# in_progress_course 필드에 사용할 시리얼라이저
-class InProgressCourseSerializer(serializers.Serializer[Dict[str, Any]]):
+class InProgressCourseSerializer(serializers.Serializer[dict[str, Any]]):
     cohort = CohortSimpleSerializer()
     course = CourseSimpleSerializer()
 
@@ -47,14 +44,11 @@ class StudentManagerSerializer(serializers.ModelSerializer[User]):
         ]
 
     @extend_schema_field(InProgressCourseSerializer(allow_null=True))
-    def get_in_progress_course(self, obj: User) -> Optional[Dict[str, Any]]:
-        all_enrollments = list(obj.cohort_students.all())  # type: ignore
+    def get_in_progress_course(self, obj: User) -> dict[str, Any] | None:
+        last_enrollment = obj.cohort_students.order_by("-id").first()  # type: ignore
 
-        if not all_enrollments:
+        if not last_enrollment:
             return None
-
-        # 가장 최근 기수 정보
-        last_enrollment = all_enrollments[-1]
 
         return InProgressCourseSerializer(
             {"cohort": last_enrollment.cohort, "course": last_enrollment.cohort.course}

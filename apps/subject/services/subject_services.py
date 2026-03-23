@@ -41,7 +41,7 @@ class SubjectService:
 
     @staticmethod
     def list_subjects_by_course(*, course_id: int) -> QuerySet[Subject]:
-        return Subject.objects.filter(course_id=course_id).order_by("id")
+        return Subject.objects.select_related("course").filter(course_id=course_id).order_by("id")
 
     @staticmethod
     def get_subject(*, subject_id: int) -> Subject:

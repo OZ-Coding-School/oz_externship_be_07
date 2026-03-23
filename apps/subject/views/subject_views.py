@@ -1,4 +1,3 @@
-from django.http import Http404
 from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiParameter,
@@ -6,6 +5,7 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework import status
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -100,13 +100,13 @@ class SubjectListCreateAPIView(APIView):
                 course_id=course_id,
                 data=serializer.validated_data,
             )
-        except Http404:
+        except NotFound:
             return Response(
                 {"error_detail": "해당 과정을 찾을 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        except Exception as exc:
-            detail = str(exc)
+        except ValidationError as exc:
+            detail = str(exc.detail)
 
             if "동일한 이름의 과목이 이미 존재합니다." in detail:
                 return Response(
@@ -228,7 +228,7 @@ class SubjectScatterAPIView(APIView):
     def get(self, request: Request, subject_id: int) -> Response:
         try:
             submissions = SubjectService.get_subject_scatter_queryset(subject_id=subject_id)
-        except Http404:
+        except NotFound:
             return Response(
                 {"error_detail": "과목을 찾을 수 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,

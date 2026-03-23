@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -10,7 +8,6 @@ from apps.users.models.models import User
 
 
 class QuestionCreateService:
-    # 질문 등록
     @staticmethod
     @transaction.atomic
     def create_question(
@@ -18,7 +15,7 @@ class QuestionCreateService:
         category_id: int,
         title: str,
         content: str,
-        image_url_list: Optional[List[str]] = None,
+        image_url_list: list[str] | None = None,
     ) -> Questions:
 
         if user.role != "STUDENT":

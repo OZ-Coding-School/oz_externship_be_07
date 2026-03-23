@@ -1,5 +1,3 @@
-from typing import Any
-
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -16,9 +14,6 @@ class EmailVerifyView(APIView):
     permission_classes = [AllowAny]
     serializer_class = EmailVerifySerializer
     service = EmailVerifyService()
-
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
 
     @extend_schema(
         summary="이메일 인증 확인 API",

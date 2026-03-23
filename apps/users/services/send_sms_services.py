@@ -2,6 +2,8 @@ from django.conf import settings
 from django.core.cache import cache
 from twilio.rest import Client  # type: ignore
 
+from apps.users.constants import RATE_LIMIT_TIMEOUT
+
 
 class SendSmsService:
     def send_sms_code(self, phone_number: str) -> None:
@@ -19,7 +21,7 @@ class SendSmsService:
                 to=formatted_number, channel="sms"
             )
 
-            cache.set(limit_key, True, timeout=60)
+            cache.set(limit_key, True, timeout=RATE_LIMIT_TIMEOUT)
 
         except Exception:
             raise RuntimeError("인증번호 발송 중 오류가 발생했습니다.")

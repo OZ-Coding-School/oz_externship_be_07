@@ -45,10 +45,7 @@ class QuestionUpdateView(APIView):
         # . 시리얼라이저 검증
         serializer = QuestionUpdateSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(
-                {"error_detail": "유효하지 않은 질문 수정 요청입니다.", "errors": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # 타입 안전성을 위한 유저 캐스팅
         user = cast(User, request.user)

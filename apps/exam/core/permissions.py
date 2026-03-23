@@ -1,14 +1,3 @@
-from rest_framework import permissions
-from rest_framework.request import Request
-from rest_framework.views import APIView
+from apps.core.permissions import STAFF_ROLES, IsStaffUser  # noqa: F401
 
-STAFF_ROLES = {"TA", "OM", "LC", "ADMIN"}
-
-
-class IsStaffUser(permissions.BasePermission):
-    message = "권한이 없습니다."
-
-    def has_permission(self, request: Request, view: APIView) -> bool:
-        return bool(
-            request.user and request.user.is_authenticated and getattr(request.user, "role", None) in STAFF_ROLES
-        )
+__all__ = ["STAFF_ROLES", "IsStaffUser"]

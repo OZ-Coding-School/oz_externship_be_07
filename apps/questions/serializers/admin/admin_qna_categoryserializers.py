@@ -21,7 +21,6 @@ from apps.questions.models import QuestionCategories
         )
     ]
 )
-
 class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
     category_id = serializers.IntegerField(source="id", read_only=True)
 

@@ -83,7 +83,7 @@ def build_post_list_response(page_items: list[dict[str, Any]]) -> list[dict[str,
                 "profile_img_url": s3_url(post["author__profile_img_url"]),
             },
             "title": post["title"],
-            "thumbnail_img_url": post["thumbnail_img_url"],
+            "thumbnail_img_url": content_top_img(post["content"]),
             "content_preview": content_img_not_url(post["content"]),
             "comment_count": post["comment_count"],
             "view_count": post["view_count"],
@@ -267,3 +267,18 @@ def s3_url(key_url: str) -> str:
 def content_img_not_url(content: str) -> str:
     not_url_content = RE_MARKDOWN_LINK.sub("", content)
     return f"{not_url_content[:50]}..." if len(not_url_content) > 50 else not_url_content
+
+
+def content_top_img(content: str) -> str:
+    if not content:
+        return ""
+    img_urls = RE_IMAGE_URL.findall(content)
+
+    if not img_urls:
+        return ""
+
+    img_split = img_urls[0].split("com/")
+    if len(img_split) == 2:
+        return s3_url(img_split[1])
+
+    return ""

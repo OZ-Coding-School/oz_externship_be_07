@@ -19,7 +19,7 @@ class PostListSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     author = PostListAuthorSerializer()
     title = serializers.CharField()
-    thumbnail_img_url = serializers.SerializerMethodField()
+    thumbnail_img_url = serializers.CharField(allow_null=True)
     content_preview = serializers.CharField()
     comment_count = serializers.IntegerField()
     view_count = serializers.IntegerField()
@@ -27,14 +27,3 @@ class PostListSerializer(serializers.Serializer[dict[str, Any]]):
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
     category_name = serializers.CharField()
-
-    def get_thumbnail_img_url(self, obj: dict[str, Any]) -> str | None:
-        content = obj.get("content")
-        if not content:
-            return None
-
-        img_urls = RE_IMAGE_URL.findall(content)
-        for img_url in img_urls:
-            return s3_url(img_url.split("com/")[1])
-
-        return None

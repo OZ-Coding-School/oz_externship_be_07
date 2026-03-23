@@ -1,4 +1,5 @@
 from datetime import date
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 from rest_framework import status
@@ -6,6 +7,12 @@ from rest_framework.test import APIClient
 
 from apps.questions.models import QuestionCategories, Questions
 from apps.users.models.models import User
+
+
+def make_mock_gemini() -> MagicMock:
+    mock_instance = MagicMock()
+    mock_instance.models.generate_content.return_value = MagicMock(text="AI 답변 내용")
+    return mock_instance
 
 
 class AIAnswerTest(TestCase):
@@ -47,7 +54,8 @@ class AIAnswerTest(TestCase):
     # 중복 생성 → 409 + error_detail 확인
     def test_ai_answer_conflict(self) -> None:
         url = f"/api/v1/qna/questions/{self.question.id}/ai-answer"
-        self.client.get(url)
-        response = self.client.get(url)
+        with patch("apps.questions.services.answers_services.genai.Client", return_value=make_mock_gemini()):
+            self.client.get(url)
+            response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertIn("error_detail", response.data)

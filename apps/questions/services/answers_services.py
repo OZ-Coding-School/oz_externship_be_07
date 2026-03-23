@@ -1,4 +1,5 @@
-from django.conf import settings
+import os
+
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from google import genai
@@ -67,8 +68,6 @@ class AnswerService:
 
         if hasattr(question, "ai_answers"):
             raise ValidationError("이미 AI가 답변을 생성했습니다.")
-
-        import os
 
         client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         model_name = "gemini-2.5-flash"

@@ -1,6 +1,6 @@
 from typing import Any
 
-from django.db.models import QuerySet, Q
+from django.db.models import Q, QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound
@@ -23,8 +23,7 @@ class ExamAdminSubmissionService:
         search_keyword = params.get("search_keyword")
         if search_keyword:
             queryset = queryset.filter(
-                Q(submitter__name__icontains=search_keyword) |
-                Q(submitter__nickname__icontains=search_keyword)
+                Q(submitter__name__icontains=search_keyword) | Q(submitter__nickname__icontains=search_keyword)
             )
 
         cohort_id = params.get("cohort_id")
@@ -50,11 +49,15 @@ class ExamAdminSubmissionService:
     # 쪽지시험 응시 내역 상세 조회
     @staticmethod
     def get_submission_detail(submission_id: int) -> ExamSubmission:
-        submission = ExamSubmission.objects.select_related(
-            "submitter",
-            "deployment__cohort__course",
-            "deployment__exam__subject",
-        ).filter(id=submission_id).first()
+        submission = (
+            ExamSubmission.objects.select_related(
+                "submitter",
+                "deployment__cohort__course",
+                "deployment__exam__subject",
+            )
+            .filter(id=submission_id)
+            .first()
+        )
 
         if not submission:
             raise NotFound("해당 응시 내역을 찾을 수 없습니다.")

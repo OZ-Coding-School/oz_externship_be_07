@@ -29,7 +29,7 @@ class CohortSimpleSerializer(serializers.Serializer[dict[str, Any]]):
 
 class ExamDeploymentListQuerySerializer(serializers.Serializer[dict[str, Any]]):
     page = serializers.IntegerField(required=False, default=1, min_value=1)
-    size = serializers.IntegerField(required=False, default=10, min_value=1)
+    page_size = serializers.IntegerField(required=False, default=10, min_value=1)
     search_keyword = serializers.CharField(required=False, allow_blank=True)
     subject_id = serializers.IntegerField(required=False, min_value=1)
     cohort_id = serializers.IntegerField(required=False, min_value=1)
@@ -37,6 +37,7 @@ class ExamDeploymentListQuerySerializer(serializers.Serializer[dict[str, Any]]):
     order = serializers.ChoiceField(
         choices=["asc", "desc"],
         required=False,
+        default="desc",
     )
 
 
@@ -48,7 +49,7 @@ class ExamDeploymentListItemSerializer(serializers.Serializer[dict[str, Any]]):
     exam = ExamSimpleSerializer()
     subject = SubjectSimpleSerializer()
     cohort = CohortSimpleSerializer()
-    created_at = serializers.DateTimeField()
+    created_at = serializers.CharField()
 
 
 class ExamDeploymentListResponseSerializer(serializers.Serializer[dict[str, Any]]):
@@ -62,12 +63,12 @@ class ExamDeploymentDetailSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     exam_access_url = serializers.CharField()
     access_code = serializers.CharField()
+    cohort = CohortSimpleSerializer()
     submit_count = serializers.IntegerField()
     not_submitted_count = serializers.IntegerField()
     duration_time = serializers.IntegerField()
-    open_at = serializers.DateTimeField()
-    close_at = serializers.DateTimeField()
-    created_at = serializers.DateTimeField()
+    open_at = serializers.CharField()
+    close_at = serializers.CharField()
+    created_at = serializers.CharField()
     exam = ExamSimpleSerializer()
     subject = SubjectSimpleSerializer()
-    cohort = CohortSimpleSerializer()

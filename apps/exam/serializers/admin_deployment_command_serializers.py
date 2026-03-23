@@ -1,25 +1,13 @@
 from typing import Any
 
-from django.utils import timezone
 from rest_framework import serializers
 
-from apps.exam.models.choices import DeploymentStatus
 from apps.exam.models.exam_deployment_models import ExamDeployment
-from apps.exam.models.exam_models import Exam
-from apps.subject.models.cohort_models import Cohort
 
 
 class ExamDeploymentCreateSerializer(serializers.ModelSerializer[ExamDeployment]):
-    exam_id = serializers.PrimaryKeyRelatedField(
-        queryset=Exam.objects.all(),
-        source="exam",
-        write_only=True,
-    )
-    cohort_id = serializers.PrimaryKeyRelatedField(
-        queryset=Cohort.objects.all(),
-        source="cohort",
-        write_only=True,
-    )
+    exam_id = serializers.IntegerField(write_only=True, min_value=1)
+    cohort_id = serializers.IntegerField(write_only=True, min_value=1)
     duration_time = serializers.IntegerField(
         min_value=1,
         max_value=32767,
@@ -38,13 +26,9 @@ class ExamDeploymentCreateSerializer(serializers.ModelSerializer[ExamDeployment]
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         open_at = data.get("open_at")
         close_at = data.get("close_at")
-        now = timezone.now()
 
         if open_at and close_at and open_at >= close_at:
             raise serializers.ValidationError("종료 일시는 시작 일시 이후여야 합니다.")
-
-        if open_at and open_at < now:
-            raise serializers.ValidationError("시작 시간은 현재 시간보다 이전일 수 없습니다.")
 
         return data
 
@@ -71,13 +55,9 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]
     def validate(self, data: dict[str, Any]) -> dict[str, Any]:
         open_at = data.get("open_at", getattr(self.instance, "open_at", None))
         close_at = data.get("close_at", getattr(self.instance, "close_at", None))
-        now = timezone.now()
 
         if open_at and close_at and open_at >= close_at:
             raise serializers.ValidationError("종료 일시는 시작 일시 이후여야 합니다.")
-
-        if open_at and open_at < now:
-            raise serializers.ValidationError("시작 시간은 현재 시간보다 이전일 수 없습니다.")
 
         return data
 
@@ -85,13 +65,22 @@ class ExamDeploymentUpdateSerializer(serializers.ModelSerializer[ExamDeployment]
 class ExamDeploymentUpdateResponseSerializer(serializers.Serializer[dict[str, Any]]):
     deployment_id = serializers.IntegerField()
     duration_time = serializers.IntegerField()
-    open_at = serializers.DateTimeField()
-    close_at = serializers.DateTimeField()
-    updated_at = serializers.DateTimeField()
+    open_at = serializers.CharField()
+    close_at = serializers.CharField()
+    updated_at = serializers.CharField()
 
 
 class ExamDeploymentStatusUpdateSerializer(serializers.Serializer[dict[str, Any]]):
-    status = serializers.ChoiceField(choices=DeploymentStatus.choices)
+    status = serializers.CharField()
+
+    def validate_status(self, value: str) -> str:
+        normalized = value.lower()
+        allowed = {"activated", "deactivated"}
+
+        if normalized not in allowed:
+            raise serializers.ValidationError("유효하지 않은 상태 값입니다.")
+
+        return normalized
 
 
 class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[dict[str, Any]]):
@@ -100,4 +89,4 @@ class ExamDeploymentStatusUpdateResponseSerializer(serializers.Serializer[dict[s
 
 
 class ExamDeploymentDeleteResponseSerializer(serializers.Serializer[dict[str, Any]]):
-    detail = serializers.CharField()
+    deployment_id = serializers.IntegerField()

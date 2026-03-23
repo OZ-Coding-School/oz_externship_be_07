@@ -21,10 +21,11 @@ class ExamAdminSubmissionService:
         )
 
         search_keyword = params.get("search_keyword")
-        queryset = queryset.filter(
-            Q(submitter__name__icontains=search_keyword) |
-            Q(submitter__nickname__icontains=search_keyword)
-        )
+        if search_keyword:
+            queryset = queryset.filter(
+                Q(submitter__name__icontains=search_keyword) |
+                Q(submitter__nickname__icontains=search_keyword)
+            )
 
         cohort_id = params.get("cohort_id")
         if cohort_id:

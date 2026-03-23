@@ -19,7 +19,7 @@ from apps.exam.services.exam_admin_submission_services import ExamAdminSubmissio
 
 class ExamAdminSubmissionPagination(PageNumberPagination):
     page_size = 10
-    page_size_query_param = "size"
+    page_size_query_param = "page_size"
     page_query_param = "page"
     max_page_size = 100
 

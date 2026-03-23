@@ -32,7 +32,7 @@ class EnrollStudentSerializer(serializers.Serializer[Any]):
 
         if enrollment:
             if enrollment.status == EnrollmentStatus.PENDING:
-                raise serializers.ValidationError({"detail": "현재 신청 내역이 존재합니다."})
+                raise serializers.ValidationError({"detail": "이미 신청한 기수입니다."})
 
             elif enrollment.status == EnrollmentStatus.ACCEPTED:
                 raise serializers.ValidationError({"detail": "이미 등록된 기수입니다."})

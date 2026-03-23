@@ -16,12 +16,13 @@ from apps.users.models.models import User
 class EnrollStudentTest(TestCase):
     client: APIClient
     user: User
-    base_url = "/api/v1/accounts/enroll-student/"
     cohort: Cohort
     course: Course
+    url: str
 
     @classmethod
     def setUpTestData(cls) -> None:
+        cls.url = "/api/v1/accounts/enroll-student/"
         cls.course = Course.objects.create(name="Python 백엔드 과정")
 
         # 테스트 유저 생성
@@ -53,7 +54,7 @@ class EnrollStudentTest(TestCase):
         self.client.force_authenticate(user=cast(AbstractBaseUser, self.user))
 
         data: dict[str, Any] = {"cohort_id": self.cohort.id}
-        response = self.client.post(self.base_url, data=data, format="json")
+        response = self.client.post(self.url, data=data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(EnrollmentRequest.objects.filter(user=self.user, cohort=self.cohort).exists())
@@ -64,7 +65,7 @@ class EnrollStudentTest(TestCase):
         EnrollmentRequest.objects.create(user=self.user, cohort=self.cohort, status=EnrollmentStatus.PENDING)
 
         self.client.force_authenticate(user=cast(AbstractBaseUser, self.user))
-        response = self.client.post(self.base_url, data={"cohort_id": self.cohort.id}, format="json")
+        response = self.client.post(self.url, data={"cohort_id": self.cohort.id}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error_detail"]["detail"][0], "이미 신청한 기수입니다.")
@@ -74,7 +75,7 @@ class EnrollStudentTest(TestCase):
         EnrollmentRequest.objects.create(user=self.user, cohort=self.cohort, status=EnrollmentStatus.ACCEPTED)
 
         self.client.force_authenticate(user=cast(AbstractBaseUser, self.user))
-        response = self.client.post(self.base_url, data={"cohort_id": self.cohort.id}, format="json")
+        response = self.client.post(self.url, data={"cohort_id": self.cohort.id}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error_detail"]["detail"][0], "이미 등록된 기수입니다.")
@@ -82,7 +83,7 @@ class EnrollStudentTest(TestCase):
     def test_enroll_student_fail_401_unauthorized(self) -> None:
         """401 Unauthorized: 로그인하지 않은 상태로 요청"""
         data = {"cohort_id": self.cohort.id}
-        response = self.client.post(self.base_url, data=data, format="json")
+        response = self.client.post(self.url, data=data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data["error_detail"], "자격 인증 데이터가 제공되지 않았습니다.")

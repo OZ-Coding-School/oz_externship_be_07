@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.users.serializers.find_email_serializers import FindEmailSerializer
-from apps.users.services.find_email_serivces import FindEmailService
+from apps.users.services.find_email_services import FindEmailService
 
 
 class FindEmailView(APIView):
@@ -47,3 +47,6 @@ class FindEmailView(APIView):
 
         except ValidationError as e:
             return Response({"error_detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+
+        except ValueError as e:
+            return Response({"error_detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

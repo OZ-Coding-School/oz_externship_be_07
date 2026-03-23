@@ -35,13 +35,13 @@ class FindEmailViewTest(APITestCase):
 
     @patch("apps.users.services.verify_sms_services.VerifySmsService.verify_code")
     def test_find_email_invalid_code(self, mock_verify: MagicMock) -> None:
-        mock_verify.return_value = False
+        mock_verify.side_effect = ValueError("인증번호가 올바르지 않습니다.")
 
         data = {"name": "킹짱이준", "phone_number": "01012345678", "code": "000000"}
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("code", response.data["error_detail"])
+        self.assertEqual(response.data["error_detail"], "인증번호가 올바르지 않습니다.")
 
     @patch("apps.users.services.verify_sms_services.VerifySmsService.verify_code")
     def test_find_email_user_not_found(self, mock_verify: MagicMock) -> None:

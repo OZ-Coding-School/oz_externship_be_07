@@ -1,4 +1,5 @@
 from typing import Any
+import json
 
 from django.db import transaction
 from django.http import Http404
@@ -44,6 +45,9 @@ class ExamUserSubmissionService:
 
     @staticmethod
     def _calculate_score(snapshot: list[dict[str, Any]], submitted_answers: list[dict[str, Any]]) -> tuple[int, int]:
+        if isinstance(snapshot, str):
+            snapshot = json.loads(snapshot)
+
         answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
         total_score = 0
         correct_count = 0

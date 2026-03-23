@@ -1,5 +1,8 @@
+from typing import Any
+
 from django.db import models
 from django.db.models.functions import Lower
+
 from apps.core.models import TimeStampModel
 
 
@@ -20,7 +23,7 @@ class PostCategory(TimeStampModel):
     def normalize_name(name: str) -> str:
         return " ".join(name.split())
 
-    def save(self, *args: object, **kwargs: object) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         if self.name:
             self.name = self.normalize_name(self.name)
         super().save(*args, **kwargs)

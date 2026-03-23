@@ -1,6 +1,6 @@
-from datetime import date
 import hashlib
 import time
+from datetime import date
 from typing import Any
 
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
@@ -71,9 +71,7 @@ class PostCategoryAdminTest(TestCase):
 
     def _bulk_confirm_session_key(self, category_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(category_ids))
-        token = hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[
-            : PostCategoryAdmin.DELETE_CONFIRM_TOKEN_LENGTH
-        ]
+        token = hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[: PostCategoryAdmin.DELETE_CONFIRM_TOKEN_LENGTH]
         prefix = PostCategoryAdmin.DELETE_CONFIRM_SESSION_KEY_PREFIX
         return f"{prefix}:bulk:{token}"
 
@@ -147,7 +145,7 @@ class PostCategoryAdminTest(TestCase):
         """비활성 카테고리 상세 삭제 시 게시글 연쇄 삭제 확인"""
         url = reverse("admin:community_postcategory_delete", args=[self.inactive_with_posts.pk])
 
-        response = self.client.post(url, {"post": "yes"}, follow=True) # "post": "yes" -> 확인 후, 최종 삭제 요청
+        response = self.client.post(url, {"post": "yes"}, follow=True)  # "post": "yes" -> 확인 후, 최종 삭제 요청
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(PostCategory.objects.filter(pk=self.inactive_with_posts.pk).exists())

@@ -141,7 +141,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
         try:
             post_id = int(object_id) if object_id is not None else None
-        except(TypeError, ValueError):
+        except (TypeError, ValueError):
             post_id = None
 
         if post_id is not None:
@@ -427,7 +427,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
     def _generate_token(self, selected_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(selected_ids))
-        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:: self.DELETE_CONFIRM_TOKEN_LENGTH]
+        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[: self.DELETE_CONFIRM_TOKEN_LENGTH]
 
     def _is_valid_confirmation_payload(
         self,

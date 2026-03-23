@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from botocore.exceptions import ClientError
 from django.core.files.storage import default_storage
-from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
+from django.db.models import CharField, Count, Q, QuerySet, Value
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -29,9 +29,7 @@ def get_post_list_queryset(
         .annotate(
             like_count=Count("likes", filter=Q(likes__is_liked=True), distinct=True),
             comment_count=Count("postcomment", distinct=True),
-            thumbnail_img_url=Subquery(
-                PostImage.objects.filter(post_id=OuterRef("pk")).order_by("id").values("img_url")[:1]
-            ),
+            thumbnail_img_url=Value("", output_field=CharField()),
         )
     )
     if category_id is not None:
@@ -82,11 +80,11 @@ def build_post_list_response(page_items: list[dict[str, Any]]) -> list[dict[str,
             "author": {
                 "id": post["author_id"],
                 "nickname": post["author__nickname"],
-                "profile_img_url": post["author__profile_img_url"],
+                "profile_img_url": s3_url(post["author__profile_img_url"]),
             },
             "title": post["title"],
-            "thumbnail_img_url": post["thumbnail_img_url"],
-            "content_preview": f"{post['content'][:50]}..." if len(post["content"]) > 50 else post["content"],
+            "thumbnail_img_url": content_top_img(post["content"]),
+            "content_preview": content_img_not_url(post["content"]),
             "comment_count": post["comment_count"],
             "view_count": post["view_count"],
             "like_count": post["like_count"],
@@ -254,6 +252,8 @@ def post_update_file_presigned_url(instance: Post) -> None:
 
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
+    if not key_url:
+        return key_url
     try:
         s3_value = S3Handler().generate_get_presigned_url(key_url)
     except ClientError as e:
@@ -261,3 +261,23 @@ def s3_url(key_url: str) -> str:
         logger.error(e)
         return key_url
     return s3_value
+
+
+def content_img_not_url(content: str) -> str:
+    not_url_content = RE_MARKDOWN_LINK.sub("", content)
+    return f"{not_url_content[:50]}..." if len(not_url_content) > 50 else not_url_content
+
+
+def content_top_img(content: str) -> str:
+    if not content:
+        return ""
+    img_urls = RE_IMAGE_URL.findall(content)
+
+    if not img_urls:
+        return ""
+
+    img_split = img_urls[0].split("com/")
+    if len(img_split) == 2:
+        return s3_url(img_split[1])
+
+    return ""

@@ -71,7 +71,9 @@ class PostCategoryAdminTest(TestCase):
 
     def _bulk_confirm_session_key(self, category_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(category_ids))
-        token = hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:32]
+        token = hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[
+            : PostCategoryAdmin.DELETE_CONFIRM_TOKEN_LENGTH
+        ]
         prefix = PostCategoryAdmin.DELETE_CONFIRM_SESSION_KEY_PREFIX
         return f"{prefix}:bulk:{token}"
 

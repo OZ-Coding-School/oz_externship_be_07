@@ -254,6 +254,10 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     DELETE_CONFIRM_SESSION_KEY_PREFIX = "community_category_delete_confirm"
     DELETE_CONFIRM_TTL_SECONDS = 60
     PREVIEW_LIMIT = 3
+    DELETE_CONFIRM_TOKEN_LENGTH = 32
+    ACTIVE_CATEGORY_DELETE_BLOCK_MESSAGE = (
+        '활성 카테고리 "{name}(#{pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.'
+    )
 
     list_display = ("id", "name", "status")
     list_display_links = ("id", "name")
@@ -307,7 +311,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         if obj and obj.status:
             self.message_user(
                 request,
-                f'활성 카테고리 "{obj.name}(#{obj.pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.',
+                self.ACTIVE_CATEGORY_DELETE_BLOCK_MESSAGE.format(name=obj.name, pk=obj.pk),
                 level=messages.WARNING,
             )
             changelist_url = reverse("admin:community_postcategory_changelist")
@@ -357,7 +361,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         if obj.status:
             self.message_user(
                 request,
-                f'활성 카테고리 "{obj.name}(#{obj.pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.',
+                self.ACTIVE_CATEGORY_DELETE_BLOCK_MESSAGE.format(name=obj.name, pk=obj.pk),
                 level=messages.WARNING,
             )
             return
@@ -423,7 +427,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
     def _generate_token(self, selected_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(selected_ids))
-        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:32]
+        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:: self.DELETE_CONFIRM_TOKEN_LENGTH]
 
     def _is_valid_confirmation_payload(
         self,

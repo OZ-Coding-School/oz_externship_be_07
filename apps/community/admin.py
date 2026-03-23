@@ -131,8 +131,25 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         return self.fieldsets
 
     def formfield_for_foreignkey(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Any:
-        if db_field.name == "category":
-            kwargs["queryset"] = PostCategory.objects.filter(status=True).order_by("id")
+        if db_field.name != "category":
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+        qs = PostCategory.objects.filter(status=True)
+
+        resolver_match = getattr(request, "resolver_match", None)
+        object_id = resolver_match.kwargs.get("object_id") if resolver_match else None
+
+        try:
+            post_id = int(object_id) if object_id is not None else None
+        except(TypeError, ValueError):
+            post_id = None
+
+        if post_id is not None:
+            current_cat_id = Post.objects.filter(pk=post_id).values_list("category_id", flat=True).first()
+            if current_cat_id is not None:
+                qs = PostCategory.objects.filter(Q(status=True) | Q(pk=current_cat_id))
+
+        kwargs["queryset"] = qs.order_by("id")
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Post]:
@@ -170,7 +187,8 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
 
         warning_message = "⚠️주의: 게시글 삭제 시 해당 게시글의 댓글이 함께 삭제되며 되돌릴 수 없습니다."
-        deleted_objects.append(warning_message)
+        if warning_message not in deleted_objects:
+            deleted_objects.append(warning_message)
 
         return deleted_objects, model_count, perms_needed, protected
 
@@ -367,7 +385,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         if not inactive_queryset.exists():
             return
 
-        selected_ids = sorted(inactive_queryset.values_list("id", flat=True))
+        selected_ids = list(inactive_queryset.values_list("id", flat=True))
         token = self._generate_token(selected_ids)
 
         selected_count = len(selected_ids)
@@ -404,7 +422,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
             )
 
     def _generate_token(self, selected_ids: list[int]) -> str:
-        token_raw = ",".join(str(pk) for pk in selected_ids)
+        token_raw = ",".join(str(pk) for pk in sorted(selected_ids))
         return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:32]
 
     def _is_valid_confirmation_payload(

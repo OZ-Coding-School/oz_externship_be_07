@@ -25,7 +25,9 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
     """게시글 저장 Serializer"""
 
-    category_id = serializers.PrimaryKeyRelatedField(queryset=PostCategory.objects.all(), source="category")
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=PostCategory.objects.filter(status=True), source="category"
+    )
 
     class Meta:
         model = Post
@@ -50,16 +52,12 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
         return data
 
 
-class PostExSerializer(serializers.ModelSerializer[Post]):
-    class Meta:
-        model = Post
-        fields = ["title", "content", "category_id"]
-
-
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     """게시글 수정 Serializer"""
 
-    category_id = serializers.PrimaryKeyRelatedField(queryset=PostCategory.objects.all(), source="category")
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=PostCategory.objects.filter(status=True), source="category"
+    )
 
     class Meta:
         model = Post

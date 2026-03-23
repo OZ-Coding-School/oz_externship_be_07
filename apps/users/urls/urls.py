@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.users.views.enroll_student import EnrollStudentAPIView
 from apps.users.views.login_views import LoginView
 from apps.users.views.logout_views import LogoutView
 from apps.users.views.re_token_views import ReTokenView
@@ -20,4 +21,5 @@ urlpatterns = [
     path("login", LoginView.as_view(), name="login"),
     path("me/refresh", ReTokenView.as_view(), name="token-refresh"),
     path("logout", LogoutView.as_view(), name="logout"),
+    path("enroll-student/", EnrollStudentAPIView.as_view(), name="enroll-student"),
 ]

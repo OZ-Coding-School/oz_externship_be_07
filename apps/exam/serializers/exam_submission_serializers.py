@@ -6,6 +6,43 @@ from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_submission_models import ExamSubmission
 
+# questions의 공통헬퍼
+def _build_questions(
+    snapshot: list[dict[str, Any]],
+    submitted_answers: list[dict[str, Any]],
+    include_blank_count: bool = False,
+    include_number: bool = False,
+) -> list[dict[str, Any]]:
+    answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
+    questions = []
+
+    for index, q_info in enumerate(snapshot, start=1):
+        q_id = q_info.get("id")
+        submitted_val = answer_map.get(q_id)
+        correct_val = q_info.get("answer")
+
+        question_data: dict[str, Any] = {
+            "id": q_id,
+            "question": q_info.get("question"),
+            "prompt": q_info.get("prompt", ""),
+            "options": q_info.get("options", []),
+            "type": q_info.get("type", ""),
+            "answer": correct_val,
+            "point": q_info.get("point", 0),
+            "explanation": q_info.get("explanation", ""),
+            "is_correct": correct_val == submitted_val,
+            "submitted_answer": submitted_val,
+        }
+
+        if include_blank_count:
+            question_data["blank_count"] = q_info.get("blank_count", 0)
+
+        if include_number:
+            question_data["number"] = index
+
+        questions.append(question_data)
+
+    return questions
 
 # 쪽지시험 제출 - answers
 class AnswerItemSerializer(serializers.Serializer[dict[str, Any]]):
@@ -83,35 +120,11 @@ class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]
         return max(0, elapsed_time)
 
     def get_questions(self, obj: ExamSubmission) -> list[dict[str, Any]]:
-        snapshot = obj.deployment.questions_snapshot_json
-        submitted_answers = obj.answers_json
-
-        answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
-
-        questions = []
-
-        for index, q_info in enumerate(snapshot, start=1):
-            q_id = q_info.get("id")
-            submitted_val = answer_map.get(q_id)
-            correct_val = q_info.get("answer")
-
-            questions.append(
-                {
-                    "id": q_id,
-                    "question": q_info.get("question"),
-                    "prompt": q_info.get("prompt", ""),
-                    "blank_count": q_info.get("blank_count", 0),
-                    "options": q_info.get("options", []),
-                    "type": q_info.get("type", ""),
-                    "answer": correct_val,
-                    "point": q_info.get("point", 0),
-                    "explanation": q_info.get("explanation", ""),
-                    "is_correct": submitted_val == correct_val,
-                    "submitted_answer": submitted_val,
-                }
-            )
-
-        return questions
+        return _build_questions(
+            obj.deployment.questions_snapshot_json,
+            obj.answers_json,
+            include_blank_count=True,
+        )
 
 
 # 쪽지시험 응시 내역 목록 조회 API
@@ -193,32 +206,8 @@ class ExamSubmissionDetailSerializer(serializers.ModelSerializer[ExamSubmission]
         }
 
     def get_questions(self, obj: ExamSubmission) -> list[dict[str, Any]]:
-        snapshot = obj.deployment.questions_snapshot_json
-        submitted_answers = obj.answers_json
-
-        answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
-
-        processed_questions = []
-
-        for index, q_info in enumerate(snapshot, start=1):
-            q_id = q_info.get("id")
-            submitted_val = answer_map.get(q_id)
-            correct_val = q_info.get("answer")
-
-            processed_questions.append(
-                {
-                    "id": q_id,
-                    "number": index,
-                    "type": q_info.get("type"),
-                    "question": q_info.get("question"),
-                    "prompt": q_info.get("prompt", ""),
-                    "options": q_info.get("options", []),
-                    "point": q_info.get("point", 0),
-                    "answer": correct_val,
-                    "submitted_answer": submitted_val,
-                    "is_correct": submitted_val == correct_val,
-                    "explanation": q_info.get("explanation", ""),
-                }
-            )
-
-        return processed_questions
+        return _build_questions(
+            obj.deployment.questions_snapshot_json,
+            obj.answers_json,
+            include_number=True,
+        )

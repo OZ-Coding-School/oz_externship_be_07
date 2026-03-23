@@ -177,7 +177,7 @@ class ExamAPITest(APITestCase):
         self.assertEqual(response.data["total_count"], 26)
         self.assertEqual(len(response.data["exams"]), 10)
 
-        response = self.client.get(self.url, {"page": 2, "size": 5})
+        response = self.client.get(self.url, {"page": 2, "page_size": 5})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["page"], 2)
         self.assertEqual(len(response.data["exams"]), 5)

@@ -63,8 +63,3 @@ class StudentSubjectScoreItemSerializer(serializers.Serializer[Any]):
     subject = serializers.CharField()
     score = serializers.IntegerField()
 
-
-# 어드민 기수별 수강생 목록 조회 API
-class CohortStudentItemSerializer(serializers.Serializer[Any]):
-    value = serializers.CharField()
-    label = serializers.CharField()  # type: ignore[assignment]

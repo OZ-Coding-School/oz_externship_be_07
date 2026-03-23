@@ -38,11 +38,8 @@ class ExamAdminSubmissionService:
         order = params.get("order", "desc")
         order_prefix = "-" if order == "desc" else ""
 
-        allowed_sorts = ["score", "started_at", "finished_at", "created_at"]
+        allowed_sorts = ["score", "started_at", "created_at"]
         if sort_field not in allowed_sorts:
-            sort_field = "created_at"
-
-        if sort_field == "finished_at":
             sort_field = "created_at"
 
         queryset = queryset.order_by(f"{order_prefix}{sort_field}")

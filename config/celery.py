@@ -1,7 +1,7 @@
 import os
 
-from celery import Celery
-from celery.schedules import crontab
+from celery import Celery  # type: ignore
+from celery.schedules import crontab  # type: ignore
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
 

@@ -109,7 +109,6 @@ class PostListAPIView(APIView):
         response_data = build_post_list_response(page_items)
 
         serializer = PostListSerializer(cast(Any, response_data), many=True)
-
         data = serializer.data
 
         return (

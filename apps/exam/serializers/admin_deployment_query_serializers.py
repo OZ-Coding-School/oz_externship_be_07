@@ -29,7 +29,7 @@ class CohortSimpleSerializer(serializers.Serializer[dict[str, Any]]):
 
 class ExamDeploymentListQuerySerializer(serializers.Serializer[dict[str, Any]]):
     page = serializers.IntegerField(required=False, default=1, min_value=1)
-    size = serializers.IntegerField(required=False, default=10, min_value=1)
+    page_size = serializers.IntegerField(required=False, default=10, min_value=1)
     search_keyword = serializers.CharField(required=False, allow_blank=True)
     subject_id = serializers.IntegerField(required=False, min_value=1)
     cohort_id = serializers.IntegerField(required=False, min_value=1)

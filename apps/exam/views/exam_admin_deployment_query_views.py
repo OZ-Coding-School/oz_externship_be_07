@@ -38,10 +38,10 @@ class AdminExamDeploymentQueryBaseAPIView(SubjectBaseAPIView):
     def _get_deployment(self, deployment_id: int) -> ExamDeployment | None:
         return ExamDeploymentService.get_detail_queryset().filter(id=deployment_id).first()
 
-    def _build_page_url(self, request: Request, page: int, size: int) -> str:
+    def _build_page_url(self, request: Request, page: int, page_size: int) -> str:
         params = request.query_params.copy()
         params["page"] = str(page)
-        params["size"] = str(size)
+        params["page_size"] = str(page_size)
         return f"{request.build_absolute_uri(request.path)}?{urlencode(params, doseq=True)}"
 
     def _build_list_item(self, deployment: ExamDeployment) -> dict[str, Any]:
@@ -151,7 +151,7 @@ class AdminExamDeploymentListAPIView(AdminExamDeploymentQueryBaseAPIView):
         sort = params.get("sort", "created_at")
         order = params.get("order", "desc")
         page = params.get("page", 1)
-        size = params.get("size", 10)
+        page_size = params.get("page_size", 10)
 
         if search_keyword:
             queryset = queryset.filter(exam__title__icontains=search_keyword)
@@ -174,14 +174,14 @@ class AdminExamDeploymentListAPIView(AdminExamDeploymentQueryBaseAPIView):
         queryset = queryset.order_by(ordering, secondary_ordering)
 
         total_count = queryset.count()
-        start = (page - 1) * size
-        end = start + size
+        start = (page - 1) * page_size
+        end = start + page_size
         items = list(queryset[start:end])
 
         response_data = {
             "count": total_count,
-            "previous": self._build_page_url(request, page - 1, size) if page > 1 else None,
-            "next": self._build_page_url(request, page + 1, size) if end < total_count else None,
+            "previous": self._build_page_url(request, page - 1, page_size) if page > 1 else None,
+            "next": self._build_page_url(request, page + 1, page_size) if end < total_count else None,
             "results": [self._build_list_item(item) for item in items],
         }
         return Response(response_data, status=status.HTTP_200_OK)

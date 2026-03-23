@@ -19,10 +19,15 @@ class SubjectCreateRequestSerializer(serializers.Serializer[Any]):
     )
 
 
-class SubjectCreateResponseSerializer(serializers.ModelSerializer[Subject]):
+class SubjectBaseResponseSerializer(serializers.ModelSerializer[Subject]):
     course_id = serializers.IntegerField(source="course.id", read_only=True)
     status = serializers.SerializerMethodField()
 
+    def get_status(self, obj: Subject) -> str:
+        return str(obj.status).lower()
+
+
+class SubjectCreateResponseSerializer(SubjectBaseResponseSerializer):
     class Meta:
         model = Subject
         fields = (
@@ -35,14 +40,22 @@ class SubjectCreateResponseSerializer(serializers.ModelSerializer[Subject]):
             "status",
         )
 
-    def get_status(self, obj: Subject) -> str:
-        return str(obj.status).lower()
+
+class SubjectDetailResponseSerializer(SubjectBaseResponseSerializer):
+    class Meta:
+        model = Subject
+        fields = (
+            "id",
+            "course_id",
+            "title",
+            "number_of_days",
+            "number_of_hours",
+            "thumbnail_img_url",
+            "status",
+        )
 
 
-class SubjectListItemSerializer(serializers.ModelSerializer[Subject]):
-    course_id = serializers.IntegerField(source="course.id", read_only=True)
-    status = serializers.SerializerMethodField()
-
+class SubjectListItemSerializer(SubjectBaseResponseSerializer):
     class Meta:
         model = Subject
         fields = (
@@ -52,9 +65,6 @@ class SubjectListItemSerializer(serializers.ModelSerializer[Subject]):
             "status",
             "thumbnail_img_url",
         )
-
-    def get_status(self, obj: Subject) -> str:
-        return str(obj.status).lower()
 
 
 class SubjectUpdateRequestSerializer(serializers.Serializer[Any]):
@@ -75,37 +85,17 @@ class SubjectUpdateRequestSerializer(serializers.Serializer[Any]):
         return attrs
 
 
-class SubjectDetailResponseSerializer(serializers.ModelSerializer[Subject]):
-    course_id = serializers.IntegerField(source="course.id", read_only=True)
-    status = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Subject
-        fields = (
-            "id",
-            "course_id",
-            "title",
-            "number_of_days",
-            "number_of_hours",
-            "thumbnail_img_url",
-            "status",
-        )
-
-    def get_status(self, obj: Subject) -> str:
-        return str(obj.status).lower()
-
-
 class SubjectScatterPointSerializer(serializers.ModelSerializer[ExamSubmission]):
-    duration = serializers.SerializerMethodField()
+    time = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamSubmission
         fields = [
-            "duration",
+            "time",
             "score",
         ]
 
-    def get_duration(self, obj: ExamSubmission) -> float:
+    def get_time(self, obj: ExamSubmission) -> float:
         duration = obj.created_at - obj.started_at
         hours = duration.total_seconds() / 3600
         return round(hours, 1)

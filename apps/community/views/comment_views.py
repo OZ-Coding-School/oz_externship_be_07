@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -56,6 +57,7 @@ class CommentViewSet(
         ],
     )
     def list(self, request: Request, post_id: int) -> Response:
+        get_object_or_404(PostComment, pk=post_id)
         queryset = PostComment.objects.filter(post_id=post_id).select_related("author").all()
         page = self.paginate_queryset(queryset)
 
@@ -84,6 +86,7 @@ class CommentViewSet(
         },
     )
     def create(self, request: Request, post_id: int) -> Response:
+        get_object_or_404(PostComment, pk=post_id)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

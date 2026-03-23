@@ -42,6 +42,7 @@ CUSTOM_APPS: list[str] = [
     "apps.exam",
     "apps.subject",
     "apps.community",
+    "apps.core",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
@@ -287,3 +288,13 @@ FRONTEND_SOCIAL_REDIRECT_URL = "http://localhost:3000"
 
 # GEMINI_API_KEY
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+
+# celery setting
+CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/11"
+CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/11"
+
+CELERY_TIMEZONE = 'Asia/Seoul'
+CELERY_ENABLE_UTC = False
+
+CELERY_RESULT_EXPIRES = 3600

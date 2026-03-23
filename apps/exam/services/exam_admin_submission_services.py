@@ -50,17 +50,16 @@ class ExamAdminSubmissionService:
     # 쪽지시험 응시 내역 상세 조회
     @staticmethod
     def get_submission_detail(submission_id: int) -> ExamSubmission:
-        try:
-            return get_object_or_404(
-                ExamSubmission.objects.select_related(
-                    "submitter",
-                    "deployment__cohort__course",
-                    "deployment__exam__subject",
-                ),
-                id=submission_id,
-            )
-        except Http404:
+        submission = ExamSubmission.objects.select_related(
+            "submitter",
+            "deployment__cohort__course",
+            "deployment__exam__subject",
+        ).filter(id=submission_id).first()
+
+        if not submission:
             raise NotFound("해당 응시 내역을 찾을 수 없습니다.")
+
+        return submission
 
     # 쪽지시험 응시 내역 삭제
     @staticmethod

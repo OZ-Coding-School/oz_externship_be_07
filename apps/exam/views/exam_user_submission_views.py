@@ -41,13 +41,14 @@ class ExamSubmissionAPIView(ExamBaseAPIView):
     )
     def post(self, request: Request) -> Response:
         serializer = ExamSubmissionCreateSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            submission = ExamUserSubmissionService.create_submission(
-                user=cast(User, request.user), data=serializer.validated_data
-            )
+        serializer.is_valid(raise_exception=True)
 
-            response_serializer = ExamSubmissionCreateResponseSerializer(submission)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        submission = ExamUserSubmissionService.create_submission(
+            user=cast(User, request.user), data=serializer.validated_data
+        )
+
+        response_serializer = ExamSubmissionCreateResponseSerializer(submission)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ExamSubmissionDetailAPIView(ExamBaseAPIView):

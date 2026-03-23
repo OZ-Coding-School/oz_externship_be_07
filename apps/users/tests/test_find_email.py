@@ -47,7 +47,7 @@ class FindEmailViewTest(APITestCase):
     def test_find_email_user_not_found(self, mock_verify: MagicMock) -> None:
         mock_verify.return_value = True
 
-        data = {"name": "지존소민", "phone_number": "01000000000", "code": "123456"}
+        data = {"name": "지존소민2", "phone_number": "01000000000", "code": "123456"}
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

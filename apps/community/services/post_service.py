@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from botocore.exceptions import ClientError
 from django.core.files.storage import default_storage
-from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
+from django.db.models import CharField, Count, OuterRef, Q, QuerySet, Subquery, Value
 
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
@@ -29,9 +29,7 @@ def get_post_list_queryset(
         .annotate(
             like_count=Count("likes", filter=Q(likes__is_liked=True), distinct=True),
             comment_count=Count("postcomment", distinct=True),
-            thumbnail_img_url=Subquery(
-                PostImage.objects.filter(post_id=OuterRef("pk")).order_by("id").values("img_url")[:1]
-            ),
+            thumbnail_img_url=Value("", output_field=CharField()),
         )
     )
     if category_id is not None:
@@ -86,13 +84,14 @@ def build_post_list_response(page_items: list[dict[str, Any]]) -> list[dict[str,
             },
             "title": post["title"],
             "thumbnail_img_url": post["thumbnail_img_url"],
-            "content_preview": f"{post['content'][:50]}..." if len(post["content"]) > 50 else post["content"],
+            "content_preview": content_img_not_url(post["content"]),
             "comment_count": post["comment_count"],
             "view_count": post["view_count"],
             "like_count": post["like_count"],
             "created_at": post["created_at"],
             "updated_at": post["updated_at"],
             "category_name": post["category__name"],
+            "content": post["content"],
         }
         for post in page_items
     ]
@@ -179,6 +178,7 @@ def file_synchronization(instance: Post) -> None:
         if url not in existing_att_urls:
             PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
 
+
 def post_delete_sum(instance: Post) -> None:
     post_file_delete(instance)
     post_delete(instance)
@@ -250,6 +250,7 @@ def post_update_file_presigned_url(instance: Post) -> None:
         file_delete(set(delete_file.values_list("file_url", flat=True)))
         delete_file.delete()
 
+
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
     try:
@@ -260,5 +261,10 @@ def s3_url(key_url: str) -> str:
         return key_url
     return s3_value
 
+
 def presigned_url_change(url: str) -> str:
     return s3_url(url)
+
+def content_img_not_url(content: str) -> str:
+    not_url_content = RE_MARKDOWN_LINK.sub("", content)
+    return f"{not_url_content[:50]}..." if len(not_url_content) > 50 else not_url_content

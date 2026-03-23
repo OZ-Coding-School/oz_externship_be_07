@@ -66,6 +66,14 @@ class KakaoLoginCallbackView(APIView):
         code = request.query_params.get("code")
         state = request.query_params.get("state")
 
+        saved_state = request.session.get("social_login_state")
+        if not saved_state or state != saved_state:
+            from rest_framework.exceptions import AuthenticationFailed
+
+            raise AuthenticationFailed("잘못된 접근입니다. (보안 위조 위험)")
+
+        del request.session["social_login_state"]
+
         service = KakaoLoginService()
 
         access_token = service.get_access_token(code, state)
@@ -112,6 +120,14 @@ class NaverLoginCallbackView(APIView):
     def get(self, request: Any) -> Response:
         code = request.query_params.get("code")
         state = request.query_params.get("state")
+
+        saved_state = request.session.get("social_login_state")
+        if not saved_state or state != saved_state:
+            from rest_framework.exceptions import AuthenticationFailed
+
+            raise AuthenticationFailed("잘못된 접근입니다. (보안 위조 위험)")
+
+        del request.session["social_login_state"]
 
         service = NaverLoginService()
         access_token = service.get_access_token(code, state)

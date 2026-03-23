@@ -20,6 +20,10 @@ class SocialLoginTest(APITestCase):
     @patch("apps.users.services.social_login_services.requests.get")
     @patch("apps.users.services.social_login_services.requests.post")
     def test_kakao_login_success(self, mock_post: Any, mock_get: Any) -> None:
+        session = self.client.session
+        session["social_login_state"] = "test_state"
+        session.save()
+
         mock_post.return_value.ok = True
         mock_post.return_value.json.return_value = {"access_token": "fake_kakao_token"}
 
@@ -44,6 +48,10 @@ class SocialLoginTest(APITestCase):
     @patch("apps.users.services.social_login_services.requests.get")
     @patch("apps.users.services.social_login_services.requests.post")
     def test_naver_login_success(self, mock_post: Any, mock_get: Any) -> None:
+        session = self.client.session
+        session["social_login_state"] = "test_state"
+        session.save()
+
         mock_post.return_value.ok = True
         mock_post.return_value.json.return_value = {"access_token": "fake_naver_token"}
 

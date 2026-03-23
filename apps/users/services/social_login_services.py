@@ -30,15 +30,8 @@ class BaseSocialLoginService:
         return str(uuid.uuid4())
 
     def generate_unique_nickname(self, prefix: str) -> str:
-        last_user = User.objects.filter(nickname__startswith=prefix).order_by("-nickname").first()
-        if not last_user:
-            return f"{prefix}1"
-        try:
-            nickname = str(last_user.nickname)
-            last_number = int(nickname.split("_")[1])
-            return f"{prefix}{last_number + 1}"
-        except (IndexError, ValueError):
-            return f"{prefix}{uuid.uuid4().hex[:5]}"
+        unique_suffix = uuid.uuid4().hex[:6]
+        return f"{prefix}{unique_suffix}"
 
     def get_access_token(self, code: str, state: str | None = None) -> str:
         data = {
@@ -54,8 +47,12 @@ class BaseSocialLoginService:
         response = requests.post(self.token_url, data=data)
         if not response.ok:
             raise AuthenticationFailed(f"{self.provider_name} 토큰 발급에 실패했습니다.")
+
         token = response.json().get("access_token")
-        return str(token) if token else ""
+
+        if not token:
+            raise AuthenticationFailed(f"{self.provider_name} 응답에 액세스 토큰이 없습니다.")
+        return str(token)
 
     def get_user_info(self, access_token: str) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -70,9 +67,9 @@ class BaseSocialLoginService:
         raise NotImplementedError
 
     def get_or_create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
-        email: str = str(user_data.get("email", ""))
-        provider: str = str(user_data.get("provider", ""))
-        provider_id: str = str(user_data.get("provider_id", ""))
+        email: str = user_data.get("email") or ""
+        provider: str = user_data.get("provider") or ""
+        provider_id: str = user_data.get("provider_id") or ""
 
         social_account = SocialUser.objects.filter(provider=provider, provider_id=provider_id).first()
 
@@ -80,18 +77,24 @@ class BaseSocialLoginService:
             user = social_account.user
         else:
             with transaction.atomic():
-                user = User.objects.create(
-                    email=email,
-                    name=user_data.get("name", ""),
-                    nickname=user_data.get("nickname", ""),
-                    phone_number=f"010-{str(uuid.uuid4())[:8]}",
-                    gender=UserGender.MALE,
-                    birthday=date(1900, 1, 1),
-                )
+                social_user = User.objects.filter(email=email).first()
+                if not social_user:
+                    user = User.objects.create(
+                        email=email,
+                        name=user_data.get("name", "소셜사용자"),
+                        nickname=user_data.get("nickname", "임시닉네임"),
+                        phone_number=user_data.get("phone_number", f"010{uuid.uuid4().hex[:4]}{uuid.uuid4().hex[:4]}"),
+                        gender=user_data.get("gender", UserGender.MALE),
+                        birthday=user_data.get("birthday", date(1900, 1, 1)),
+                    )
+                else:
+                    user = social_user
                 SocialUser.objects.create(user=user, provider=provider, provider_id=provider_id)
 
         if not user.is_active:
-            raise PermissionDenied({"error_detail": {"detail": "탈퇴 신청한 계정입니다.", "expire_at": "2026-03-19"}})
+            withdrawal = getattr(user, "withdrawals", None)
+            expire_at = withdrawal.due_date if withdrawal else "확인 불가"
+            raise PermissionDenied({"error_detail": {"detail": "탈퇴 신청한 계정입니다.", "expire_at": str(expire_at)}})
 
         refresh = RefreshToken.for_user(user)
         return {"access_token": str(refresh.access_token), "refresh_token": str(refresh)}
@@ -120,11 +123,19 @@ class KakaoLoginService(BaseSocialLoginService):
         return url, state
 
     def extract_user_data(self, user_info: dict[str, Any]) -> dict[str, Any]:
+        kakao_account = user_info.get("kakao_account", {})
+        profile = kakao_account.get("profile", {})
         social_id = str(user_info.get("id"))
+
+        gender_map = {"male": UserGender.MALE, "female": UserGender.FEMALE}
+
         return {
-            "email": f"kakao_{social_id}@kakao.com",
-            "name": "카카오유저",
+            "email": kakao_account.get("email", f"kakao_{social_id}@kakao.com"),
+            "name": profile.get("nickname", "카카오유저"),
             "nickname": self.generate_unique_nickname("K_"),
+            "gender": gender_map.get(kakao_account.get("gender"), UserGender.MALE),
+            "phone_number": kakao_account.get("phone_number", f"010{uuid.uuid4().hex[:4]}{uuid.uuid4().hex[:4]}"),
+            "birthday": date(1995, 1, 1),
             "provider": SocialProvider.KAKAO,
             "provider_id": social_id,
         }
@@ -153,11 +164,18 @@ class NaverLoginService(BaseSocialLoginService):
         return url, state
 
     def extract_user_data(self, user_info: dict[str, Any]) -> dict[str, Any]:
-        social_id = str(user_info.get("response", {}).get("id"))
+        naver_response = user_info.get("response", {})
+        social_id = str(naver_response.get("id"))
+
+        gender_map = {"M": UserGender.MALE, "F": UserGender.FEMALE}
+
         return {
-            "email": f"naver_{social_id[:10]}@naver.com",
-            "name": "네이버유저",
+            "email": naver_response.get("email", f"naver_{social_id[:10]}@naver.com"),
+            "name": naver_response.get("name", "네이버유저"),
             "nickname": self.generate_unique_nickname("N_"),
+            "gender": gender_map.get(naver_response.get("gender"), UserGender.MALE),
+            "phone_number": naver_response.get("mobile", f"010{uuid.uuid4().hex[:4]}{uuid.uuid4().hex[:4]}"),
+            "birthday": date(1995, 1, 1),
             "provider": SocialProvider.NAVER,
             "provider_id": social_id,
         }

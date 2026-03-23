@@ -1,6 +1,7 @@
 from typing import Any
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -20,6 +21,13 @@ class UserSearchAPIView(GenericAPIView[Any]):
     @extend_schema(
         summary="댓글 태그",
         description="댓글 태그 기능",
+        parameters=[
+            OpenApiParameter(
+                name="nickname",
+                type=OpenApiTypes.STR,
+                required=True,
+            ),
+        ],
         tags=["posts"],
     )
     def get(self, request: Request) -> Response:

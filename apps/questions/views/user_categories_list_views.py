@@ -18,6 +18,7 @@ from apps.questions.serializers.user_category_serializer import UserCategorySeri
 from apps.questions.services.user_categories_list_services import (
     QuestionCategoryService,
 )
+from apps.users.choices import UserRole
 from apps.users.models.models import User
 
 
@@ -34,8 +35,17 @@ class UserCategoryListView(APIView):
     def get(self, request: Request) -> Response:
         user = cast(User, request.user)
 
-        # 권한 조회
-        if user.role != "STUDENT":
+        # 수강생 이상의 권한
+        allowed_roles = [
+            UserRole.STUDENT,
+            UserRole.TA,
+            UserRole.OM,
+            UserRole.LC,
+            UserRole.ADMIN
+        ]
+
+        # 수강생 이상 권한은 조회 가능
+        if user.role not in allowed_roles:
             raise PermissionDenied("카테고리 조회 권한이 없습니다.")
 
         try:

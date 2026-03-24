@@ -1,7 +1,6 @@
 from typing import Any, cast
 
 from django.http import Http404
-from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
@@ -29,7 +28,6 @@ from apps.community.services.post_service import (
     build_post_detail_response,
     file_synchronization,
     get_post_detail,
-    post_delete,
     post_delete_sum,
 )
 

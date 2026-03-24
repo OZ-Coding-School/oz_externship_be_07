@@ -16,6 +16,9 @@ RE_IMAGE_URL = re.compile(r"!\[.*?\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
 RE_ATTACHMENT_URL = re.compile(r"(?<!\!)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
 RE_FILE_URL_STRIP_QS = re.compile(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
 
+# url 절취선 기준
+RIST_SPLIT = "com/"
+
 
 def get_post_list_queryset(
     search: str,
@@ -135,7 +138,7 @@ def create_post(author: Any, title: str, content: str, category: PostCategory) -
 
 
 def update_post(instance: Post, title: str, content: str, category: PostCategory) -> None:
-    """게시판 수정 함수"""
+    """게시글 수정 함수"""
 
     instance.title = title
     instance.content = content
@@ -200,10 +203,12 @@ def file_delete(url: set[str]) -> None:
     """실제 파일 삭제 함수"""
 
     for file_url in url:
-        key_url = file_url.split("com/")
-        if len(key_url) > 1:
+        key_url = file_url.split(RIST_SPLIT)
+        try:
             if default_storage.exists(key_url[1]):
                 default_storage.delete(key_url[1])
+        except IndexError as e:
+            logging.getLogger(__name__).error(f"file delete error: {e}")
 
 
 def post_detail_file_presigned_url(content: str) -> str:
@@ -221,7 +226,7 @@ def post_detail_file_presigned_url(content: str) -> str:
             new = f"{is_image}[{name}]({key_url})"
 
         else:
-            key_url = url.split("com/")[1]
+            key_url = url.split(RIST_SPLIT)[1]
             get_url = s3_url(key_url)
             original = f"{is_image}[{name}]({url})"
             new = f"{is_image}[{name}]({get_url})"
@@ -276,7 +281,7 @@ def content_top_img(content: str) -> str:
     if not img_urls:
         return ""
 
-    img_split = img_urls[0].split("com/")
+    img_split = img_urls[0].split(RIST_SPLIT)
     if len(img_split) == 2:
         return s3_url(img_split[1])
 

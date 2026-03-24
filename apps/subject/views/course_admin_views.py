@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.permissions import IsStaffUser
 from apps.subject.core.error_base import SubjectBaseAPIView
-from apps.subject.core.permissions import IsStaffUser
 from apps.subject.serializers.course_serializers import (
     CourseCreateRequestSerializer,
     CourseCreateResponseSerializer,

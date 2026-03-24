@@ -7,6 +7,8 @@ from apps.exam.models.exam_deployment_models import ExamDeployment
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_submission_models import ExamSubmission
 
+ONE_MINUTE = 60
+
 
 # questions의 공통헬퍼
 def _build_questions(
@@ -119,7 +121,7 @@ class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]
 
     def get_elapsed_time(self, obj: ExamSubmission) -> int:
         elapsed_delta = obj.created_at - obj.started_at
-        elapsed_time = int(elapsed_delta.total_seconds() // 60)
+        elapsed_time = int(elapsed_delta.total_seconds() // ONE_MINUTE)
         return max(0, elapsed_time)
 
     def get_questions(self, obj: ExamSubmission) -> list[dict[str, Any]]:

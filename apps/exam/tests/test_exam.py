@@ -1,7 +1,6 @@
 import json
-from typing import IO, Any, Dict, cast
+from typing import Any, Dict, cast
 
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
 from django.urls import reverse
 from rest_framework import status
@@ -16,7 +15,6 @@ from apps.users.models.models import User
 
 
 class ExamAPITest(APITestCase):
-    # 속성 타입 선언 (attr-defined 에러 해결)
     admin_user: User
     target_user: User
     course: Course

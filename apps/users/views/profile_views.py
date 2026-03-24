@@ -15,6 +15,7 @@ from apps.users.serializers.profile_serializers import (
 )
 
 User = get_user_model()
+Permission_EXAMPLE = OpenApiExample("인증 에러", value={"error_detail": "자격 인증이 제공되지 않았습니다"})
 
 
 class ProfileView(APIView):
@@ -25,7 +26,10 @@ class ProfileView(APIView):
         summary="내 정보 조회",
         tags=["Accounts"],
         description="로그인한 사용자의 프로필 정보를 가져옵니다.",
-        responses={200: UserProfileSerializer},
+        responses={
+            200: UserProfileSerializer,
+            401: Permission_EXAMPLE,
+        },
     )
     def get(self, request: Request) -> Response:
         serializer = self.serializer_class(request.user)
@@ -38,7 +42,8 @@ class ProfileView(APIView):
         request=UserProfileSerializer,
         responses={
             200: UserProfileSerializer,
-            400: OpenApiExample("입력 에러", value={"error_detail": {"phone_number": ["형식이 올바르지 않습니다."]}}),
+            400: OpenApiExample("입력 에러", value={"error_detail": {"nickname": ["10글자 이하로 해주세요."]}}),
+            401: Permission_EXAMPLE,
             409: OpenApiExample("중복 에러", value={"error_detail": {"nickname": ["중복된 닉네임이 존재합니다."]}}),
         },
     )
@@ -57,7 +62,7 @@ class ProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         error_str = str(serializer.errors)
-        if "중복된 닉네임" in error_str or "이미 등록된 휴대폰" in error_str:
+        if "중복된 닉네임" in error_str:
             return Response({"error_detail": serializer.errors}, status=status.HTTP_409_CONFLICT)
 
         return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

@@ -40,9 +40,8 @@ class UserProfileSerializer(serializers.ModelSerializer[Any]):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "email", "created_at", "updated_at"]
+        read_only_fields = ["id", "email", "phone_number", "created_at", "updated_at"]
         extra_kwargs: Dict[str, Any] = {
-            "phone_number": {"validators": []},
             "nickname": {"validators": []},
         }
 
@@ -53,13 +52,4 @@ class UserProfileSerializer(serializers.ModelSerializer[Any]):
             user_id = getattr(instance, "id", None)
             if user_id and User.objects.filter(nickname=value).exclude(id=user_id).exists():
                 raise serializers.ValidationError("중복된 닉네임이 존재합니다.")
-        return value
-
-    def validate_phone_number(self, value: str) -> str:
-        instance = self.instance
-
-        if value and instance and not isinstance(instance, (list, tuple)):
-            user_id = getattr(instance, "id", None)
-            if user_id and User.objects.filter(phone_number=value).exclude(id=user_id).exists():
-                raise serializers.ValidationError("이미 등록된 휴대폰 번호입니다.")
         return value

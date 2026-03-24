@@ -36,13 +36,7 @@ class UserCategoryListView(APIView):
         user = cast(User, request.user)
 
         # 수강생 이상의 권한
-        allowed_roles = [
-            UserRole.STUDENT,
-            UserRole.TA,
-            UserRole.OM,
-            UserRole.LC,
-            UserRole.ADMIN
-        ]
+        allowed_roles = [UserRole.STUDENT, UserRole.TA, UserRole.OM, UserRole.LC, UserRole.ADMIN]
 
         # 수강생 이상 권한은 조회 가능
         if user.role not in allowed_roles:

@@ -5,6 +5,7 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.subject.models.choices import CohortStatus
 from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.course_models import Course
 from apps.users.choices import UserRole, UserStatus
@@ -22,7 +23,7 @@ class AvailableCourseTest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         # 테스트 코스 생성
-        cls.url = "/api/v1/accounts/available-courses/"
+        cls.url = "/api/v1/accounts/available-courses"
         cls.course = Course.objects.create(name="초격차 백엔드 부트캠프")
 
         # 테스트 기수 생성 (신청 가능)
@@ -30,7 +31,7 @@ class AvailableCourseTest(TestCase):
             course=cls.course,
             number=1,
             max_student=30,
-            status="PENDING",
+            status=CohortStatus.PREPARING,
             start_date="2026-03-01",
             end_date="2026-06-01",
         )
@@ -39,7 +40,7 @@ class AvailableCourseTest(TestCase):
             course=cls.course,
             number=2,
             max_student=30,
-            status="FINISHED",
+            status=CohortStatus.FINISHED,
             start_date="2025-01-01",
             end_date="2025-04-01",
         )
@@ -70,7 +71,7 @@ class AvailableCourseTest(TestCase):
 
     def test_get_available_courses_empty_list(self) -> None:
         """200 OK: 신청 가능한 기수가 없을 때 빈 리스트 반환 확인"""
-        Cohort.objects.all().update(status="FINISHED")
+        Cohort.objects.all().update(status=CohortStatus.FINISHED)
 
         response = self.client.get(self.url)
 

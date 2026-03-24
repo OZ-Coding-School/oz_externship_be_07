@@ -19,8 +19,5 @@ class CohortSimpleSerializer(serializers.ModelSerializer[Cohort]):
 
 
 class AvailableCourseSerializer(serializers.Serializer[Any]):
-    cohort = CohortSimpleSerializer()
+    cohort = CohortSimpleSerializer(source="*")
     course = CourseSimpleSerializer()
-
-    def to_representation(self, instance: Cohort) -> dict[str, Any]:
-        return {"cohort": CohortSimpleSerializer(instance).data, "course": CourseSimpleSerializer(instance.course).data}

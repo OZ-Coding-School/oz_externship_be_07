@@ -15,9 +15,6 @@ def build_post_viewer_key(request: Request) -> str:
 
 
 def increase_post_view_count(post_id: int, viewer_key: str) -> bool:
-    if not cache_add(post_viewer_key(post_id, viewer_key), 1, timeout=POST_VIEW_TTL):
-        return False
-
     cache_incr(post_view_count_key(post_id))
     return True
 

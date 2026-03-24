@@ -57,7 +57,7 @@ class AdminUserWithdrawalRestoreTest(TestCase):
 
         # 응답 검증
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["detail"], "회원 탈퇴 취소처리 완료.")
+        self.assertEqual(response.data["error_detail"], "회원 탈퇴 취소처리 완료.")
 
         # DB 상태 검증
         self.assertFalse(Withdrawal.objects.filter(id=self.withdrawal.id).exists())

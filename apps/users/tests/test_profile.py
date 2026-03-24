@@ -41,9 +41,10 @@ class ProfileAPITest(APITestCase):
         self.assertEqual(response.data["nickname"], "화난이준")
 
     def test_patch_profile_image_success(self) -> None:
+        url = reverse("users:profile-image")
         image_url = "https://oz-externship.s3.ap-northeast-2.amazonaws.com/uploads/images/profiles/photo.png"
         data = {"profile_img_url": image_url}
-        response = self.client.patch(self.url, data)
+        response = self.client.put(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["profile_img_url"], image_url)
 
@@ -53,12 +54,14 @@ class ProfileAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_nickname_check_available(self) -> None:
+        url = reverse("users:check-nickname")
         data = {"nickname": "침울현오"}
-        response = self.client.post(self.url, data)
+        response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["detail"], "사용가능한 닉네임 입니다.")
 
     def test_nickname_check_conflict(self) -> None:
+        url = reverse("users:check-nickname")
         data = {"nickname": "지존소민"}
-        response = self.client.post(self.url, data)
+        response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)

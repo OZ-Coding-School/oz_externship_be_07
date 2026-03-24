@@ -5,15 +5,19 @@ from typing import Any
 from django.conf import settings
 from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
-from rest_framework import status
-from rest_framework.exceptions import NotFound
-from rest_framework.pagination import CursorPagination
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
+from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
 
 from apps.chatbot.choices import BotTypeChoices
 from apps.chatbot.services.chatbot_service import ChatbotService
@@ -22,42 +26,43 @@ from .serializers import ChatbotCompletionRequestSerializer
 
 
 class ChatbotSessionCreateView(APIView):
-
     """
-    [무상태 챗봇 세션 발급 뷰] 1회용 고유 식별자(UUID)만 발급
+    [무상태 챗봇 세션 발급] 1회용 고유 식별자(UUID)만 발급
     """
 
     permission_classes = [IsAuthenticated]
-    @extend_schema(summary="새 챗봇 세션 생성", responses={201: Any})
+
+    @extend_schema(
+        tags=["Chatbot (챗봇)"],
+        summary="챗봇 세션 생성",
+        description="새로운 챗봇 대화를 위한 1회용 UUID 세션을 발급합니다.",
+        request=None,
+        responses={
+            201: inline_serializer(name="SessionCreateResponse", fields={"session_id": serializers.UUIDField()})
+        },
+    )
     def post(self, request: Request) -> Response:
         new_session_id = str(uuid.uuid4())
         return Response({"session_id": new_session_id}, status=status.HTTP_201_CREATED)
 
-@extend_schema_view(
-    POST=extend_schema(summary="AI 답변 생성, 스트리밍"),
-    GET=extend_schema(summary="대화내역 조회"),
-    DELETE=extend_schema(summary="대화내역 삭제 (초기화)")
-)
+
 class ChatbotCompletionView(APIView):
     permission_classes = [IsAuthenticated]
     """
-    <POST> /api/v1/chatbot/sessions/{session_id}/completions : AI 답변 생성(최대 2회), 스트리밍 방식
-    <GET> /api/v1/chatbot/sessions/{session_id}/completions : 현재 세션 대화내역 (Redis)
+    <GET> /api/v1/chatbot/sessions/{session_id}/completions : 현재 세션 대화내역 조회
     <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 세션 종료 (Redis 삭제)
+    <POST> /api/v1/chatbot/sessions/{session_id}/completions : AI 답변 생성(최대 2회), 스트리밍 방식
     """
+
     # 대화내역 조회 <GET>
     @extend_schema(
         tags=["Chatbot (챗봇)"],
+        description="특정 세션의 챗봇 대화 내역을 조회합니다.",
         summary="대화내역 조회 <GET>",
-        request=ChatbotCompletionRequestSerializer,
-        parameters=[
-            OpenApiParameter(
-                name="bot_type",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.PATH,
-                enum=BotTypeChoices.values, 
-            ),
-        ]
+        responses={
+            200: OpenApiResponse(description="대화 내역 리스트 반환"),
+            404: OpenApiResponse(description="세션 만료"),
+        },
     )
     def get(self, request: Request, bot_type: str, session_id: str) -> Response:
         if bot_type not in BotTypeChoices.values:
@@ -76,15 +81,8 @@ class ChatbotCompletionView(APIView):
     @extend_schema(
         tags=["Chatbot (챗봇)"],
         summary="챗봇 세션 종료",
-        request=ChatbotCompletionRequestSerializer,
-        parameters=[
-            OpenApiParameter(
-                name="bot_type",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.PATH,
-                enum=BotTypeChoices.values, 
-            ),
-        ]
+        description="특정 세션의 대화 내역을 삭제합니다.",
+        responses={204: OpenApiResponse(description="성공적으로 삭제됨")},
     )
     def delete(self, request: Request, bot_type: str, session_id: str) -> Response:
         assert request.user.is_authenticated
@@ -96,17 +94,17 @@ class ChatbotCompletionView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # AI 답변 생성 <POST>
+    # <POST>
     @extend_schema(
         tags=["Chatbot (챗봇)"],
         summary="AI 답변 생성 (Streaming)",
         request=ChatbotCompletionRequestSerializer,
-        # 🔥 이 부분을 추가하세요!
+        description="챗봇에게 메시지를 보내고 답변을 받음(스트리밍).",
         parameters=[
             OpenApiParameter(
                 name="bot_type",
-                type=str,
-                location=OpenApiParameter.PATH,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,  # URL 경로 변수임을 명시
                 description="어떤 챗봇과 대화할지 선택하세요. (예: qna, support)",
                 enum=BotTypeChoices.values,
             ),
@@ -115,32 +113,24 @@ class ChatbotCompletionView(APIView):
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.PATH,
                 description="발급받은 세션 ID (UUID)",
-            )
-        ]
+            ),
+        ],
+        responses={201: OpenApiResponse(description="스트리밍 응답 (text/event-stream)")},
     )
     def post(self, request: Request, bot_type: str, session_id: str) -> Response | StreamingHttpResponse:
         serializer = ChatbotCompletionRequestSerializer(data=request.data)
 
-        assert request.user.is_authenticate
+        if serializer.is_valid():
+            user_message = serializer.validated_data.get("message")
 
-        if not serializer.is_valid():
-            return Response(
-                {"error_detail": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            if bot_type == "qna":
+                try:
+                    ChatbotService.check_and_increment_limit(bot_type, session_id, user=request.user)
+                except PermissionError as e:
+                    return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
 
-        user_message = serializer.validated_data.get("message")
-
-        bot_type = serializer.validated_data.get("bot_type", "qna")
-
-        if bot_type not in BotTypeChoices.values:
-            return Response({"error_detail": "잘못된 챗봇 URL 경로입니다."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if bot_type == "qna":
-            try:
-                ChatbotService.check_and_increment_limit(session_id, user=request.user)
-            except PermissionError as e:
-                return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
+            if bot_type not in BotTypeChoices.values:
+                return Response({"error_detail": "잘못된 경로입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         api_key = getattr(settings, "GEMINI_API_KEY", None)
 
@@ -150,7 +140,7 @@ class ChatbotCompletionView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # Gemini API와 통신하여 AI 답변을 스트리밍으로 받아옴
+        # Gemini API와 통신하여 응답 반환 (스트리밍)
         stream = ChatbotService.stream_ephemeral_response(
             session_id=session_id,
             user_message=user_message,

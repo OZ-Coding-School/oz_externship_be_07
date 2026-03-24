@@ -1,4 +1,6 @@
 import os
+import logging
+from typing import Optional
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -9,6 +11,7 @@ from apps.users.models.models import User
 
 from ..models import AnswerComments, AnswerImages, Answers, QuestionAiAnswers, Questions
 
+logger = logging.getLogger(__name__)
 
 class AnswerService:
 
@@ -75,12 +78,12 @@ class AnswerService:
 
         try:
             response = client.models.generate_content(model=model_name, contents=prompt)
-            
+
             return QuestionAiAnswers.objects.create(
-            questions=question,
-            output=response.text or "",
-            using_model=model_name,
+                questions=question,
+                output=response.text or "",
+                using_model=model_name,
             )
         except Exception as e:
             logger.error(f"[AI 답변 생성 실패] Question ID{question_id}: {str(e)}")
-            return None
+            raise

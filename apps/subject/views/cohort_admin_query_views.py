@@ -20,7 +20,7 @@ class AdminCourseCohortAvgScoresAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
-        tags=["subjects"],
+        tags=["admin_students"],
         summary="어드민 기수별 평균 점수 조회 API",
         responses={
             200: OpenApiResponse(response=CohortAvgScoreItemSerializer(many=True), description="OK"),
@@ -46,7 +46,7 @@ class AdminCohortStudentListAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
-        tags=["subjects"],
+        tags=["admin_students"],
         summary="어드민 기수별 수강생 목록 조회 API",
         responses={
             200: OpenApiResponse(response=CohortStudentItemSerializer(many=True), description="OK"),

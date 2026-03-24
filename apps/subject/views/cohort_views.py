@@ -46,7 +46,7 @@ class CohortListAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, CanViewCohortList]
 
     @extend_schema(
-        tags=["subjects"],
+        tags=["course"],
         summary="기수 리스트 조회 API",
         responses={
             200: OpenApiResponse(response=CohortListItemSerializer(many=True), description="OK"),

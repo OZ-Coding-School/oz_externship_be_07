@@ -1,15 +1,16 @@
 from typing import Any, cast
 
 from django.http import Http404
-from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.community.core.extend_schema import value_list
 from apps.community.models.post_model import Post
 from apps.community.serializers.post_cud_serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
@@ -27,7 +28,6 @@ from apps.community.services.post_service import (
     build_post_detail_response,
     file_synchronization,
     get_post_detail,
-    post_delete,
     post_delete_sum,
 )
 
@@ -52,13 +52,21 @@ class PostDetailAPIView(APIView):
         self.permission_classes = original_permissions
 
     @staticmethod
+    def _author_check(author_id: int, user_id: int) -> None:
+        if user_id != author_id:
+            serializer = PostDetailNotFoundSerializer({"error_detail": "권한이 없습니다."})
+            raise PermissionDenied(detail=serializer.data)
+
+    @staticmethod
     def _get_visible_post(post_id: int) -> Post:
-        return get_object_or_404(
-            Post.objects.select_related("author", "category"),
-            id=post_id,
-            is_visible=True,
-            category__status=True,
-        )
+        try:
+            return Post.objects.select_related("author", "category").get(
+                id=post_id,
+                is_visible=True,
+                category__status=True,
+            )
+        except Post.DoesNotExist as e:
+            raise NotFound(detail={"error_detail": "해당 게시글을 찾을 수 없습니다."})
 
     @extend_schema(
         summary="게시글 상세 조회",
@@ -151,10 +159,12 @@ class PostDetailAPIView(APIView):
         description="게시글을 수정합니다.",
         tags=["posts"],
         request=PostUpdateSerializer,
+        examples=[value_list["200"], value_list["400"], value_list["401"], value_list["403"], value_list["404"]],
         responses={
             200: PostDetailSerializer,
             400: OpenApiTypes.OBJECT,
             401: OpenApiTypes.OBJECT,
+            403: OpenApiTypes.OBJECT,
             404: PostDetailNotFoundSerializer,
         },
     )
@@ -162,6 +172,8 @@ class PostDetailAPIView(APIView):
         self._check_authenticated(request)
 
         post = self._get_visible_post(post_id)
+        self._author_check(post.author_id, cast(int, request.user.id))
+
         serializer = PostUpdateSerializer(post, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -180,21 +192,19 @@ class PostDetailAPIView(APIView):
         summary="게시글 삭제",
         description="게시글을 삭제합니다.",
         tags=["posts"],
+        examples=[value_list["200_delete"], value_list["400"], value_list["401"], value_list["403"], value_list["404"]],
         responses={
             200: OpenApiTypes.OBJECT,
             401: OpenApiTypes.OBJECT,
+            403: OpenApiTypes.OBJECT,
             404: PostDetailNotFoundSerializer,
         },
     )
     def delete(self, request: Request, post_id: int) -> Response:
         self._check_authenticated(request)
 
-        post = get_object_or_404(
-            Post,
-            id=post_id,
-            is_visible=True,
-            category__status=True,
-        )
+        post = self._get_visible_post(post_id)
+        self._author_check(post.author_id, cast(int, request.user.id))
 
         post_delete_sum(post)
 

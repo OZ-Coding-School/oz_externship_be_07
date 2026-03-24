@@ -6,6 +6,8 @@ from apps.subject.models.course_models import Course
 
 
 class CourseListItemSerializer(serializers.ModelSerializer[Course]):
+    thumbnail_img_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Course
         fields = (
@@ -14,6 +16,9 @@ class CourseListItemSerializer(serializers.ModelSerializer[Course]):
             "tag",
             "thumbnail_img_url",
         )
+
+    def get_thumbnail_img_url(self, obj: Course) -> str:
+        return obj.thumbnail_img_url or ""
 
 
 class CourseCreateRequestSerializer(serializers.Serializer[Any]):
@@ -52,6 +57,9 @@ class CourseUpdateRequestSerializer(serializers.Serializer[Any]):
 
 
 class CourseUpdateResponseSerializer(serializers.ModelSerializer[Course]):
+    thumbnail_img_url = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+
     class Meta:
         model = Course
         fields = (
@@ -62,6 +70,12 @@ class CourseUpdateResponseSerializer(serializers.ModelSerializer[Course]):
             "thumbnail_img_url",
             "updated_at",
         )
+
+    def get_thumbnail_img_url(self, obj: Course) -> str:
+        return obj.thumbnail_img_url or ""
+
+    def get_description(self, obj: Course) -> str:
+        return obj.description or ""
 
 
 class CourseDeleteResponseSerializer(serializers.Serializer[Any]):

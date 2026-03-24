@@ -11,7 +11,7 @@ from drf_spectacular.views import (
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("admin/", admin.site.urls),
-    path("api/v1/posts", include("apps.community.urls")),
+    path("api/v1/posts/", include("apps.community.urls")),
     path("api/v1/accounts/", include("apps.users.urls.urls")),
     path("api/v1/admin/", include("apps.users.urls.admin_urls")),
     path("api/v1/qna/", include("apps.questions.urls.qna_urls")),
@@ -28,7 +28,6 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/admin/exams/", include("apps.exam.urls.exam_question_url")),
     path("api/v1/", include("apps.exam.urls.exam_question_url")),
 ]
-
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     if "debug_toolbar" in settings.INSTALLED_APPS:

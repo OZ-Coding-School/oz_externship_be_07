@@ -7,6 +7,7 @@ from apps.users.views.admin.user_enrollment_reject import AdminEnrollmentRejectA
 from apps.users.views.admin.user_management import AdminUserDeleteAPIView
 from apps.users.views.admin.user_role_change import AdminUserRoleUpdateAPIView
 from apps.users.views.admin.user_search import StudentManagementViewSet
+from apps.users.views.admin.user_withdrawal import AdminUserWithdrawalRestoreAPIView
 
 router = DefaultRouter()
 router.register(r"students", StudentManagementViewSet, basename="admin-students")
@@ -17,5 +18,8 @@ urlpatterns = [
     path("student-enrollments/reject/", AdminEnrollmentRejectAPIView.as_view(), name="admin-enrollment-reject"),
     path("accounts/<int:account_id>/", AdminUserDeleteAPIView.as_view(), name="admin-user-delete"),
     path("accounts/<int:account_id>/role/", AdminUserRoleUpdateAPIView.as_view(), name="admin-user-role-update"),
+    path(
+        "withdrawals/<int:withdrawal_id>/", AdminUserWithdrawalRestoreAPIView.as_view(), name="admin-withdrawal-restore"
+    ),
     path("", include(router.urls)),
 ]

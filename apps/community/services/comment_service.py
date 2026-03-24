@@ -2,11 +2,11 @@ import re
 from typing import Any
 
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError, PermissionDenied
+from django.db.models import QuerySet
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
-from apps.community.models.post_model import Post
 from apps.community.models.comment_model import CommentTag, PostComment
+from apps.community.models.post_model import Post
 from apps.users.models.models import User
 
 
@@ -30,7 +30,7 @@ class CommentService:
             CommentTag.objects.bulk_create(new_tags)
 
     @staticmethod
-    def get_comment_tags(post_id: int):
+    def get_comment_tags(post_id: int) -> QuerySet[PostComment]:
         if not Post.objects.filter(pk=post_id).exists():
             raise ValidationError("해당 게시글을 찾을 수 없습니다.")
 
@@ -42,7 +42,7 @@ class CommentService:
         """
         댓글과 태그 유저 저장
         """
-        post = Post.objects.filter(post_id=post_id).first()
+        post = Post.objects.filter(id=post_id).first()
         if not post:
             raise ValidationError("해당 게시글을 찾을 수 없습니다.")
         if not author or author.id is None:

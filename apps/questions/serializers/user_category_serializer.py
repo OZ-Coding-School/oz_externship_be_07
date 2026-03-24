@@ -3,7 +3,7 @@ from typing import Any
 from rest_framework import serializers
 
 from apps.questions.models import QuestionCategories
-from apps.questions.services.categories_list_services import QuestionCategoryService
+from apps.questions.services.user_categories_list_services import QuestionCategoryService
 
 
 class UserCategorySerializer(serializers.ModelSerializer[QuestionCategories]):

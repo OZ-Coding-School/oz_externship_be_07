@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.questions.serializers.user_category_serializer import UserCategorySerializer
-from apps.questions.services.categories_list_services import QuestionCategoryService
+from apps.questions.services.user_categories_list_services import QuestionCategoryService
 
 
 # API명세서 102번 유저 카테고리 조회

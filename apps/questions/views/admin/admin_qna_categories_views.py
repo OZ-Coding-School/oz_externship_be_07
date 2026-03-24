@@ -14,6 +14,7 @@ from apps.questions.services.admin.questions_admin_category_services import (
     AdminCategoryService,
 )
 
+
 # 어드민 카테고리 등록
 class AdminCategoryCreateAPIView(APIView):
     permission_classes = [IsAdminUser]
@@ -32,5 +33,3 @@ class AdminCategoryCreateAPIView(APIView):
 
         response_serializer = AdminCategorySerializer(category)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-# 어드민 카테고리 목록 조회

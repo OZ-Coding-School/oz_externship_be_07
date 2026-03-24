@@ -1,4 +1,3 @@
-# apps/questions/urls/admin_urls.py
 from django.urls import path
 
 from apps.questions.views.admin.admin_qna_categories_list_view import (
@@ -17,6 +16,7 @@ urlpatterns = [
         AdminCategoryCreateAPIView.as_view(),
         name="admin_category_create",
     ),
+    # 어드민 카테고리 목록 조회
     path(
         "admin/qna/categories/list/",
         AdminCategoryListAPIView.as_view(),

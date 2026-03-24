@@ -1,4 +1,3 @@
-# apps/questions/views/admin/admin_qna_categories_list_views.py
 from typing import Any
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -9,7 +8,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# 정확한 파일명으로 임포트 경로 수정
 from apps.questions.serializers.admin.admin_qna_categorylist_serializers import (
     AdminQnaCategoryListSerializer,
 )

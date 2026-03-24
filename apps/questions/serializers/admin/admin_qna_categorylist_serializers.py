@@ -1,4 +1,3 @@
-# apps/questions/serializers/admin/admin_qna_categorylist_serializers.py
 from typing import Any, List
 
 from drf_spectacular.types import OpenApiTypes

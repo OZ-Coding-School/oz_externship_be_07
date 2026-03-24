@@ -22,7 +22,7 @@ class EnrollStudentTest(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.url = "/api/v1/accounts/enroll-student/"
+        cls.url = "/api/v1/accounts/enroll-student"
         cls.course = Course.objects.create(name="Python 백엔드 과정")
 
         # 테스트 유저 생성

@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.users.views.available_courses import AvailableCourseListAPIView
 from apps.users.views.enroll_student import EnrollStudentAPIView
 from apps.users.views.find_email_views import FindEmailView
 from apps.users.views.login_views import LoginView
@@ -34,4 +35,8 @@ urlpatterns = [
     path("social-login/naver/callback", NaverLoginCallbackView.as_view(), name="naver-callback"),
     path("find-email/", FindEmailView.as_view(), name="find-email"),
     path("enroll-student/", EnrollStudentAPIView.as_view(), name="enroll-student"),
+    path("available-courses/", AvailableCourseListAPIView.as_view(), name="available-courses"),
+    path("find-email", FindEmailView.as_view(), name="find-email"),
+    path("enroll-student", EnrollStudentAPIView.as_view(), name="enroll-student"),
+    path("available-courses", AvailableCourseListAPIView.as_view(), name="available-courses"),
 ]

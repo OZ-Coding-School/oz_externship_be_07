@@ -1,13 +1,24 @@
+from drf_spectacular.utils import extend_schema
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework import status
 
 from apps.subject.core.error_base import SubjectBaseAPIView
+from apps.subject.serializers.cohort_serializers import ErrorDetailStringSerializer
 from apps.subject.serializers.course_serializers import CourseListItemSerializer
 from apps.subject.services.course_services import CourseService
 
 
+@extend_schema(
+    tags=["subjects"],
+    summary="과정 리스트 조회 API",
+    responses={
+        200: CourseListItemSerializer(many=True),
+        401: ErrorDetailStringSerializer,
+        403: ErrorDetailStringSerializer,
+    },
+)
 class CourseListAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated]
 

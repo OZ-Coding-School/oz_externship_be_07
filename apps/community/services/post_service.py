@@ -6,18 +6,16 @@ from botocore.exceptions import ClientError
 from django.core.files.storage import default_storage
 from django.db.models import CharField, Count, Q, QuerySet, Value
 
+from apps.community.core.constants import (
+    RE_ATTACHMENT_URL,
+    RE_FILE_URL_STRIP_QS,
+    RE_IMAGE_URL,
+    RE_MARKDOWN_LINK,
+    RIST_SPLIT,
+)
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 from apps.core.utils.s3_handler import S3Handler
-
-# 마크다운 이미지/링크 정규식
-RE_MARKDOWN_LINK = re.compile(r"(!?)\[(.*?)\]\((https?://[^\s\)]+)\)")
-RE_IMAGE_URL = re.compile(r"!\[.*?\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
-RE_ATTACHMENT_URL = re.compile(r"(?<!\!)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
-RE_FILE_URL_STRIP_QS = re.compile(r"(!?)\[(.*?)\]\((https?://[^?)\s]+)(?:\?.*?)?\)")
-
-# url 절취선 기준
-RIST_SPLIT = "com/"
 
 
 def get_post_list_queryset(

@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from apps.chatbot.choices import BotTypeChoices
 from apps.chatbot.services.chatbot_service import ChatbotService
@@ -24,6 +25,11 @@ class ChatbotCursorPagination(CursorPagination):
 
 
 class ChatbotSessionCreateView(APIView):
+@extend_schema_view(
+    get=extend_schema(summary="내 챗봇 세션 목록 조회"),
+    post=extend_schema(summary="새 챗봇 세션 생성")
+)
+class ChatbotSessionListCreateView(generics.ListCreateAPIView[Any]):
     """
     [무상태 챗봇 세션 발급 뷰] 1회용 고유 식별자(UUID)만 발급
     """
@@ -34,12 +40,16 @@ class ChatbotSessionCreateView(APIView):
         new_session_id = str(uuid.uuid4())
         return Response({"session_id": new_session_id}, status=status.HTTP_201_CREATED)
 
-
+@extend_schema_view(
+    POST=extend_schema(summary="AI 답변 생성, 스트리밍"),
+    GET=extend_schema(summary="대화내역 조회"),
+    DELETE=extend_schema(summary="대화내역 삭제 (초기화)")
+)
 class ChatbotCompletionView(APIView):
     """
-    <POST> /api/v1/chatbot/sessions/{session_id}/completions : AI 답변 생성, 스트리밍 방식
-    <GET> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 조회
-    <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 대화내역 삭제 (초기화)
+    <POST> /api/v1/chatbot/sessions/{session_id}/completions : AI 답변 생성(최대 2회), 스트리밍 방식
+    <GET> /api/v1/chatbot/sessions/{session_id}/completions : 현재 세션 대화내역 (Redis)
+    <DELETE> /api/v1/chatbot/sessions/{session_id}/completions : 세션 종료 (Redis 삭제)
     """
 
     permission_classes = [IsAuthenticated]
@@ -107,7 +117,7 @@ class ChatbotCompletionView(APIView):
             )
 
         # Gemini API와 통신하여 AI 답변을 스트리밍으로 받아옴
-        stream = ChatbotService.stream_ephemeral_response(
+        stream = ChatbotService.stream_ephemeral_gemini_response(
             session_id=session_id,
             user_message=user_message,
             api_key=str(api_key),

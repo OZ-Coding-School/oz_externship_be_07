@@ -73,10 +73,14 @@ class AnswerService:
         model_name = "gemini-2.5-flash"
         prompt = f"질문 제목: {question.title}\n내용: {question.content}\n전문가로서 답변해줘."
 
-        response = client.models.generate_content(model=model_name, contents=prompt)
-
-        return QuestionAiAnswers.objects.create(
+        try:
+            response = client.models.generate_content(model=model_name, contents=prompt)
+            
+            return QuestionAiAnswers.objects.create(
             questions=question,
             output=response.text or "",
             using_model=model_name,
-        )
+            )
+        except Exception as e:
+            logger.error(f"[AI 답변 생성 실패] Question ID{question_id}: {str(e)}")
+            return None

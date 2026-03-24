@@ -53,6 +53,7 @@ class UserCategoryListTest(TestCase):
         self.client.force_authenticate(user=self.student)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("categories", response.data)
 
     # 로그인 인증 실패
     def test_get_category_list_unauthorized(self) -> None:

@@ -1,3 +1,5 @@
+from typing import cast
+
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -16,6 +18,7 @@ from apps.questions.serializers.user_category_serializer import UserCategorySeri
 from apps.questions.services.user_categories_list_services import (
     QuestionCategoryService,
 )
+from apps.users.models.models import User
 
 
 # API명세서 102번 유저 카테고리 조회
@@ -29,10 +32,11 @@ class UserCategoryListView(APIView):
         responses={200: UserCategorySerializer(many=True)},
     )
     def get(self, request: Request) -> Response:
-        user = request.user
+        user = cast(User, request.user)
+
         # 권한 조회
-        if not user or user.is_anonymous:
-            return Response({"error_detail": "조회권한이 없습니다."}, status=status.HTTP_401_UNAUTHORIZED)
+        if user.role != "STUDENT":
+            raise PermissionDenied("카테고리 조회 권한이 없습니다.")
 
         try:
             categories = QuestionCategoryService.get_user_category_list().filter(parent__isnull=True)

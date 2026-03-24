@@ -1,4 +1,10 @@
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework import mixins, status, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
@@ -29,6 +35,16 @@ class CommentViewSet(
         summary="댓글 목록",
         description="특정 게시글의 모든 댓글 list",
         tags=["posts"],
+        parameters=[
+            OpenApiParameter(
+                name="ordering",
+                type=OpenApiTypes.STR,
+                required=False,
+                description="정렬 순서 (recent: 최신순, old: 오래된순)",
+                default="recent",
+                enum=["recent", "old"],
+            ),
+        ],
         examples=[
             OpenApiExample(
                 name="댓글 목록 예시",
@@ -56,7 +72,8 @@ class CommentViewSet(
         ],
     )
     def list(self, request: Request, post_id: int) -> Response:
-        queryset = CommentService.get_comment_tags(post_id=post_id)
+        ordering = request.query_params.get("ordering", "recent")
+        queryset = CommentService.get_comment_tags(post_id=post_id, ordering=ordering)
         page = self.paginate_queryset(queryset)
 
         if page is not None:

@@ -30,11 +30,13 @@ class CommentService:
             CommentTag.objects.bulk_create(new_tags)
 
     @staticmethod
-    def get_comment_tags(post_id: int) -> QuerySet[PostComment]:
+    def get_comment_tags(post_id: int, ordering: str = "recent") -> QuerySet[PostComment]:
         if not Post.objects.filter(pk=post_id).exists():
             raise ValidationError("해당 게시글을 찾을 수 없습니다.")
 
-        return PostComment.objects.filter(post_id=post_id).select_related("author").all()
+        order_by = "-created_at" if ordering == "recent" else "created_at"
+
+        return PostComment.objects.filter(post_id=post_id).order_by(order_by).select_related("author").all()
 
     @staticmethod
     @transaction.atomic

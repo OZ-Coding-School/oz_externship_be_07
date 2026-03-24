@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
         recently_updated_users = User.objects.filter(updated_at__gte=one_hour_ago)
 
-        if not recently_updated_users:
+        if not recently_updated_users.exists():
             self.stdout.write("동기화할 데이터가 없습니다.")
             return
 

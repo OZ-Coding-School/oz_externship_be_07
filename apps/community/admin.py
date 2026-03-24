@@ -12,6 +12,13 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
+from apps.community.core.constants import (
+    ADMIN_AUTOCOMPLETE_LIMIT,
+    ADMIN_COMMENT_PREVIEW_LENGTH,
+    ADMIN_DELETE_CONFIRM_TOKEN_LENGTH,
+    ADMIN_DELETE_CONFIRM_TTL_SECONDS,
+    ADMIN_PREVIEW_LIMIT,
+)
 from apps.community.models.category_model import PostCategory
 from apps.community.models.comment_model import CommentTag, PostComment
 from apps.community.models.post_model import Post, PostAttachment, PostImage, PostLike
@@ -22,7 +29,7 @@ def _is_safe_external_url(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
-def _comment_preview(content: str, limit: int = 16) -> str:
+def _comment_preview(content: str, limit: int = ADMIN_COMMENT_PREVIEW_LENGTH) -> str:
     return Truncator((content or "").replace("\n", " ")).chars(limit)
 
 
@@ -92,7 +99,6 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     AUTOCOMPLETE_APP_LABEL = "community"
     AUTOCOMPLETE_MODEL_NAME = "postcomment"
     AUTOCOMPLETE_FIELD_NAME = "post"
-    AUTOCOMPLETE_LIMIT = 5
 
     list_display = (
         "id",
@@ -175,7 +181,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         keyword = search_term.strip()
 
         if keyword == "":
-            return ordered_qs[: self.AUTOCOMPLETE_LIMIT], False
+            return ordered_qs[:ADMIN_AUTOCOMPLETE_LIMIT], False
 
         return ordered_qs.filter(title__icontains=keyword), False
 
@@ -252,9 +258,6 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 @admin.register(PostCategory)
 class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     DELETE_CONFIRM_SESSION_KEY_PREFIX = "community_category_delete_confirm"
-    DELETE_CONFIRM_TTL_SECONDS = 60
-    PREVIEW_LIMIT = 3
-    DELETE_CONFIRM_TOKEN_LENGTH = 32
     ACTIVE_CATEGORY_DELETE_BLOCK_MESSAGE = (
         '활성 카테고리 "{name}(#{pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.'
     )
@@ -340,10 +343,10 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
                 model_count_dict[str(Post._meta.verbose_name_plural)] = post_count
 
-                preview_rows = list(post_queryset.order_by("-id").values_list("id", "title")[: self.PREVIEW_LIMIT])
+                preview_rows = list(post_queryset.order_by("-id").values_list("id", "title")[:ADMIN_PREVIEW_LIMIT])
                 preview_items = [f"{title} (#{post_id})" for post_id, title in preview_rows]
-                if post_count > self.PREVIEW_LIMIT:
-                    preview_items.append(f"... 외 {post_count - self.PREVIEW_LIMIT}건")
+                if post_count > ADMIN_PREVIEW_LIMIT:
+                    preview_items.append(f"... 외 {post_count - ADMIN_PREVIEW_LIMIT}건")
 
                 deleted_objects.append(f"연결 게시글 {post_count}건: {', '.join(preview_items)}")
 
@@ -393,11 +396,11 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         token = self._generate_token(selected_ids)
 
         selected_count = len(selected_ids)
-        preview_names = list(inactive_queryset.values_list("name", flat=True)[: self.PREVIEW_LIMIT])
+        preview_names = list(inactive_queryset.values_list("name", flat=True)[:ADMIN_PREVIEW_LIMIT])
         safe_names = [name if name else "(이름 없음)" for name in preview_names]
 
-        if selected_count > self.PREVIEW_LIMIT:
-            preview_text = f"{', '.join(safe_names)} 외 {selected_count - self.PREVIEW_LIMIT}개"
+        if selected_count > ADMIN_PREVIEW_LIMIT:
+            preview_text = f"{', '.join(safe_names)} 외 {selected_count - ADMIN_PREVIEW_LIMIT}개"
         else:
             preview_text = ", ".join(safe_names)
 
@@ -427,7 +430,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
     def _generate_token(self, selected_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(selected_ids))
-        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[: self.DELETE_CONFIRM_TOKEN_LENGTH]
+        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:ADMIN_DELETE_CONFIRM_TOKEN_LENGTH]
 
     def _is_valid_confirmation_payload(
         self,
@@ -446,7 +449,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         except ValueError:
             return False
 
-        return now_ts - ts <= self.DELETE_CONFIRM_TTL_SECONDS
+        return now_ts - ts <= ADMIN_DELETE_CONFIRM_TTL_SECONDS
 
     def _require_delete_confirmation(
         self,

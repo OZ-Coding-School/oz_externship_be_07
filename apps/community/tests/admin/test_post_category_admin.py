@@ -8,6 +8,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.community.admin import PostCategoryAdmin
+from apps.community.core.constants import (
+    ADMIN_DELETE_CONFIRM_TOKEN_LENGTH,
+    ADMIN_DELETE_CONFIRM_TTL_SECONDS,
+)
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post
 from apps.users.models.models import User
@@ -71,7 +75,7 @@ class PostCategoryAdminTest(TestCase):
 
     def _bulk_confirm_session_key(self, category_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(category_ids))
-        token = hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[: PostCategoryAdmin.DELETE_CONFIRM_TOKEN_LENGTH]
+        token = hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:ADMIN_DELETE_CONFIRM_TOKEN_LENGTH]
         prefix = PostCategoryAdmin.DELETE_CONFIRM_SESSION_KEY_PREFIX
         return f"{prefix}:bulk:{token}"
 
@@ -182,7 +186,7 @@ class PostCategoryAdminTest(TestCase):
         self.assertIn(session_key, session)
 
         payload = session[session_key]
-        payload["ts"] = int(time.time()) - (PostCategoryAdmin.DELETE_CONFIRM_TTL_SECONDS + 1)  # TTL(60초) 만료
+        payload["ts"] = int(time.time()) - (ADMIN_DELETE_CONFIRM_TTL_SECONDS + 1)  # TTL(60초) 만료
         session[session_key] = payload
         session.save()
 

@@ -9,7 +9,7 @@ from apps.questions.models import QuestionCategories
 
 
 # 어드민 카테고리 목록 조회
-class AdminQnaCategoryListSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
+class AdminQnaCategoryListSerializer(serializers.ModelSerializer): # type: ignore[type-arg]
     category_id = serializers.IntegerField(source="id", read_only=True)
     category_type = serializers.SerializerMethodField()
     parent_category = serializers.CharField(source="parent.name", read_only=True, default=None)

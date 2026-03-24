@@ -20,7 +20,7 @@ class CourseAdminCreateAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, IsStaffUser]
 
     @extend_schema(
-        tags=["subjects"],
+        tags=["admin_students"],
         summary="어드민 과정 등록",
         description="새로운 과정을 등록합니다.",
         request=CourseCreateRequestSerializer,
@@ -46,7 +46,7 @@ class CourseAdminUpdateDeleteAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, IsStaffUser]
 
     @extend_schema(
-        tags=["subjects"],
+        tags=["admin_students"],
         summary="어드민 과정 정보 수정",
         description="과정 정보를 수정합니다.",
         request=CourseUpdateRequestSerializer,
@@ -66,7 +66,7 @@ class CourseAdminUpdateDeleteAPIView(SubjectBaseAPIView):
         return Response(CourseUpdateResponseSerializer(course).data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["subjects"],
+        tags=["admin_students"],
         summary="어드민 과정 삭제",
         description="과정을 삭제합니다.",
         responses={

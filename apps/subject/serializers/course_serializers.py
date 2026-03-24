@@ -22,13 +22,11 @@ class CourseCreateRequestSerializer(serializers.Serializer[Any]):
     description = serializers.CharField(
         max_length=255,
         allow_blank=True,
-        allow_null=True,
         required=False,
     )
     thumbnail_img_url = serializers.CharField(
         max_length=255,
         allow_blank=True,
-        allow_null=True,
         required=False,
     )
 
@@ -44,13 +42,11 @@ class CourseUpdateRequestSerializer(serializers.Serializer[Any]):
     description = serializers.CharField(
         max_length=255,
         allow_blank=True,
-        allow_null=True,
         required=False,
     )
     thumbnail_img_url = serializers.CharField(
         max_length=255,
         allow_blank=True,
-        allow_null=True,
         required=False,
     )
 

@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.db.models import QuerySet
 from google import genai
 
-from apps.chatbot.choices import MessageRoleChoices
+from apps.chatbot.choices import MessageRoleChoices, ChatbotModelChoices
 from apps.chatbot.prompts.support_context import SUPPORT_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -75,44 +75,40 @@ class ChatbotService:
             - bot_type="support": CS 전용 시스템 프롬프트 주입
         """
         client = genai.Client(api_key=api_key)
+        
+        if bot_type == "support":
+            system_instruction = SUPPORT_SYSTEM_PROMPT if SUPPORT_SYSTEM_PROMPT else "친절한 고객지원 AI입니다."
+        else:
+            system_instruction = "당신은 오즈코딩스쿨의 QnA 도우미입니다."
 
         ChatbotService._append_to_history(bot_type, session_id, MessageRoleChoices.USER, user_message)
         raw_history = ChatbotService.get_ephemeral_history(bot_type, session_id)
 
-        prompt_context = ""
+        system_instruction = SUPPORT_SYSTEM_PROMPT if bot_type == "support" else "당신은 QnA 도우미입니다."
 
-        if bot_type == "support":
-            # [고객지원 챗봇] 모드일 경우 프롬프트 주입
-            if not SUPPORT_SYSTEM_PROMPT or not SUPPORT_SYSTEM_PROMPT.strip():
-                logger.warning("지원 프롬프트가 비어있습니다. 기본값으로 대체합니다.")
-                system_instruction = "당신은 고객지원 AI입니다. 친절하게 답변해주세요.\n\n"
-            else:
-                system_instruction = f"{SUPPORT_SYSTEM_PROMPT}\n\n"
-
-            prompt_context += system_instruction
-            prompt_context += "--- 이전 대화 내역 ---"
-        else:
-            # [QnA 챗봇]
-            prompt_context += "이전 대화 내역:\n"
-
-        # 공통 로직, 과거 대화 내역
+        formatted_history = "--- 대화 내역 ---\n"
         for msg in raw_history:
-            role_name = "사용자" if msg["role"] == MessageRoleChoices.USER else "AI"
-            prompt_context += f"{role_name}: {msg['message']}\n"
-
-        prompt_context += "\nAI:"
-
+            role_label = "사용자" if msg["role"] == MessageRoleChoices.USER else "AI"
+            formatted_history += f"{role_lable}:{msg['message']}\n"
+        
+            formatted_contents = []
+            for msg in raw_history:
+                formatted_contents.append({
+                    "role": "user" if msg["role"] == MessageRoleChoices.USER.value else "model",
+                    "parts": [{"text": msg["message"]}]
+                })
+        
         full_response = ""
-
         try:
             response = client.models.generate_content_stream(
-                model="gemini-2.5-flash",
-                contents=prompt_context,
+                model=ChatbotModelChoices.GEMINI_1_5_FLASH.value,
+                contents=user_message,
+                config={"system_instruction": system_instruction, "temperature": 0.7},
             )
+            
             for chunk in response:
                 if chunk.text:
-                    full_response += chunk.text
-                    yield f"data: {json.dumps({'content': chunk.text}, ensure_ascii=False)}\n\n"
+                    yield f"data: {json.dump({"rolr":MessageRoleChoices, "content": chunk.text}ensure_ascii=False)}\n\n"
 
         except Exception as e:
             logger.error(f"[챗봇 스트리밍 에러 ({bot_type})]: {e}")

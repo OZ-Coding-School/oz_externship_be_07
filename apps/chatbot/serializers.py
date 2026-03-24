@@ -13,8 +13,3 @@ class ChatbotCompletionRequestSerializer(serializers.Serializer[Any]):
         required=True,
         help_text="사용자 질문",
     )
-    bot_type = serializers.CharField(
-        required=False,
-        default="qna",
-        help_text="챗봇 타입 (qna 또는 support)",
-    )

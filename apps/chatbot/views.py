@@ -5,7 +5,14 @@ from typing import Any
 from django.conf import settings
 from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
-from rest_framework import status
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    inline_serializer,
+)
+from drf_spectacular.types import OpenApiTypes
+from rest_framework import serializers, status
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import IsAuthenticated
@@ -35,7 +42,19 @@ class ChatbotSessionListCreateView(generics.ListCreateAPIView[Any]):
     """
 
     permission_classes = [IsAuthenticated]
-
+    
+    @extend_schema(
+        tags=["Chatbot (챗봇)"],
+        summary = "챗봇 세션 생성",
+        description = "새로운 챗봇 대화를 위한 1회용 UUID 세션 발급",
+        request = None,
+        responses={
+            201: inline_serializer(
+                name='SessionCreateResponse',
+                fields={'session_id': serializers.UUIDField()}
+            )   
+        },
+    )
     def post(self, request: Request) -> Response:
         new_session_id = str(uuid.uuid4())
         return Response({"session_id": new_session_id}, status=status.HTTP_201_CREATED)
@@ -55,6 +74,27 @@ class ChatbotCompletionView(APIView):
     permission_classes = [IsAuthenticated]
 
     # 대화내역 조회 <GET>
+    @extend_schema(
+        tags=["Chatbot (챗봇)"],
+        summary="대화 내역 조회",
+        description="특정 세션의 챗봇 대화 내역을 조회합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="bot_type",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="챗봇 종류 선택. (예: qna, support)",
+                enum=BotTypeChoices.values,
+            ),
+            OpenApiParameter(
+                name="session_id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+                description="발급받은 세션 ID (UUID)",
+            )
+        ],
+        responses={200: OpenApiResponse(description="대화 내역 리스트 반환"), 404: OpenApiResponse(description="세션 만료")}
+    )
     def get(self, request: Request, bot_type: str, session_id: str) -> Response:
         assert request.user.is_authenticated
 
@@ -71,6 +111,27 @@ class ChatbotCompletionView(APIView):
         return Response({"results": messages}, status=status.HTTP_200_OK)
 
     # 대화 내역 초기화 <DELETE>
+    @extend_schema(
+        tags=["Chatbot (챗봇)"],
+        summary="대화 내역 초기화",
+        description="특정 세션의 대화 내역을 삭제합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="bot_type",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="어떤 챗봇과 대화할지 선택하세요. (예: qna, support)",
+                enum=BotTypeChoices.values,
+            ),
+            OpenApiParameter(
+                name="session_id",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="발급받은 세션 ID (UUID)",
+            )
+        ],
+        responses={204: OpenApiResponse(description="성공적으로 삭제됨")}
+    )
     def delete(self, request: Request, bot_type: str, session_id: str) -> Response:
         assert request.user.is_authenticated
 
@@ -82,6 +143,28 @@ class ChatbotCompletionView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # AI 답변 생성 <POST>
+    @extend_schema(
+        tags=["Chatbot (챗봇)"],
+        summary="AI 답변 생성 (Streaming)",
+        description="챗봇에게 메시지를 보내고 스트리밍 방식으로 답변을 받습니다.",
+        request=ChatbotCompletionRequestSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="bot_type",
+                type=str,
+                location=OpenApiParameter.PATH,
+                description="어떤 챗봇과 대화할지 선택하세요. (예: qna, support)",
+                enum=BotTypeChoices.values,
+            ),
+            OpenApiParameter(
+                name="session_id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.PATH,
+                description="발급받은 세션 ID (UUID)",
+            )
+        ],
+        responses={201: OpenApiResponse(description="스트리밍 응답 (text/event-stream)")}
+    )
     def post(self, request: Request, bot_type: str, session_id: str) -> Response | StreamingHttpResponse:
         serializer = ChatbotCompletionRequestSerializer(data=request.data)
 
@@ -100,7 +183,7 @@ class ChatbotCompletionView(APIView):
         bot_type = serializer.validated_data.get("bot_type", "qna")
 
         if bot_type not in BotTypeChoices.values:
-            return Response({"error_detail": "잘못된 챗봇 URL 경로입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error_detail": "지원하지 않는 챗봇입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         if bot_type == "qna":
             try:

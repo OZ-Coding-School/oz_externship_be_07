@@ -1,10 +1,10 @@
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotAuthenticated, NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -56,6 +56,11 @@ class PostDetailAPIView(APIView):
         if user_id != author_id:
             serializer = PostDetailNotFoundSerializer({"error_detail": "권한이 없습니다."})
             raise PermissionDenied(detail=serializer.data)
+
+    def permission_denied(self, request: Request, message: str | None = None, code: str | None = None) -> NoReturn:
+        if not request.user.is_authenticated:
+            raise NotAuthenticated(detail={"error_detail": "자격 인증 데이터가 제공되지 않았습니다."})
+        super().permission_denied(request, message, code)
 
     @staticmethod
     def _get_visible_post(post_id: int) -> Post:

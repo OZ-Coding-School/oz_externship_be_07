@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 
 from apps.users.choices import UserGender
+from apps.users.models.models import SocialUser
 
 User = get_user_model()
 
@@ -59,21 +60,31 @@ class KakaoOAuthService:
         kakao_account = user_info.get("kakao_account", {})
         profile = kakao_account.get("profile", {})
         kakao_id = str(user_info.get("id"))
-
         email = kakao_account.get("email", f"kakao_{kakao_id}@temporary.com")
-        nickname = profile.get("nickname")
-        gender = kakao_account.get("gender")
-        birthday_date = self.parse_kakao_birthday(kakao_account)
 
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "nickname": nickname[:10] if nickname else f"kakao_{kakao_id[:4]}",
-                "phone_number": "",
-                "gender": UserGender.FEMALE if gender == "female" else UserGender.MALE,
-                "birthday": birthday_date or date(1990, 1, 1),
-            },
-        )
+        social_user = SocialUser.objects.filter(provider="kakao", provider_id=kakao_id).first()
+        if social_user:
+            return social_user.user
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            nickname = profile.get("nickname")
+            gender = kakao_account.get("gender")
+            birthday_date = self.parse_kakao_birthday(kakao_account)
+
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "nickname": nickname[:10] if nickname else f"kakao_{kakao_id[:4]}",
+                    "phone_number": "",
+                    "gender": UserGender.FEMALE if gender == "female" else UserGender.MALE,
+                    "birthday": birthday_date or date(1990, 1, 1),
+                },
+            )
+
+        SocialUser.objects.get_or_create(user=user, provider="kakao", provider_id=kakao_id)
+
         return user
 
 
@@ -127,19 +138,29 @@ class NaverOAuthService:
         return None
 
     def get_or_create_user(self, user_info: dict[str, Any]) -> Any:
-        naver_id = user_info.get("id")
-        email = user_info.get("email", f"naver_{naver_id[:10]}@temporary.com")  # type: ignore
-        nickname = user_info.get("nickname")
-        gender = user_info.get("gender")
-        birthday_date = self.parse_naver_birthday(user_info)
+        naver_id = str(user_info.get("id"))
+        email = user_info.get("email", f"naver_{naver_id[:10]}@temporary.com")
 
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "nickname": nickname[:10] if nickname else f"naver_{naver_id[:4]}",  # type: ignore
-                "phone_number": "",
-                "gender": UserGender.FEMALE if gender == "F" else UserGender.MALE,
-                "birthday": birthday_date or date(1990, 1, 1),
-            },
-        )
+        social_user = SocialUser.objects.filter(provider="naver", provider_id=naver_id).first()
+        if social_user:
+            return social_user.user
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            nickname = user_info.get("nickname")
+            gender = user_info.get("gender")
+            birthday_date = self.parse_naver_birthday(user_info)
+
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "nickname": nickname[:10] if nickname else f"naver_{naver_id[:4]}",
+                    "phone_number": "",
+                    "gender": UserGender.FEMALE if gender == "F" else UserGender.MALE,
+                    "birthday": birthday_date or date(1990, 1, 1),
+                },
+            )
+        SocialUser.objects.get_or_create(user=user, provider="naver", provider_id=naver_id)
+
         return user

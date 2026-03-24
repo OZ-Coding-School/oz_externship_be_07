@@ -1,5 +1,4 @@
 import urllib.parse
-import uuid
 from typing import Any
 
 from django.conf import settings

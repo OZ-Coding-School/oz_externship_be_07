@@ -59,8 +59,12 @@ class CommentViewSet(
         queryset = CommentService.get_comment_tags(post_id=post_id)
         page = self.paginate_queryset(queryset)
 
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @extend_schema(
         summary="댓글 작성",

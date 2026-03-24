@@ -1,8 +1,9 @@
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
@@ -34,6 +35,11 @@ class PostListAPIView(APIView):
     """게시글 목록 조회 API"""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def permission_denied(self, request: Request, message: str | None = None, code: str | None = None) -> NoReturn:
+        if not request.user.is_authenticated:
+            raise NotAuthenticated(detail={"error_detail": "자격 인증 데이터가 제공되지 않았습니다."})
+        super().permission_denied(request, message, code)
 
     @extend_schema(
         summary="게시글 조회",

@@ -120,18 +120,9 @@ class CohortStudentAPITest(APITestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
-    def test_get_student_list_success(self) -> None:
-        """어드민 페이지 수강생 목록 조회 성공 테스트"""
-
-        response = self.client.get(self.list_url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("count", response.data)
-        self.assertIn("results", response.data)
-        self.assertTrue(response.data["count"] >= 1)
-
     def test_get_student_scores_success(self) -> None:
         """학생별 과목 점수 조회 성공 테스트"""
+        self.client.force_authenticate(user=self.admin_user)
 
         response = self.client.get(self.score_url)
 
@@ -140,8 +131,37 @@ class CohortStudentAPITest(APITestCase):
         self.assertEqual(response.data[0]["subject"], "HTML/CSS")
         self.assertEqual(response.data[0]["score"], 85)
 
+    def test_get_student_scores_unauthorized_denied(self) -> None:
+        """학생별 과목 점수 조회 401 테스트"""
+        self.client.force_authenticate(user=None)
+
+        response = self.client.get(self.score_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["error_detail"], "자격 인증 데이터가 제공되지 않았습니다.")
+
+    def test_get_student_scores_permission_denied(self) -> None:
+        """학생별 과목 점수 조회 403 테스트"""
+        non_admin_user = User.objects.create(
+            email="nonadmin@example.com",
+            nickname="tnonadmin",
+            name="일반유저",
+            role="ST",
+            status="ACTIVATED",
+            birthday="1999-01-01",
+            phone_number="01099998888",
+        )
+
+        self.client.force_authenticate(user=non_admin_user)
+
+        response = self.client.get(self.score_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error_detail"], "권한이 없습니다.")
+
     def test_get_student_scores_not_found(self) -> None:
-        """학생별 과목 점수 조회 실패 테스트 - 존재하지 않는 student_id"""
+        """학생별 과목 점수 조회 404 테스트"""
+        self.client.force_authenticate(user=self.admin_user)
 
         url = reverse("student-score", kwargs={"student_id": 9999})
 

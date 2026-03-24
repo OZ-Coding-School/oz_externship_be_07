@@ -2,14 +2,10 @@ import json
 from typing import Any, Dict, Optional
 
 from django.db import models
-from rest_framework import exceptions
-from rest_framework.permissions import BasePermission
-from rest_framework.request import Request
 
-from apps.exam.core.error_base import ConflictError
+from apps.exam.core.error_custom_base import ConflictException
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
-from apps.users.choices import UserRole
 
 MAX_QUESTION_COUNT = 10
 MAX_TOTAL_POINT = 100
@@ -24,10 +20,10 @@ class ExamQuestionService:
 
         current_count = ExamQuestion.objects.filter(exam=exam).count()
         if current_count >= MAX_QUESTION_COUNT:
-            raise ConflictError("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다,")
+            raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다,")
 
         if data["point"] > MAX_POINT_PER_QUESTION:
-            raise ConflictError("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
+            raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
 
         current_total = (
             ExamQuestion.objects.filter(exam=exam).aggregate(
@@ -36,7 +32,7 @@ class ExamQuestionService:
             or 0
         )
         if current_total + data["point"] > MAX_TOTAL_POINT:
-            raise ConflictError("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
+            raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
 
         options_json: Optional[str] = None
         if data.get("options") is not None:
@@ -60,7 +56,7 @@ class ExamQuestionService:
 
         if "point" in data:
             if data["point"] > MAX_POINT_PER_QUESTION:
-                raise ConflictError("시험 문제 수 제한 또는 총 배점을 초과하여 문제를 수정할 수 없습니다.")
+                raise ConflictException("시험 문제 수 제한 또는 총 배점을 초과하여 문제를 수정할 수 없습니다.")
 
         current_total = (
             ExamQuestion.objects.filter(exam=question.exam)
@@ -69,7 +65,7 @@ class ExamQuestionService:
             or 0
         )
         if current_total + data["point"] > MAX_TOTAL_POINT:
-            raise ConflictError
+            raise ConflictException("시험 문제 수 제한 또는 총 배점을 초과하여 문제를 수정할 수 없습니다.")
 
         if "options" in data:
             question.options_json = (

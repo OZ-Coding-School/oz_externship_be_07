@@ -1,12 +1,12 @@
-from typing import Any, Type, cast
+from typing import Any
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
-from rest_framework import exceptions, mixins, status
+from rest_framework import exceptions, parsers, status
+from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.serializers import Serializer
 
-from apps.exam.core.error_base import ExamBaseViewSet
+from apps.exam.core.error_base import ExamBaseAPIView
 from apps.exam.core.permissions import IsAdmin
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
@@ -21,18 +21,9 @@ from apps.exam.serializers.exam_question_serializers import (
 from apps.exam.services.exam_question_services import ExamQuestionService
 
 
-class ExamQuestionViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, ExamBaseViewSet):
+class ExamQuestionCreateAPIView(ExamBaseAPIView):
 
     permission_classes = [IsAdmin]
-    queryset = ExamQuestion.objects.all()
-    lookup_field = "id"
-
-    def get_serializer_class(self) -> Type[Serializer[Any]]:
-        if self.action == "create":
-            return ExamQuestionCreateSerializer
-        if self.action == "update":
-            return ExamQuestionUpdateSerializer
-        return ExamQuestionCreateSerializer
 
     @extend_schema(
         tags=["exams"],
@@ -79,20 +70,25 @@ class ExamQuestionViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixi
             ),
         ],
     )
-    def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def post(self, request: Request, exam_id: int, *args: Any, **kwargs: Any) -> Response:
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        serializer = ExamQuestionCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        exam_id = cast(int, self.kwargs.get("exam_id"))
         try:
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
-            raise exceptions.NotFound("해당 쪽지시험 정보를 찾을 수 없습니다.")
+            raise NotFound("해당 쪽지시험 정보를 찾을 수 없습니다.")
 
         question = ExamQuestionService.create_question(exam, serializer.validated_data)
         response_serializer = ExamQuestionCreateResponseSerializer(question)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
+    permission_classes = [IsAdmin]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
 
     @extend_schema(
         tags=["exams"],
@@ -139,16 +135,18 @@ class ExamQuestionViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixi
             ),
         ],
     )
-    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def put(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
+
+        serializer = ExamQuestionUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            instance = ExamQuestion.objects.get(id=cast(int, self.kwargs.get("id")))
+            question = ExamQuestion.objects.get(id=question_id)
         except ExamQuestion.DoesNotExist:
-            raise exceptions.NotFound("수정하려는 문제 정보를 찾을 수 없습니다.")
+            raise NotFound("수정하려는 문제 정보를 찾을 수 없습니다.")
 
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        updated_question = ExamQuestionService.update_question(instance, serializer.validated_data)
+        updated_question = ExamQuestionService.update_question(question, serializer.validated_data)
         response_serializer = ExamQuestionUpdateResponseSerializer(updated_question)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
@@ -196,11 +194,13 @@ class ExamQuestionViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, mixi
             ),
         ],
     )
-    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def delete(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
+
         try:
-            question = ExamQuestion.objects.get(id=cast(int, self.kwargs.get("id")))
+            question = ExamQuestion.objects.get(id=question_id)
         except ExamQuestion.DoesNotExist:
             raise exceptions.NotFound("삭제할 문제 정보를 찾을 수 없습니다.")
 
         result = ExamQuestionService.delete_question(question)
-        return Response(result, status=status.HTTP_200_OK)
+        response_serializer = ExamQuestionDeleteResponseSerializer(result)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)

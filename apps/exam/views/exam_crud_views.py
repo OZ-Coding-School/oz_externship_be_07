@@ -3,14 +3,12 @@ from typing import Any
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from apps.core.permissions import IsStaffUser
 from apps.exam.core.error_base import ExamBaseAPIView
-from apps.exam.core.permissions import IsStaffUser
 from apps.exam.serializers.exam_serializers import (
     ExamCreateUpdateSerializer,
     ExamDetailSerializer,
@@ -41,7 +39,6 @@ class ExamPagination(PageNumberPagination):
 
 
 class ExamListCreateAPIView(ExamBaseAPIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsStaffUser]
     permission_error_msgs = {"GET": "쪽지시험 목록 조회 권한이 없습니다.", "POST": "쪽지시험 생성 권한이 없습니다."}
     validation_error_msgs = {"GET": "유효하지 않은 조회 요청입니다.", "POST": "유효하지 않은 시험 생성 요청입니다."}
@@ -99,13 +96,11 @@ class ExamListCreateAPIView(ExamBaseAPIView):
         serializer = ExamCreateUpdateSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             exam = ExamService.create_exam(serializer.validated_data)
-            # 응답 형식: {id, title, subject_id, thumbnail_img_url}
             return Response(ExamCreateUpdateSerializer(exam).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ExamDetailAPIView(ExamBaseAPIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsStaffUser]
     permission_error_msgs = {"PUT": "쪽지시험 수정 권한이 없습니다.", "DELETE": "쪽지시험 삭제 권한이 없습니다."}
     validation_error_msgs = {"PUT": "유효하지 않은 요청 데이터입니다.", "DELETE": "유효하지 않은 요청입니다."}

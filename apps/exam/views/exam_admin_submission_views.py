@@ -6,10 +6,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from apps.core.permissions import IsStaffUser
 from apps.exam.core.error_base import ExamBaseAPIView
-from apps.exam.core.permissions import IsStaffUser
 from apps.exam.serializers.exam_submission_serializers import (
     ExamSubmissionDetailSerializer,
     ExamSubmissionListSerializer,
@@ -35,7 +34,6 @@ class ExamAdminSubmissionPagination(PageNumberPagination):
 
 
 class ExamAdminSubmissionListAPIView(ExamBaseAPIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsStaffUser]
     permission_error_msgs = {"GET": "쪽지시험 응시 내역 조회 권한이 없습니다."}
     validation_error_msgs = {"GET": "유효하지 않은 조회 요청입니다."}
@@ -84,7 +82,6 @@ class ExamAdminSubmissionListAPIView(ExamBaseAPIView):
 
 
 class ExamAdminSubmissionDetailAPIView(ExamBaseAPIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, IsStaffUser]
     permission_error_msgs = {
         "GET": "쪽지시험 응시 상세 조회 권한이 없습니다.",

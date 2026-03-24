@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.urls import reverse
@@ -18,7 +18,6 @@ from apps.users.models.models import User
 
 
 class ExamAdminSubmissionAPITest(APITestCase):
-    # 속성 타입 선언 (attr-defined 에러 해결)
     admin_user: User
     student_user: User
     course: Course
@@ -32,7 +31,6 @@ class ExamAdminSubmissionAPITest(APITestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        """테스트 전체에서 사용할 기본 데이터 설정"""
         user_manager: Any = User.objects
 
         cls.admin_user = user_manager.create(

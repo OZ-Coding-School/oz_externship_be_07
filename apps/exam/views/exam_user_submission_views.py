@@ -6,8 +6,6 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.exam.core.error_base import ExamBaseAPIView
 from apps.exam.serializers.exam_submission_serializers import (
@@ -20,7 +18,6 @@ from apps.users.models.models import User
 
 
 class ExamSubmissionAPIView(ExamBaseAPIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     permission_error_msgs = {"POST": "권한이 없습니다."}
     validation_error_msgs = {"POST": "유효하지 않은 시험 응시 세션입니다."}
@@ -52,7 +49,6 @@ class ExamSubmissionAPIView(ExamBaseAPIView):
 
 
 class ExamSubmissionDetailAPIView(ExamBaseAPIView):
-    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     permission_error_msgs = {"GET": "권한이 없습니다."}
     validation_error_msgs = {"GET": "유효하지 않은 시험 응시 세션입니다."}

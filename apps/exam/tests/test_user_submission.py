@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.urls import reverse
@@ -28,7 +28,7 @@ class ExamSubmissionAPITest(APITestCase):
     question: ExamQuestion
     cohort: Cohort
     submission: ExamSubmission
-    submission_data: Dict[str, Any]
+    submission_data: dict[str, Any]
     list_url: str
 
     @classmethod

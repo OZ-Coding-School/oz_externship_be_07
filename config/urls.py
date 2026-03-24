@@ -21,6 +21,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.exam.urls.exam_admin_deployment_urls")),
     path("api/v1/", include("apps.exam.urls.exam_user_submission_urls")),
     path("api/v1/", include("apps.exam.urls.exam_admin_submission_urls")),
+    path("api/v1/", include("apps.subject.urls.course_admin_urls")),
     path("api/v1/", include("apps.questions.urls.admin_urls")),
 ]
 

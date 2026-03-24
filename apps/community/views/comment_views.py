@@ -122,7 +122,7 @@ class CommentViewSet(
             post_id=post_id,
             comment_id=comment_id,
             author=request.user,
-            content=serializer.validated_data.get("content")
+            content=serializer.validated_data.get("content"),
         )
 
         return Response({"detail": "댓글이 수정되었습니다.", "data": self.get_serializer(comment).data})

@@ -1,7 +1,7 @@
 from django.urls import path
 
-from apps.users.serializers.profile_serializers import NicknameCheckSerializer
 from apps.users.views.available_courses import AvailableCourseListAPIView
+from apps.users.views.change_phone_views import ChangePhoneNumberView
 from apps.users.views.enroll_student import EnrollStudentAPIView
 from apps.users.views.find_email_views import FindEmailView
 from apps.users.views.login_views import LoginView
@@ -42,9 +42,11 @@ urlpatterns = [
     path("find-email/", FindEmailView.as_view(), name="find-email"),
     path("enroll-student/", EnrollStudentAPIView.as_view(), name="enroll-student"),
     path("available-courses/", AvailableCourseListAPIView.as_view(), name="available-courses"),
+    path("find-email", FindEmailView.as_view(), name="find-email"),
     path("enroll-student", EnrollStudentAPIView.as_view(), name="enroll-student"),
     path("available-courses", AvailableCourseListAPIView.as_view(), name="available-courses"),
     path("me", ProfileView.as_view(), name="profile"),
     path("check-nickname", NicknameCheckView.as_view(), name="check-nickname"),
     path("me/profile-image", ProfileImageView.as_view(), name="profile-image"),
+    path("change-phone", ChangePhoneNumberView.as_view(), name="change-phone"),
 ]

@@ -56,4 +56,12 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
     def to_representation(self, instance: QuestionCategories) -> dict[str, Any]:
         ret = super().to_representation(instance)
         ret["parent_id"] = instance.parent.id if instance.parent else None
+
+        if instance.parent is None:
+            ret["category_type"] = "large"
+        elif instance.parent.parent is None:
+            ret["category_type"] = "medium"
+        else:
+            ret["category_type"] = "small"
+
         return ret

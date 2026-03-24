@@ -125,7 +125,7 @@ class AdminExamDeploymentListAPIView(AdminExamDeploymentQueryBaseAPIView):
     permission_classes = [IsAuthenticated, CanListExamDeployment]
 
     @extend_schema(
-        tags=["exams"],
+        tags=["admin_exams"],
         summary="쪽지시험 배포 목록 조회 API",
         responses={
             200: ExamDeploymentListResponseSerializer,
@@ -191,7 +191,7 @@ class AdminExamDeploymentDetailAPIView(AdminExamDeploymentQueryBaseAPIView):
     permission_classes = [IsAuthenticated, CanDetailExamDeployment]
 
     @extend_schema(
-        tags=["exams"],
+        tags=["admin_exams"],
         summary="쪽지시험 배포 상세 조회 API",
         responses={
             200: ExamDeploymentDetailSerializer,

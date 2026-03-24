@@ -11,7 +11,7 @@ from apps.subject.services.course_services import CourseService
 
 
 @extend_schema(
-    tags=["subjects"],
+    tags=["course"],
     summary="과정 리스트 조회 API",
     responses={
         200: CourseListItemSerializer(many=True),

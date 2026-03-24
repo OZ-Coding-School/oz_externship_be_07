@@ -9,6 +9,7 @@ from apps.questions.views.questions_list_views import (
     QuestionListDetailView,
     QuestionListView,
 )
+from apps.questions.views.user_categories_list_views import UserCategoryListView
 
 app_name = "questions"
 
@@ -58,4 +59,6 @@ urlpatterns = [
         QuestionPresignedUrlView.as_view(),
         name="question_presigned_url",
     ),
+    # 유저 카테고리 조회
+    path("categories/", UserCategoryListView.as_view(), name="categories"),
 ]

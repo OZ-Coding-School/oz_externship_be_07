@@ -19,7 +19,6 @@ class UserCategoryListTest(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.client = APIClient()
 
         cls.student = User.objects.create_user(
             email="test@test.com",
@@ -45,6 +44,9 @@ class UserCategoryListTest(TestCase):
         cls.parent_category = QuestionCategories.objects.create(name="백엔드")
         cls.child_category = QuestionCategories.objects.create(name="Python", parent=cls.parent_category)
         cls.url = reverse("questions:categories")
+
+    def setUp(self) -> None:
+        self.client = APIClient()
 
     # 성공 테스트
     def test_get_category_list_success(self) -> None:

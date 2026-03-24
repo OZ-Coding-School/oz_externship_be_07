@@ -141,7 +141,9 @@ class ExamQuestionAPITest(APITestCase):
         url = reverse("exam-question-create", kwargs={"exam_id": self.exam.id})
         response = self.client.post(url, self.question_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertEqual(response.data["error_detail"], "해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다,")
+        self.assertEqual(
+            response.data["error_detail"], "해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다,"
+        )
 
     def test_update_question_success(self) -> None:
         """문제 수정 성공 테스트 (PUT)"""

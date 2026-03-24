@@ -12,6 +12,7 @@ from apps.users.serializers.profile_serializers import (
     NicknameCheckSerializer,
     ProfileImageSerializer,
     UserProfileSerializer,
+    UserProfileUpdateSerializer,
 )
 
 User = get_user_model()
@@ -20,7 +21,6 @@ Permission_EXAMPLE = OpenApiExample("인증 에러", value={"error_detail": "자
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = UserProfileSerializer
 
     @extend_schema(
         summary="내 정보 조회",
@@ -32,32 +32,26 @@ class ProfileView(APIView):
         },
     )
     def get(self, request: Request) -> Response:
-        serializer = self.serializer_class(request.user)
+        serializer = UserProfileSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="내 정보 수정",
         tags=["Accounts"],
-        description="내정보를 수정합니다.",
-        request=UserProfileSerializer,
+        description="내 정보를 수정합니다.",
+        request=UserProfileUpdateSerializer,
         responses={
-            200: UserProfileSerializer,
+            200: UserProfileUpdateSerializer,
             400: OpenApiExample("입력 에러", value={"error_detail": {"nickname": ["10글자 이하로 해주세요."]}}),
             401: Permission_EXAMPLE,
             409: OpenApiExample("중복 에러", value={"error_detail": {"nickname": ["중복된 닉네임이 존재합니다."]}}),
         },
     )
     def patch(self, request: Request) -> Response:
-        serializer = self.serializer_class(request.user, data=request.data, partial=True)
+        serializer = UserProfileUpdateSerializer(request.user, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
-
-            if "profile_img_url" in request.data and len(request.data) == 1:
-                return Response(
-                    {"detail": "프로필 사진이 등록되었습니다.", "profile_img_url": serializer.data["profile_img_url"]},
-                    status=status.HTTP_200_OK,
-                )
 
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -66,6 +60,11 @@ class ProfileView(APIView):
             return Response({"error_detail": serializer.errors}, status=status.HTTP_409_CONFLICT)
 
         return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NicknameCheckView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = NicknameCheckSerializer
 
     @extend_schema(
         summary="닉네임 중복 확인",
@@ -91,6 +90,11 @@ class ProfileView(APIView):
             return Response({"error_detail": "중복된 닉네임이 존재합니다."}, status=status.HTTP_409_CONFLICT)
 
         return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileImageView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProfileImageSerializer
 
     @extend_schema(
         summary="프로필 이미지 수정",

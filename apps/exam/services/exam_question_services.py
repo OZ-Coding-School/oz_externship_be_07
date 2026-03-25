@@ -33,7 +33,7 @@ class ExamQuestionService:
         if current_total + data["point"] > MAX_TOTAL_POINT:
             raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
 
-        options_json: str | None
+        options_json: str | None = None
         if data.get("options") is not None:
             options_json = json.dumps(data["options"], ensure_ascii=False)
 

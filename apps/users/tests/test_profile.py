@@ -5,6 +5,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from apps.users.models.models import Withdrawal
+
 User = get_user_model()
 
 
@@ -65,3 +67,25 @@ class ProfileAPITest(APITestCase):
         data = {"nickname": "지존소민"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    def test_withdrawal_success(self) -> None:
+        data = {"reason": "GRADUATION", "reason_detail": "수강이 친절하고 조교님들이 유익해요."}
+        response = self.client.delete(self.url, data=data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+
+        withdrawal = Withdrawal.objects.filter(user=self.user).first()
+        self.assertIsNotNone(withdrawal)
+        assert withdrawal is not None
+        self.assertEqual(withdrawal.reason, "GRADUATION")
+
+    def test_withdrawal_missing_reason(self) -> None:
+        data = {"reason_detail": "사유는 비밀입니다!"}
+        response = self.client.delete(self.url, data=data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertIn("탈퇴 사유는 필수 입력 항목입니다.", str(response.data))

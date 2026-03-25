@@ -398,15 +398,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
         selected_ids = list(inactive_queryset.values_list("id", flat=True))
         token = self._generate_token(selected_ids)
-
-        selected_count = len(selected_ids)
-        preview_names = list(inactive_queryset.values_list("name", flat=True)[:ADMIN_PREVIEW_LIMIT])
-        safe_names = [name if name else "(이름 없음)" for name in preview_names]
-
-        if selected_count > ADMIN_PREVIEW_LIMIT:
-            preview_text = f"{', '.join(safe_names)} 외 {selected_count - ADMIN_PREVIEW_LIMIT}개"
-        else:
-            preview_text = ", ".join(safe_names)
+        preview_text = self._build_category_bulk_delete_preview_text(list(inactive_queryset))
 
         confirmed = self._require_delete_confirmation(
             request=request,
@@ -431,6 +423,15 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 f"삭제 완료: 카테고리 {deleted_category_count}개, 게시글 {deleted_post_count}개",
                 level=messages.SUCCESS,
             )
+
+    def _build_category_bulk_delete_preview_text(self, categories: list[PostCategory]) -> str:
+        selected_count = len(categories)
+        preview_categories = categories[:ADMIN_PREVIEW_LIMIT]
+        preview_names = [category.name or "(이름 없음)" for category in preview_categories]
+
+        if selected_count > ADMIN_PREVIEW_LIMIT:
+            return f"{', '.join(preview_names)} 외 {selected_count - ADMIN_PREVIEW_LIMIT}개"
+        return ", ".join(preview_names)
 
     def _generate_token(self, selected_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(selected_ids))

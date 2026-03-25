@@ -1,15 +1,8 @@
-from rest_framework import permissions
-from rest_framework.request import Request
-from rest_framework.views import APIView
-
-STAFF_ROLES = {"TA", "OM", "LC", "ADMIN"}
+from apps.core.permissions import IsStaffUser
 
 
-class BaseAdminExamDeploymentPermission(permissions.BasePermission):
+class BaseAdminExamDeploymentPermission(IsStaffUser):
     message = "권한이 없습니다."
-
-    def has_permission(self, request: Request, view: APIView) -> bool:
-        return getattr(request.user, "role", None) in STAFF_ROLES
 
 
 class CanCreateExamDeployment(BaseAdminExamDeploymentPermission):

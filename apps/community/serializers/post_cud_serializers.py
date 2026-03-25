@@ -27,8 +27,9 @@ class PostCreateSerializer(serializers.ModelSerializer[Post]):
     """게시글 저장 Serializer"""
 
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=PostCategory.objects.filter(status=True), source="category",
-        error_messages={"null": "카테고리는 필수 값입니다."}
+        queryset=PostCategory.objects.filter(status=True),
+        source="category",
+        error_messages={"null": "카테고리는 필수 값입니다."},
     )
 
     class Meta:
@@ -41,8 +42,9 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     """게시글 수정 Serializer"""
 
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=PostCategory.objects.filter(status=True), source="category",
-        error_messages={"null": "카테고리는 필수 값입니다."}
+        queryset=PostCategory.objects.filter(status=True),
+        source="category",
+        error_messages={"null": "카테고리는 필수 값입니다."},
     )
 
     class Meta:

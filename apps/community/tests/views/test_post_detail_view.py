@@ -103,6 +103,7 @@ class PostDetailAPIViewTest(TestCase):
         data = {
             "title": "테스트 수정 title",
             "content": "테스트 수정 content",
+            "category_id": "",
         }
         response = self.client.put(url, data, content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

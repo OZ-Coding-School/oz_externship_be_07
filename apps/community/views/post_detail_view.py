@@ -1,16 +1,16 @@
-from typing import Any, NoReturn, cast
+from typing import Any, cast
 
 from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import NotAuthenticated, NotFound, PermissionDenied
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
+from apps.community.core.permissions import PostPermission
 from apps.community.models.post_model import Post
 from apps.community.serializers.post_cud_serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
@@ -37,7 +37,7 @@ class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, Any]]):
 
 
 class PostDetailAPIView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [PostPermission]
     serializer_class = PostUpdateSerializer
 
     @staticmethod
@@ -45,22 +45,11 @@ class PostDetailAPIView(APIView):
         serializer = PostDetailNotFoundSerializer({"error_detail": "게시글을 찾을 수 없습니다."})
         return Response(serializer.data, status=status.HTTP_404_NOT_FOUND)
 
-    def _check_authenticated(self, request: Request) -> None:
-        original_permissions = self.permission_classes
-        self.permission_classes = [IsAuthenticated]
-        self.check_permissions(request)
-        self.permission_classes = original_permissions
-
     @staticmethod
     def _author_check(author_id: int, user_id: int) -> None:
         if user_id != author_id:
             serializer = PostDetailNotFoundSerializer({"error_detail": "권한이 없습니다."})
             raise PermissionDenied(detail=serializer.data)
-
-    def permission_denied(self, request: Request, message: str | None = None, code: str | None = None) -> NoReturn:
-        if not request.user.is_authenticated:
-            raise NotAuthenticated(detail={"error_detail": "자격 인증 데이터가 제공되지 않았습니다."})
-        super().permission_denied(request, message, code)
 
     @staticmethod
     def _get_visible_post(post_id: int) -> Post:
@@ -142,7 +131,6 @@ class PostDetailAPIView(APIView):
         ],
     )
     def post(self, request: Request, post_id: int) -> Response:
-        self._check_authenticated(request)
 
         request_serializer = PostLikeRequestSerializer(data=request.data)
         request_serializer.is_valid(raise_exception=True)
@@ -174,7 +162,6 @@ class PostDetailAPIView(APIView):
         },
     )
     def put(self, request: Request, post_id: int) -> Response:
-        self._check_authenticated(request)
 
         post = self._get_visible_post(post_id)
         self._author_check(post.author_id, cast(int, request.user.id))
@@ -206,7 +193,6 @@ class PostDetailAPIView(APIView):
         },
     )
     def delete(self, request: Request, post_id: int) -> Response:
-        self._check_authenticated(request)
 
         post = self._get_visible_post(post_id)
         self._author_check(post.author_id, cast(int, request.user.id))

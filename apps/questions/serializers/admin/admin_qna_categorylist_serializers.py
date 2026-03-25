@@ -23,6 +23,7 @@ class AdminQnaCategoryListSerializer(serializers.ModelSerializer):  # type: igno
             "parent_category",
             "child_categories",
             "created_at",
+            "updated_at",
         ]
         ref_name = "AdminQnaCategoryListResponse"
 

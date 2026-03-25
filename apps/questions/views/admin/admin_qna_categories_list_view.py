@@ -11,6 +11,12 @@ from rest_framework.views import APIView
 from apps.questions.serializers.admin.admin_qna_categorylist_serializers import (
     AdminQnaCategoryListSerializer,
 )
+from apps.questions.serializers.admin.admin_qna_categoryserializers import (
+    AdminCategorySerializer,
+)
+from apps.questions.services.admin.questions_admin_category_services import (
+    AdminCategoryService,
+)
 from apps.questions.services.admin.questions_admin_categorylist_services import (
     AdminQnaCategoryListService,
 )
@@ -20,9 +26,21 @@ class AdminCategoryPagination(PageNumberPagination):
     page_size_query_param = "size"
     max_page_size = 100
 
+    def get_paginated_response(self, data: Any) -> Response:
+        return Response(
+            {
+                "success": True,
+                "result": {
+                    "count": self.page.paginator.count,  # type: ignore[union-attr]
+                    "next": self.get_next_link(),
+                    "previous": self.get_previous_link(),
+                    "data": data,
+                },
+            }
+        )
 
-# 어드민 카테고리 목록 조회
-class AdminCategoryListAPIView(APIView):
+
+class AdminCategoryAPIView(APIView):
     permission_classes = [IsAdminUser]
 
     @extend_schema(
@@ -53,4 +71,23 @@ class AdminCategoryListAPIView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = AdminQnaCategoryListSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            {"success": True, "result": {"data": serializer.data}},
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        summary="관리자 카테고리 등록",
+        request=AdminCategorySerializer,
+        responses={201: AdminCategorySerializer},
+        tags=["Admin - Questions"],
+    )
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        serializer = AdminCategorySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        category = AdminCategoryService.create_category(validated_data=serializer.validated_data)
+
+        response_serializer = AdminCategorySerializer(category)
+
+        return Response({"success": True, "result": {"data": response_serializer.data}}, status=status.HTTP_201_CREATED)

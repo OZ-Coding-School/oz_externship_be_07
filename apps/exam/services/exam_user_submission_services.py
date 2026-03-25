@@ -2,8 +2,6 @@ import json
 from typing import Any
 
 from django.db import transaction
-from django.http import Http404
-from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound
 
 from apps.exam.core.error_custom_base import ConflictException
@@ -16,14 +14,13 @@ class ExamUserSubmissionService:
     @staticmethod
     @transaction.atomic
     def create_submission(user: User, data: dict[str, Any]) -> ExamSubmission:
-        deployment_id = data.get("deployment_id")
+        deployment_id = data.get("deployment_id", 0)
 
         if deployment_id and ExamSubmission.objects.filter(submitter=user).filter(deployment_id=deployment_id).exists():
             raise ConflictException(detail="이미 제출된 시험입니다.")
 
-        try:
-            deployment = get_object_or_404(ExamDeployment, id=deployment_id)
-        except Http404:
+        deployment = ExamDeployment.objects.filter(id=deployment_id).first()
+        if not deployment:
             raise NotFound("해당 시험 정보를 찾을 수 없습니다.")
 
         submitted_answers = data.get("answers", [])
@@ -65,15 +62,16 @@ class ExamUserSubmissionService:
 
     @staticmethod
     def get_submission_detail(submission_id: int) -> ExamSubmission:
-        try:
-            submission = get_object_or_404(
-                ExamSubmission.objects.select_related(
-                    "submitter",
-                    "deployment__exam",
-                    "deployment__cohort__course",
-                ),
-                id=submission_id,
+        submission = (
+            ExamSubmission.objects.select_related(
+                "submitter",
+                "deployment__exam",
+                "deployment__cohort__course",
             )
-        except Http404:
+            .filter(id=submission_id)
+            .first()
+        )
+        if not submission:
             raise NotFound("해당 시험 정보를 찾을 수 없습니다.")
+
         return submission

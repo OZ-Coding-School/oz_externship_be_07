@@ -1,8 +1,6 @@
 from typing import Any
 
 from django.db.models import Q, QuerySet
-from django.http import Http404
-from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound
 
 from apps.exam.core.error_custom_base import ConflictException
@@ -67,9 +65,8 @@ class ExamAdminSubmissionService:
     # 쪽지시험 응시 내역 삭제
     @staticmethod
     def delete_submission(submission_id: int) -> int:
-        try:
-            submission = get_object_or_404(ExamSubmission, id=submission_id)
-        except Http404:
+        submission = ExamSubmission.objects.filter(id=submission_id).first()
+        if not submission:
             raise NotFound("삭제할 응시 내역을 찾을 수 없습니다.")
 
         try:

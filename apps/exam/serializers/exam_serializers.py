@@ -1,5 +1,3 @@
-from typing import Any
-
 from rest_framework import serializers
 
 from apps.exam.models.exam_models import Exam

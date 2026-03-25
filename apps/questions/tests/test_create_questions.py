@@ -43,7 +43,6 @@ class QuestionCreateTest(TestCase):
             "category_id": self.small_category.id,
             "title": "Test Title",
             "content": "test content",
-            "image_url": ["http://test.com/img1.png"],
         }
         response = self.client.post(self.url, data=data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)

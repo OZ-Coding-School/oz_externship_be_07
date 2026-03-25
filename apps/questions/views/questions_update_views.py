@@ -38,7 +38,6 @@ class QuestionUpdateView:
                 title=validated_data.get("title"),
                 content=validated_data.get("content"),
                 category_id=validated_data.get("category_id"),
-                image_urls=validated_data.get("image_urls"),
             )
             response_serializer = QuestionUpdateResponseSerializer(updated_question)
             return Response(response_serializer.data, status=status.HTTP_200_OK)

@@ -110,7 +110,6 @@ class QuestionUpdateSerializer(serializers.Serializer[Any]):
     category_id = serializers.IntegerField(required=False)
     title = serializers.CharField(max_length=100, min_length=3, required=False)
     content = serializers.CharField(min_length=5, required=False)
-    image_urls = serializers.ListField(child=serializers.URLField(), required=False)
 
     def validate_category_id(self, value: int | None) -> int | None:
         if value is not None and not QuestionCategories.objects.filter(id=value).exists():

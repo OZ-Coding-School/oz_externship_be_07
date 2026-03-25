@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.users.models.models import User
-from apps.users.serializers.mycouerse_check_serializers import (
+from apps.users.serializers.mycourse_check_serializers import (
     MyEnrolledCourseSerializer,
 )
 
@@ -28,9 +28,7 @@ class MyEnrolledCourseView(APIView):
         user = cast(User, request.user)
         enrollments = user.enrollmentrequest_set.all().select_related("cohort", "cohort__course")
 
-        data = []
-        for en in enrollments:
-            data.append({"cohort": en.cohort, "course": en.cohort.course})
+        data = [{"cohort": en.cohort, "course": en.cohort.course} for en in enrollments]
 
         serializer = MyEnrolledCourseSerializer(data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

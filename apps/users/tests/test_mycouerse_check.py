@@ -18,11 +18,12 @@ class MyCourseTest(APITestCase):
     course: Any
     cohort: Any
     url: str
+
     @classmethod
     def setUpTestData(cls) -> None:
         cls.user = User.objects.create_user(
             email="eye@sick.com",
-            nickname="눈아픈현오",
+            nickname="눈아픈순오",
             phone_number=f"010{uuid.uuid4().hex[:8]}",
             password="password123",
             birthday="1998-08-12",
@@ -40,7 +41,7 @@ class MyCourseTest(APITestCase):
         EnrollmentRequest.objects.create(user=cls.user, cohort=cls.cohort)
         cls.url = reverse("users:me-enrolled-courses")
 
-    def test_get_my_enrolled_courses_success(self)  -> None:
+    def test_get_my_enrolled_courses_success(self) -> None:
         self.client.force_authenticate(user=self.user)
         response = self.client.get(self.url)
 

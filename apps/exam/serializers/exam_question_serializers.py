@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any
 
 from rest_framework import serializers
 
@@ -7,7 +7,7 @@ from apps.exam.models.choices import QuestionType
 from apps.exam.models.exam_question_models import ExamQuestion
 
 
-class ExamQuestionCreateSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamQuestionCreateSerializer(serializers.Serializer[dict[str, Any]]):
 
     type = serializers.ChoiceField(choices=QuestionType.choices)
     question = serializers.CharField(max_length=255)
@@ -82,10 +82,10 @@ class ExamQuestionUpdateResponseSerializer(serializers.ModelSerializer[ExamQuest
             return None
 
 
-class ExamQuestionDeleteResponseSerializer(serializers.Serializer[Dict[str, Any]]):
+class ExamQuestionDeleteResponseSerializer(serializers.Serializer[dict[str, Any]]):
     exam_id = serializers.IntegerField()
     question_id = serializers.IntegerField()
 
 
-class ErrorDetailSerializer(serializers.Serializer[Dict[str, str]]):
+class ErrorDetailSerializer(serializers.Serializer[dict[str, str]]):
     error_detail = serializers.CharField()

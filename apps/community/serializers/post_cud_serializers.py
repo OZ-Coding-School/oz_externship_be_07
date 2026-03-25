@@ -2,6 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
+from apps.community.core.constants import EXTRA_KWARGS
 from apps.community.models.category_model import PostCategory
 from apps.community.models.post_model import Post, PostAttachment, PostImage
 
@@ -25,47 +26,29 @@ class PostAttachmentsSerializer(serializers.ModelSerializer[PostAttachment]):
 class PostCreateSerializer(serializers.ModelSerializer[Post]):
     """게시글 저장 Serializer"""
 
-    title = serializers.CharField(allow_blank=True)
-    content = serializers.CharField(allow_blank=True)
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=PostCategory.objects.filter(status=True), source="category", allow_null=True
+        queryset=PostCategory.objects.filter(status=True), source="category",
+        error_messages={"null": "카테고리는 필수 값입니다."}
     )
 
     class Meta:
         model = Post
         fields = ["title", "content", "category_id"]
-
-    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
-        title = data.get("title")
-        content = data.get("content")
-        category = data.get("category")
-
-        errors = {}
-
-        if not title:
-            errors["title"] = ["제목은 필수 값입니다."]
-        if not content:
-            errors["content"] = ["내용은 필수 값입니다."]
-        if not category:
-            errors["category_id"] = ["카테고리는 필수 값입니다."]
-
-        if errors:
-            raise serializers.ValidationError(errors)
-        return data
+        extra_kwargs = EXTRA_KWARGS
 
 
 class PostUpdateSerializer(serializers.ModelSerializer[Post]):
     """게시글 수정 Serializer"""
 
-    title = serializers.CharField(allow_blank=True)
-    content = serializers.CharField(allow_blank=True)
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=PostCategory.objects.filter(status=True), source="category", allow_null=True
+        queryset=PostCategory.objects.filter(status=True), source="category",
+        error_messages={"null": "카테고리는 필수 값입니다."}
     )
 
     class Meta:
         model = Post
         fields = ["title", "content", "category_id"]
+        extra_kwargs = EXTRA_KWARGS
 
     def to_representation(self, instance: Post) -> dict[str, Any]:
         return {
@@ -74,21 +57,3 @@ class PostUpdateSerializer(serializers.ModelSerializer[Post]):
             "content": instance.content,
             "category_name": instance.category.name,
         }
-
-    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
-        title = data.get("title")
-        content = data.get("content")
-        category = data.get("category")
-
-        errors = {}
-
-        if not title:
-            errors["title"] = ["제목은 필수 값입니다."]
-        if not content:
-            errors["content"] = ["내용은 필수 값입니다."]
-        if not category:
-            errors["category_id"] = ["카테고리는 필수 값입니다."]
-
-        if errors:
-            raise serializers.ValidationError(errors)
-        return data

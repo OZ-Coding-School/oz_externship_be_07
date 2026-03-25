@@ -1,16 +1,15 @@
-from typing import Any, NoReturn, cast
+from typing import Any, cast
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.exceptions import NotAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.core.post_permissions import PostPermission
+from apps.community.core.permissions import PostPermission
 from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (

@@ -31,7 +31,4 @@ class AdminCategoryDeleteAPIView(APIView):
 
         serializer = AdminCategoryDeleteSerializer(result)
 
-        return Response(
-            {"success": True, "result": {"data": serializer.data}},
-            status=status.HTTP_200_OK,
-        )
+        return Response(serializer.data, status=status.HTTP_200_OK)

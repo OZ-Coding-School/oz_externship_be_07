@@ -3,33 +3,20 @@ from rest_framework import serializers
 from apps.users.models.models import User, Withdrawal
 
 
-class AdminUserWithdrawalUserSerializer(serializers.ModelSerializer[Withdrawal]):
+class AdminUserSimpleSerializer(serializers.ModelSerializer[User]):
     class Meta:
         model = User
-        fields = [
-            "id",
-            "email",
-            "name",
-            "role",
-            "birthday",
-            "nickname",
-            "gender",
-            "status",
-            "profile_img_url",
-            "created_at",
-        ]
+        fields = ["id", "name", "nickname", "role", "email"]
 
 
 class AdminUserWithdrawalListSerializer(serializers.ModelSerializer[Withdrawal]):
-    nickname = serializers.CharField(source="user.nickname", read_only=True)
-    role = serializers.CharField(source="user.role", read_only=True)
+    user = AdminUserSimpleSerializer(read_only=True)
 
     class Meta:
         model = Withdrawal
         fields = [
             "id",
-            "nickname",
-            "role",
+            "user",
             "reason",
             "created_at",
         ]

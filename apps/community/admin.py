@@ -330,38 +330,38 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
         model_count_dict = dict(model_count)
 
-        if len(objs) == 1 and isinstance(objs[0], PostCategory):
-            category = objs[0]
-            post_queryset = Post.objects.filter(category_id=category.pk)
-            post_count = post_queryset.count()
+        if len(objs) != 1 or not isinstance(objs[0], PostCategory):
+            return deleted_objects, model_count_dict.items(), perms_needed, protected
 
-            if post_count > 0:
-                protected = []
+        category = objs[0]
+        post_queryset = Post.objects.filter(category_id=category.pk)
+        post_count = post_queryset.count()
 
-                notice = (
-                    f'⚠️ 비활성 카테고리 "{category.name}(#{category.pk})" 삭제 시 '
-                    f"연결된 게시글 {post_count}건도 함께 삭제되며 복구할 수 없습니다."
-                )
-                if notice not in deleted_objects:
-                    deleted_objects.append(notice)
+        if post_count == 0:
+            notice = (
+                f'비활성 카테고리 "{category.name}(#{category.pk})"는 '
+                "연결된 게시글이 없어 카테고리만 삭제됩니다."
+            )
+            if notice not in deleted_objects:
+                deleted_objects.append(notice)
+            return deleted_objects, model_count_dict.items(), perms_needed, protected
 
-                model_count_dict[str(Post._meta.verbose_name_plural)] = post_count
+        protected = []
+        notice = (
+            f'⚠️ 비활성 카테고리 "{category.name}(#{category.pk})" 삭제 시 '
+            f"연결된 게시글 {post_count}건도 함께 삭제되며 복구할 수 없습니다."
+        )
+        if notice not in deleted_objects:
+            deleted_objects.append(notice)
 
-                preview_rows = list(post_queryset.order_by("-id").values_list("id", "title")[:ADMIN_PREVIEW_LIMIT])
-                preview_items = [f"{title} (#{post_id})" for post_id, title in preview_rows]
-                if post_count > ADMIN_PREVIEW_LIMIT:
-                    preview_items.append(f"... 외 {post_count - ADMIN_PREVIEW_LIMIT}건")
+        model_count_dict[str(Post._meta.verbose_name_plural)] = post_count
 
-                deleted_objects.append(f"연결 게시글 {post_count}건: {', '.join(preview_items)}")
+        preview_rows = list(post_queryset.order_by("-id").values_list("id", "title")[:ADMIN_PREVIEW_LIMIT])
+        preview_items = [f"{title} (#{post_id})" for post_id, title in preview_rows]
+        if post_count > ADMIN_PREVIEW_LIMIT:
+            preview_items.append(f"... 외 {post_count - ADMIN_PREVIEW_LIMIT}건")
 
-            else:
-                notice = (
-                    f'비활성 카테고리 "{category.name}(#{category.pk})"는 '
-                    "연결된 게시글이 없어 카테고리만 삭제됩니다."
-                )
-                if notice not in deleted_objects:
-                    deleted_objects.append(notice)
-
+        deleted_objects.append(f"연결 게시글 {post_count}건: {', '.join(preview_items)}")
         return deleted_objects, model_count_dict.items(), perms_needed, protected
 
     def delete_model(self, request: HttpRequest, obj: PostCategory) -> None:

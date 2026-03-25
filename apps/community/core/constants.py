@@ -14,14 +14,14 @@ RIST_SPLIT = "com/"
 
 # 게시글 수정/추가 필드 옵션 덮기
 EXTRA_KWARGS = {
-            "title": {
-                "error_messages": {
-                    "blank": "제목은 필수 값입니다.",
-                }
-            },
-            "content": {
-                "error_messages": {
-                    "blank": "내용은 필수 값입니다.",
-                }
-            }
+    "title": {
+        "error_messages": {
+            "blank": "제목은 필수 값입니다.",
         }
+    },
+    "content": {
+        "error_messages": {
+            "blank": "내용은 필수 값입니다.",
+        }
+    },
+}

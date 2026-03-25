@@ -33,6 +33,7 @@ class IsSelfOrReadOnly(permissions.BasePermission):
 
         return bool(obj.author_id == request.user.id or is_staff)
 
+
 class PostPermission(permissions.BasePermission):
     def has_permission(self, request: Request, view: View) -> bool:
         if request.method in permissions.SAFE_METHODS:

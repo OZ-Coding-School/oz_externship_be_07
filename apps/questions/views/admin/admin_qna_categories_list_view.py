@@ -41,9 +41,7 @@ class AdminCategoryPagination(PageNumberPagination):
                 "page": current_page,
                 "size": current_size,
                 "total_count": total_count,
-                "categories": {
-                    "data": data,
-                },
+                "categories": data,
             }
         )
 
@@ -79,8 +77,9 @@ class AdminCategoryAPIView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         serializer = AdminQnaCategoryListSerializer(queryset, many=True)
+
         return Response(
-            {"success": True, "result": {"data": serializer.data}},
+            {"categories": serializer.data},
             status=status.HTTP_200_OK,
         )
 
@@ -98,4 +97,4 @@ class AdminCategoryAPIView(APIView):
 
         response_serializer = AdminCategorySerializer(category)
 
-        return Response({"success": True, "result": {"data": response_serializer.data}}, status=status.HTTP_201_CREATED)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)

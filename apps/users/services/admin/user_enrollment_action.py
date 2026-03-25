@@ -8,10 +8,11 @@ from apps.users.choices import EnrollmentStatus
 
 def accept_enrollment_requests(enrollment_ids: list[int]) -> int:
     with transaction.atomic():
-        requests = list(EnrollmentRequest.objects.filter(
-            id__in=enrollment_ids,
-            status=EnrollmentStatus.PENDING
-        ).select_related('cohort', 'user'))
+        requests = list(
+            EnrollmentRequest.objects.filter(id__in=enrollment_ids, status=EnrollmentStatus.PENDING).select_related(
+                "cohort", "user"
+            )
+        )
 
         if not requests:
             return 0
@@ -23,16 +24,11 @@ def accept_enrollment_requests(enrollment_ids: list[int]) -> int:
             req.status = EnrollmentStatus.ACCEPTED
             req.accepted_at = now
 
-            cohort_students_to_create.append(
-                CohortStudent(cohort=req.cohort, user=req.user)
-            )
+            cohort_students_to_create.append(CohortStudent(cohort=req.cohort, user=req.user))
 
-        EnrollmentRequest.objects.bulk_update(requests, ['status', 'accepted_at'])
+        EnrollmentRequest.objects.bulk_update(requests, ["status", "accepted_at"])
 
-        CohortStudent.objects.bulk_create(
-            cohort_students_to_create,
-            ignore_conflicts=True
-        )
+        CohortStudent.objects.bulk_create(cohort_students_to_create, ignore_conflicts=True)
 
     return len(requests)
 

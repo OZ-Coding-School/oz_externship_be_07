@@ -3,6 +3,9 @@ from typing import Any, Dict
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from apps.users.choices import WithdrawalReason
+from apps.users.models.models import Withdrawal
+
 User = get_user_model()
 
 
@@ -60,7 +63,6 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer[Any]):
             if user_id and User.objects.filter(nickname=value).exclude(id=user_id).exists():
                 raise serializers.ValidationError("중복된 닉네임이 존재합니다.")
         return value
-<<<<<<< HEAD
 
 
 class UserWithdrawalSerializer(serializers.ModelSerializer[Withdrawal]):
@@ -75,5 +77,3 @@ class UserWithdrawalSerializer(serializers.ModelSerializer[Withdrawal]):
     class Meta:
         model = Withdrawal
         fields = ["reason", "reason_detail"]
-=======
->>>>>>> feat/chatbot-backup

@@ -10,7 +10,7 @@ from drf_spectacular.views import (
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("admin/", admin.site.urls),
-    path("api/v1/posts/", include("apps.community.urls")),
+    path("api/v1/posts", include("apps.community.urls")),
     path("api/v1/accounts/", include("apps.users.urls.urls")),
     path("api/v1/admin/", include("apps.users.urls.admin_urls")),
     path("api/v1/qna/", include("apps.questions.urls.qna_urls")),
@@ -21,7 +21,10 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.exam.urls.exam_admin_deployment_urls")),
     path("api/v1/", include("apps.exam.urls.exam_user_submission_urls")),
     path("api/v1/", include("apps.exam.urls.exam_admin_submission_urls")),
+    path("api/v1/", include("apps.subject.urls.course_admin_urls")),
     path("api/v1/", include("apps.questions.urls.admin_urls")),
+    path("api/v1/", include("apps.subject.urls.cohort_student_urls")),
+    path("api/v1/", include("apps.exam.urls.exam_question_url")),
 ]
 
 if settings.DEBUG:

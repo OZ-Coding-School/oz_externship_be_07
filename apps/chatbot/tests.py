@@ -3,16 +3,19 @@ import uuid
 from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
-from django.core.cache import cache
+from django.core.cache import caches
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.chatbot.choices import MessageRoleChoices
+from apps.chatbot.choices import BotTypeChoices, MessageRoleChoices
+from apps.chatbot.services.chatbot_service import ChatbotCacheManager
 from apps.users.models.models import User
 
 from .serializers import ChatbotCompletionRequestSerializer
+
+chatbot_cache = caches["chatbot"]
 
 
 class ChatbotSerializerTest(TestCase):
@@ -28,19 +31,17 @@ class ChatbotSerializerTest(TestCase):
         }
         serializer = ChatbotCompletionRequestSerializer(data=valid_data)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data["bot_type"], "support")
+        self.assertEqual(serializer.validated_data["bot_type"], BotTypeChoices.SUPPORT.value)
 
     def test_completion_request_serializer_default_bot_type(self) -> None:
         """bot_type 아닐 때 기본값 qna 홗인"""
         valid_data = {"message": "테스트 질문입니다."}
         serializer = ChatbotCompletionRequestSerializer(data=valid_data)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(serializer.validated_data["bot_type"], "qna")
+        self.assertEqual(serializer.validated_data["bot_type"], BotTypeChoices.QNA.value)
 
     def tearDown(self) -> None:
-        from django.core.cache import cache
-
-        cache.clear()
+        caches["chatbot"].clear()
 
 
 class ChatbotStatelessViewTest(APITestCase):
@@ -61,7 +62,7 @@ class ChatbotStatelessViewTest(APITestCase):
 
         # 임시 세션 ID (UUID) 발급, 캐시 최ㄱ화
         self.session_id = str(uuid.uuid4())
-        cache.clear()
+        caches["chatbot"].clear()
 
     def test_create_ephemeral_session(self) -> None:
         """[방생성] DB없이 UUID 세션 ID만 발급하는지 확인"""
@@ -78,15 +79,15 @@ class ChatbotStatelessViewTest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_delete_ephemeral_completions(self) -> None:
+    def test_delete_ephemeral_completions(self) -> Any:
         """[내역 삭제] Redis 캐시 초기화 확인"""
-        history_key = f"chatbot:qna:history:{self.session_id}"
-        cache.set(history_key, [{"role": "user", "message": "되다."}], timeout=3600)
+        history_key = ChatbotCacheManager.get_history_key(BotTypeChoices.QNA.value, self.session_id)
+        caches["chatbot"].set(history_key, [{"role": "user", "message": "되다."}], timeout=3600)
 
         url = reverse("chatbot:chatbot-completions", kwargs={"bot_type": "qna", "session_id": self.session_id})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertIsNone(cache.get(history_key))
+        self.assertIsNone(caches["chatbot"].get(history_key))
 
     @override_settings(GEMINI_API_KEY="dummy_test_key_for_CI")
     @patch("apps.chatbot.services.chatbot_service.genai.Client")
@@ -99,17 +100,19 @@ class ChatbotStatelessViewTest(APITestCase):
             MagicMock(text="근육짱짱맨"),
         ]
 
-        bot_type = "qna"
-        url = reverse("chatbot:chatbot-completions", kwargs={"bot_type": bot_type, "session_id": self.session_id})
-        data = {"message": "테스트로 텍스트", "bot_type": bot_type}
+        bot_type = BotTypeChoices.QNA.value
+        url = reverse(
+            "chatbot:chatbot-completions", kwargs={"bot_type": BotTypeChoices.QNA.value, "session_id": self.session_id}
+        )
+        data = {"message": "테스트로 텍스트", "bot_type": BotTypeChoices.QNA.value}
 
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         b"".join(cast(Any, response).streaming_content).decode("utf-8")
 
-        history_key = f"chatbot:{bot_type}:history:{self.session_id}"
-        history = cache.get(history_key)
+        history_key = ChatbotCacheManager.get_history_key(bot_type, self.session_id)
+        history = caches["chatbot"].get(history_key)
 
         self.assertIsNotNone(history)
         self.assertEqual(len(history), 2)  # 유저질문 1개, AI 1개 = 총 2개
@@ -117,12 +120,12 @@ class ChatbotStatelessViewTest(APITestCase):
         # self.assertEqual(history[1]["role"], MessageRoleChoices.ASSISTANT.value)
 
     def test_qna_bot_limit_exceeded(self) -> None:
-        """[횟수 제한] QnA 챗봇 2회 질문 초과 시 403 에러 반환"""
-        bot_type = "qna"
-        count_key = f"chatbot:{bot_type}:count:{self.session_id}"
-        cache.set(count_key, 2)
+        """[횟수 제한] QnA 챗봇 3회 질문 초과 시 403 에러 반환"""
+        bot_type = BotTypeChoices.QNA.value
+        count_key = ChatbotCacheManager.get_usage_count_key(bot_type, self.session_id)
+        caches["chatbot"].set(count_key, 3)
 
-        url = reverse("chatbot:chatbot-completions", kwargs={"bot_type": bot_type, "session_id": self.session_id})
+        url = reverse("chatbot:chatbot-completions", kwargs={"bot_type": "qna", "session_id": self.session_id})
         data = {"message": "더 궁금하신 점은 질문 게시판을 이용하시기 바랍니다."}
         response = self.client.post(url, data, format="json")
 

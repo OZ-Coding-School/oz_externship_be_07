@@ -1,16 +1,15 @@
-import os
+import json
+import logging
 import uuid
 from typing import Any
 
 from django.conf import settings
-from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
     extend_schema,
-    extend_schema_view,
     inline_serializer,
 )
 from rest_framework import serializers, status
@@ -23,6 +22,8 @@ from apps.chatbot.choices import BotTypeChoices
 from apps.chatbot.services.chatbot_service import ChatbotService
 
 from .serializers import ChatbotCompletionRequestSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class ChatbotSessionCreateView(APIView):
@@ -65,10 +66,11 @@ class ChatbotCompletionView(APIView):
         },
     )
     def get(self, request: Request, bot_type: str, session_id: str) -> Response:
-        if bot_type not in BotTypeChoices.values:
+        bot_type_lower = bot_type.lower()
+        if bot_type_lower not in BotTypeChoices.values:
             return Response({"error_detail": "잘못된 챗봇 타입입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        messages = ChatbotService.get_ephemeral_history(bot_type, str(session_id))
+        messages = ChatbotService.get_ephemeral_history(bot_type_lower, session_id)
 
         if not messages:
             return Response(
@@ -85,13 +87,8 @@ class ChatbotCompletionView(APIView):
         responses={204: OpenApiResponse(description="성공적으로 삭제됨")},
     )
     def delete(self, request: Request, bot_type: str, session_id: str) -> Response:
-        assert request.user.is_authenticated
-
-        if bot_type not in BotTypeChoices.values:
-            return Response({"error_detail": "잘못된 챗봇 타입입니다."}, status=status.HTTP_400_BAD_REQUEST)
-
-        ChatbotService.delete_ephemeral_session(bot_type, str(session_id))
-
+        bot_type_lower = bot_type.lower()
+        ChatbotService.delete_ephemeral_history(bot_type_lower, session_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # <POST>
@@ -118,22 +115,29 @@ class ChatbotCompletionView(APIView):
         responses={201: OpenApiResponse(description="스트리밍 응답 (text/event-stream)")},
     )
     def post(self, request: Request, bot_type: str, session_id: str) -> Response | StreamingHttpResponse:
-        serializer = ChatbotCompletionRequestSerializer(data=request.data)
+        bot_type_lower = bot_type.lower()
 
-        if serializer.is_valid():
-            user_message = serializer.validated_data.get("message")
+        data = request.data.copy()
+        data["bot_type"] = bot_type_lower
 
-            if bot_type == "qna":
-                try:
-                    ChatbotService.check_and_increment_limit(bot_type, session_id, user=request.user)
-                except PermissionError as e:
-                    return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
+        serializer = ChatbotCompletionRequestSerializer(data=data)
 
-            if bot_type not in BotTypeChoices.values:
-                return Response({"error_detail": "잘못된 경로입니다."}, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_message = serializer.validated_data.get("message")
+
+        if bot_type_lower not in [choice.value for choice in BotTypeChoices]:  # type: ignore[misc]
+            return Response({"error_detail": "잘못된 챗봇 타입입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 횟수 제한
+        if bot_type_lower == BotTypeChoices.QNA.value:
+            try:
+                ChatbotService.check_and_increment_limit(bot_type_lower, session_id, user=request.user)
+            except PermissionError as e:
+                return Response({"error_detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
 
         api_key = getattr(settings, "GEMINI_API_KEY", None)
-
         if not api_key:
             return Response(
                 {"error_detail": "API 키 오류."},
@@ -141,15 +145,21 @@ class ChatbotCompletionView(APIView):
             )
 
         # Gemini API와 통신하여 응답 반환 (스트리밍)
-        stream = ChatbotService.stream_ephemeral_response(
-            session_id=session_id,
-            user_message=user_message,
-            api_key=str(api_key),
-            bot_type=bot_type,
-        )
+        try:
+            stream = ChatbotService.stream_ephemeral_response(
+                session_id=session_id,
+                user_message=user_message,
+                api_key=str(api_key),
+                bot_type=bot_type_lower,
+            )
 
-        return StreamingHttpResponse(
-            stream,
-            content_type="text/event-stream",
-            status=status.HTTP_201_CREATED,
-        )
+            return StreamingHttpResponse(
+                stream,
+                content_type="text/event-stream",
+                status=status.HTTP_201_CREATED,
+            )
+        except Exception as e:
+            logger.error(f"Chatbot View Error: {e}")
+            return Response(
+                {"error_detail": "챗봇 응답 생성 중 오류가 발생했습니다."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

@@ -26,7 +26,7 @@ class ChangePhoneNumberView(APIView):
         request=PhoneNumberChangeSerializer,
         responses={
             200: OpenApiExample(
-                "성공", value={"detail": "휴대폰 번호 변경에 성공하였습니다.", "phone_number": "01011112222"}
+                "성공", value={"detail": "휴대폰 번호 변경에 성공했습니다.", "phone_number": "01011112222"}
             ),
             400: OpenApiExample(
                 "인증 실패/필드 누락",

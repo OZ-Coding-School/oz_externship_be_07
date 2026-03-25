@@ -25,8 +25,5 @@ class DeploymentLockedError(Exception):
 class CodeMismatchError(Exception):
     pass
 
-
-"""Admin Deployment Domain"""
-
 class AdminDeploymentDuplicateError(Exception):
     pass

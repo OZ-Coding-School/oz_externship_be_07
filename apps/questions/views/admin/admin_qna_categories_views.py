@@ -15,6 +15,7 @@ from apps.questions.services.admin.questions_admin_category_services import (
 )
 
 
+# 어드민 카테고리 등록
 class AdminCategoryCreateAPIView(APIView):
     permission_classes = [IsAdminUser]
 

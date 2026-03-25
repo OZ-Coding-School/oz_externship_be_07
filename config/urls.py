@@ -24,7 +24,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.subject.urls.course_admin_urls")),
     path("api/v1/", include("apps.questions.urls.admin_urls")),
     path("api/v1/", include("apps.subject.urls.cohort_student_urls")),
-    path("api/v1/admin/exams/", include("apps.exam.urls.exam_question_url")),
+    path("api/v1/", include("apps.exam.urls.exam_question_url")),
 ]
 
 if settings.DEBUG:

@@ -2,4 +2,4 @@ from django.urls import path
 
 app_name = "chatbot"
 
-urlpatterns: list[str] = []
+urlpatterns: list[str] = []aa

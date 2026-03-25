@@ -6,6 +6,7 @@ from apps.users.views.enroll_student import EnrollStudentAPIView
 from apps.users.views.find_email_views import FindEmailView
 from apps.users.views.login_views import LoginView
 from apps.users.views.logout_views import LogoutView
+from apps.users.views.mycouerse_check_views import MyEnrolledCourseView
 from apps.users.views.profile_views import (
     NicknameCheckView,
     ProfileImageView,
@@ -46,4 +47,5 @@ urlpatterns = [
     path("check-nickname", NicknameCheckView.as_view(), name="check-nickname"),
     path("me/profile-image", ProfileImageView.as_view(), name="profile-image"),
     path("change-phone", ChangePhoneNumberView.as_view(), name="change-phone"),
+    path("me/enrolled-courses", MyEnrolledCourseView.as_view(), name="me-enrolled-courses"),
 ]

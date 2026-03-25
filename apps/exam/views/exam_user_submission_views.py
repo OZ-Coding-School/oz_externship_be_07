@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.permissions import STAFF_ROLES
 from apps.exam.core.error_base import ExamBaseAPIView
 from apps.exam.serializers.exam_submission_serializers import (
     ExamSubmissionCreateResponseSerializer,
@@ -68,7 +69,8 @@ class ExamSubmissionDetailAPIView(ExamBaseAPIView):
     def get(self, request: Request, submission_id: int) -> Response:
         submission = ExamUserSubmissionService.get_submission_detail(submission_id)
 
-        if submission.submitter != request.user:
+        is_staff = getattr(request.user, "role", None) in STAFF_ROLES
+        if not is_staff and submission.submitter != request.user:
             raise PermissionDenied("권한이 없습니다.")
 
         serializer = ExamSubmissionResultSerializer(submission)

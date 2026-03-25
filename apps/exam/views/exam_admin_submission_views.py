@@ -41,7 +41,7 @@ class ExamAdminSubmissionListAPIView(ExamBaseAPIView):
     validation_error_msgs = {"GET": "유효하지 않은 조회 요청입니다."}
 
     @extend_schema(
-        tags=["exams"],
+        tags=["admin_exams"],
         summary="쪽지시험 응시 내역 목록 조회",
         description="관리자용 쪽지시험 응시 내역 목록을 페이지네이션하여 반환합니다.",
         parameters=[
@@ -96,7 +96,7 @@ class ExamAdminSubmissionDetailAPIView(ExamBaseAPIView):
     }
 
     @extend_schema(
-        tags=["exams"],
+        tags=["admin_exams"],
         summary="쪽지시험 응시 내역 상세 조회",
         description="특정 응시 내역의 상세 정보와 채점 결과를 조회합니다.",
         responses={
@@ -113,7 +113,7 @@ class ExamAdminSubmissionDetailAPIView(ExamBaseAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["exams"],
+        tags=["admin_exams"],
         summary="쪽지시험 응시 내역 삭제",
         description="특정 응시 내역을 삭제합니다.",
         responses={

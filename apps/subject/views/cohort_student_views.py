@@ -18,7 +18,7 @@ class StudentScoreAPIView(APIView):
     permission_classes = [IsAuthenticated, IsStaffUser]
 
     @extend_schema(
-        tags=["subjects"],
+        tags=["admin_students"],
         summary="학생별 과목 점수 조회",
         description="특정 학생의 과목별 점수를 조회합니다.",
         responses={200: StudentSubjectScoreItemSerializer(many=True)},

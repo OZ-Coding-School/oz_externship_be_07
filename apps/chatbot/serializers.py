@@ -2,54 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.questions.models import Questions
-
-from .models import ChatbotCompletions, ChatbotSessions
-
-
-class ChatbotSessionCreateSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    """
-    AI 챗봇 세션 생성 <POST>
-    /api/v1/chatbot/sessions
-
-    """
-
-    user: serializers.HiddenField = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    question: serializers.PrimaryKeyRelatedField[Questions] = serializers.PrimaryKeyRelatedField(
-        queryset=Questions.objects.all(),
-    )
-
-    class Meta:
-        model = ChatbotSessions
-        fields = ["user", "question", "title", "using_model"]
-
-
-class SupportSessionCreateSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    """
-    AI 시스템 챗봇 세션 생성 <POST>
-    /api/v1/chatbot/support
-    """
-
-    class Meta:
-        model = ChatbotSessions
-        fields = ["title", "using_model"]
-
-
-class ChatbotSessionReadSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    """
-    <GET> //api/v1/chatbot/sessions (목록 조회)
-    <POST> 세션 성공 성공 시 응답
-    """
-
-    question_id: serializers.IntegerField = serializers.IntegerField(
-        source="question.id", read_only=True, allow_null=True
-    )
-
-    class Meta:
-        model = ChatbotSessions
-        fields = ["id", "user_id", "question_id", "title", "using_model", "created_at", "updated_at"]
-        read_only_fields = fields
+from apps.chatbot.choices import BotTypeChoices
 
 
 class ChatbotCompletionRequestSerializer(serializers.Serializer[Any]):
@@ -60,18 +13,12 @@ class ChatbotCompletionRequestSerializer(serializers.Serializer[Any]):
 
     message: serializers.CharField = serializers.CharField(
         required=True,
-        allow_blank=False,
-        error_messages={"required": "이 필드는 필수 항목입니다.", "blank": "이 필드는 blank 일 수 없습니다."},
+        help_text="사용자 질문",
     )
 
-
-class ChatbotCompletionReadSerializer(serializers.ModelSerializer[ChatbotCompletions]):
-    """
-    <GET> /api/v1/chatbot/sessions/{session_id}/completions
-    챗봇 대화 내역 조회 응답용
-    """
-
-    class Meta:
-        model = ChatbotCompletions
-        fields = ["id", "message", "role", "created_at"]
-        read_only_fields = fields
+    bot_type = serializers.ChoiceField(
+        choices=BotTypeChoices.choices,
+        default=BotTypeChoices.QNA.value,
+        required=False,
+        help_text="챗봇 모드 선택 (qna 또는 support)",
+    )

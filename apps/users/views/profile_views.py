@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 from datetime import timedelta
 from typing import Any, cast
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+=======
+from typing import Any, cast
+
+from django.contrib.auth import get_user_model
+>>>>>>> feat/chatbot-backup
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -10,13 +16,19 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+<<<<<<< HEAD
 from apps.users.choices import UserStatus
+=======
+>>>>>>> feat/chatbot-backup
 from apps.users.serializers.profile_serializers import (
     NicknameCheckSerializer,
     ProfileImageSerializer,
     UserProfileSerializer,
     UserProfileUpdateSerializer,
+<<<<<<< HEAD
     UserWithdrawalSerializer,
+=======
+>>>>>>> feat/chatbot-backup
 )
 
 User = get_user_model()
@@ -65,6 +77,7 @@ class ProfileView(APIView):
 
         return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+<<<<<<< HEAD
     @extend_schema(
         summary="회원 탈퇴",
         tags=["Accounts"],
@@ -95,6 +108,8 @@ class ProfileView(APIView):
 
         return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+=======
+>>>>>>> feat/chatbot-backup
 
 class NicknameCheckView(APIView):
     permission_classes = [IsAuthenticated]

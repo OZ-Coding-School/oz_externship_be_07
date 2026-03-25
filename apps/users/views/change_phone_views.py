@@ -40,8 +40,8 @@ class ChangePhoneNumberView(APIView):
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         user = cast(Any, request.user)
-        user.phone_number = serializer.validated_data.get("phone_number")
-        user.save()
+        user.phone_number = serializer.validated_data["phone_number"]
+        user.save(update_fields=["phone_number"])
 
         return Response(
             {"detail": "휴대폰 번호 변경에 성공하였습니다.", "phone_number": user.phone_number},

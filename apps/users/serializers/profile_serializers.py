@@ -3,6 +3,9 @@ from typing import Any, Dict
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from apps.users.choices import WithdrawalReason
+from apps.users.models.models import Withdrawal
+
 User = get_user_model()
 
 
@@ -59,3 +62,17 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer[Any]):
             if user_id and User.objects.filter(nickname=value).exclude(id=user_id).exists():
                 raise serializers.ValidationError("중복된 닉네임이 존재합니다.")
         return value
+
+
+class UserWithdrawalSerializer(serializers.ModelSerializer[Withdrawal]):
+    reason = serializers.ChoiceField(
+        choices=WithdrawalReason.choices,
+        error_messages={
+            "invalid_choice": "올바른 탈퇴 사유를 선택해주세요. (필수 항목)",
+            "required": "탈퇴 사유는 필수 입력 항목입니다.",
+        },
+    )
+
+    class Meta:
+        model = Withdrawal
+        fields = ["reason", "reason_detail"]

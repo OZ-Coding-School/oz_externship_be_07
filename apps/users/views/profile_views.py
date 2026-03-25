@@ -1,6 +1,8 @@
+from datetime import timedelta
 from typing import Any, cast
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +15,7 @@ from apps.users.serializers.profile_serializers import (
     ProfileImageSerializer,
     UserProfileSerializer,
     UserProfileUpdateSerializer,
+    UserWithdrawalSerializer,
 )
 
 User = get_user_model()
@@ -58,6 +61,35 @@ class ProfileView(APIView):
         error_str = str(serializer.errors)
         if "중복된 닉네임" in error_str:
             return Response({"error_detail": serializer.errors}, status=status.HTTP_409_CONFLICT)
+
+        return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        summary="회원 탈퇴",
+        tags=["Accounts"],
+        description="회원 탈퇴 사유를 기록하고 유저 상태를 비활성화합니다.",
+        request=UserWithdrawalSerializer,
+        methods=["DELETE"],
+        responses={
+            204: OpenApiExample("성공", value=None),
+            400: OpenApiExample(
+                "필드 에러",
+                value={"error_detail": {"reason": ["탈퇴 사유는 필수 입력 항목입니다."]}},
+            ),
+            401: Permission_EXAMPLE,
+        },
+    )
+    def delete(self, request: Request) -> Response:
+        serializer = UserWithdrawalSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(user=request.user, due_date=timezone.now().date() + timedelta(days=30))
+
+            user = request.user
+            user.is_active = False
+            user.save()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 

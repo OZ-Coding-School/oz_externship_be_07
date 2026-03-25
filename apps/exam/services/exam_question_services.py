@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from django.db import models
 
@@ -15,8 +15,7 @@ MAX_POINT_PER_QUESTION = 10
 class ExamQuestionService:
 
     @staticmethod
-    # 1. data: dict -> Dict[str, Any]로 수정
-    def create_question(exam: Exam, data: Dict[str, Any]) -> ExamQuestion:
+    def create_question(exam: Exam, data: dict[str, Any]) -> ExamQuestion:
 
         current_count = ExamQuestion.objects.filter(exam=exam).count()
         if current_count >= MAX_QUESTION_COUNT:
@@ -34,7 +33,7 @@ class ExamQuestionService:
         if current_total + data["point"] > MAX_TOTAL_POINT:
             raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
 
-        options_json: Optional[str] = None
+        options_json: str | None
         if data.get("options") is not None:
             options_json = json.dumps(data["options"], ensure_ascii=False)
 
@@ -51,8 +50,7 @@ class ExamQuestionService:
         )
 
     @staticmethod
-    # 3. data: dict -> Dict[str, Any]로 수정
-    def update_question(question: ExamQuestion, data: Dict[str, Any]) -> ExamQuestion:
+    def update_question(question: ExamQuestion, data: dict[str, Any]) -> ExamQuestion:
 
         if "point" in data:
             if data["point"] > MAX_POINT_PER_QUESTION:
@@ -90,7 +88,7 @@ class ExamQuestionService:
         return question
 
     @staticmethod
-    def delete_question(question: ExamQuestion) -> Dict[str, Any]:
+    def delete_question(question: ExamQuestion) -> dict[str, Any]:
 
         exam_id: int = question.exam_id
         question_id: int = question.id

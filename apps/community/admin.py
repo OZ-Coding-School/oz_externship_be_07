@@ -382,7 +382,8 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         queryset: QuerySet[PostCategory],
     ) -> None:
         active_queryset = queryset.filter(status=True)
-        inactive_queryset = queryset.filter(status=False)
+        inactive_queryset = queryset.filter(status=False).annotate(post_count=Count("posts")).order_by("id")
+        inactive_categories = list(inactive_queryset)
 
         if active_queryset.exists():
             blocked_names = ", ".join(f"{c.name}(#{c.pk})" for c in active_queryset)
@@ -392,12 +393,12 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 level=messages.WARNING,
             )
 
-        if not inactive_queryset.exists():
+        if not inactive_categories:
             return
 
-        selected_ids = list(inactive_queryset.values_list("id", flat=True))
+        selected_ids = [category.id for category in inactive_categories]
         token = self._generate_token(selected_ids)
-        preview_text = self._build_category_bulk_delete_preview_text(list(inactive_queryset))
+        preview_text = self._build_category_bulk_delete_preview_text(inactive_categories)
 
         confirmed = self._require_delete_confirmation(
             request=request,
@@ -411,8 +412,8 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         deleted_category_count = 0
         deleted_post_count = 0
 
-        for category in inactive_queryset:
-            post_count = Post.objects.filter(category_id=category.pk).count()
+        for category in inactive_categories:
+            post_count = int(getattr(category, "post_count", 0))
             deleted_post_count += self._delete_category_with_related_posts(category, post_count)
             deleted_category_count += 1
 

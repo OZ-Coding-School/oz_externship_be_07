@@ -6,7 +6,7 @@ from apps.users.views.enroll_student import EnrollStudentAPIView
 from apps.users.views.find_email_views import FindEmailView
 from apps.users.views.login_views import LoginView
 from apps.users.views.logout_views import LogoutView
-from apps.users.views.mycouerse_check_views import MyEnrolledCourseView
+from apps.users.views.mycourse_check_views import MyEnrolledCourseView
 from apps.users.views.profile_views import (
     NicknameCheckView,
     ProfileImageView,

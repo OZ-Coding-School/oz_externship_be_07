@@ -6,7 +6,7 @@ from apps.subject.models.cohort_models import Cohort
 from apps.subject.models.course_models import Course
 
 
-class CourseSimpleSerializer(serializers.ModelSerializer[Course]):
+class MyCourseSimpleSerializer(serializers.ModelSerializer[Course]):
     class Meta:
         model = Course
         fields = ["id", "name", "tag", "thumbnail_img_url"]
@@ -20,4 +20,4 @@ class CohortSimpleSerializer(serializers.ModelSerializer[Cohort]):
 
 class MyEnrolledCourseSerializer(serializers.Serializer[Any]):
     cohort = CohortSimpleSerializer()
-    course = CourseSimpleSerializer()
+    course = MyCourseSimpleSerializer()

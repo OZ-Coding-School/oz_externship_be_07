@@ -3,7 +3,7 @@ from typing import Any
 
 from django.db import transaction
 from django.db.models import QuerySet
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import ValidationError
 
 from apps.community.models.comment_model import CommentTag, PostComment
 from apps.community.models.post_model import Post

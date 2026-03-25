@@ -1,8 +1,7 @@
 from rest_framework.request import Request
 
-from apps.community.core.cache import cache_add, cache_get_int, cache_incr
-from apps.community.core.cache_keys import post_view_count_key, post_viewer_key
-from apps.community.core.constants import POST_VIEW_TTL
+from apps.community.core.cache import cache_get_int, cache_incr
+from apps.community.core.cache_keys import post_view_count_key
 
 
 def build_post_viewer_key(request: Request) -> str:

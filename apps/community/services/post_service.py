@@ -1,5 +1,4 @@
 import logging
-import re
 from typing import Any, cast
 
 from botocore.exceptions import ClientError

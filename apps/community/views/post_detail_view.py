@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.core.permissions import PostPermission
+from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.community.models.post_model import Post
 from apps.community.serializers.post_cud_serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
@@ -37,19 +37,13 @@ class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, Any]]):
 
 
 class PostDetailAPIView(APIView):
-    permission_classes = [PostPermission]
+    permission_classes = [IsSelfOrReadOnly]
     serializer_class = PostUpdateSerializer
 
     @staticmethod
     def _not_found_response() -> Response:
         serializer = PostDetailNotFoundSerializer({"error_detail": "게시글을 찾을 수 없습니다."})
         return Response(serializer.data, status=status.HTTP_404_NOT_FOUND)
-
-    @staticmethod
-    def _author_check(author_id: int, user_id: int) -> None:
-        if user_id != author_id:
-            serializer = PostDetailNotFoundSerializer({"error_detail": "권한이 없습니다."})
-            raise PermissionDenied(detail=serializer.data)
 
     @staticmethod
     def _get_visible_post(post_id: int) -> Post:
@@ -164,7 +158,7 @@ class PostDetailAPIView(APIView):
     def put(self, request: Request, post_id: int) -> Response:
 
         post = self._get_visible_post(post_id)
-        self._author_check(post.author_id, cast(int, request.user.id))
+        self.check_object_permissions(request, post)
 
         serializer = PostUpdateSerializer(post, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -195,7 +189,7 @@ class PostDetailAPIView(APIView):
     def delete(self, request: Request, post_id: int) -> Response:
 
         post = self._get_visible_post(post_id)
-        self._author_check(post.author_id, cast(int, request.user.id))
+        self.check_object_permissions(request, post)
 
         post_delete_sum(post)
 

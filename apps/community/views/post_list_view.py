@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.core.permissions import PostPermission
+from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
 from apps.community.services.post_service import (
@@ -33,7 +33,7 @@ class PostListPagination(PageNumberPagination):
 class PostListAPIView(APIView):
     """게시글 목록 조회 API"""
 
-    permission_classes = [PostPermission]
+    permission_classes = [IsSelfOrReadOnly]
 
     @extend_schema(
         summary="게시글 조회",

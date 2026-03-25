@@ -6,6 +6,7 @@ from typing import Any
 from django.db.models import Exists, OuterRef, QuerySet
 from django.utils import timezone
 
+from apps.core.permissions import STAFF_ROLES
 from apps.exam.core.exceptions import (
     DeploymentForbiddenError,
     DeploymentGoneError,
@@ -41,6 +42,9 @@ class ExamDeploymentService:
 
     @classmethod
     def _ensure_user_in_cohort(cls, *, user: User, deployment: ExamDeployment, message: str) -> None:
+        if getattr(user, "role", None) in STAFF_ROLES:
+            return
+
         exists = CohortStudent.objects.filter(
             user=user,
             cohort_id=deployment.cohort_id,
@@ -143,26 +147,27 @@ class ExamDeploymentService:
     @classmethod
     def get_user_deployments(cls, *, user_id: int, page: int, status: str, page_size: int = 10) -> dict[str, Any]:
         user = cls._get_user_or_raise(user_id=user_id)
+        is_staff = getattr(user, "role", None) in STAFF_ROLES
 
-        cohort_ids = list(CohortStudent.objects.filter(user=user).values_list("cohort_id", flat=True))
-
-        if not cohort_ids:
-            raise DeploymentForbiddenError("권한이 없습니다.")
+        if not is_staff:
+            cohort_ids = list(CohortStudent.objects.filter(user=user).values_list("cohort_id", flat=True))
+            if not cohort_ids:
+                raise DeploymentForbiddenError("권한이 없습니다.")
 
         submission_subquery = ExamSubmission.objects.filter(
             submitter=user,
             deployment_id=OuterRef("id"),
         )
 
-        deployments: QuerySet[ExamDeployment] = (
-            ExamDeployment.objects.select_related(
-                "exam",
-                "exam__subject",
-            )
-            .filter(cohort_id__in=cohort_ids)
-            .annotate(is_done=Exists(submission_subquery))
-            .order_by("-created_at")
-        )
+        deployments: QuerySet[ExamDeployment] = ExamDeployment.objects.select_related(
+            "exam",
+            "exam__subject",
+        ).annotate(is_done=Exists(submission_subquery))
+
+        if not is_staff:
+            deployments = deployments.filter(cohort_id__in=cohort_ids)
+
+        deployments = deployments.order_by("-created_at")
 
         if status == "done":
             deployments = deployments.filter(is_done=True)  # type: ignore[misc]

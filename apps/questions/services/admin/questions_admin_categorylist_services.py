@@ -1,4 +1,3 @@
-# apps/questions/services/admin/questions_admin_categorylist_services.py
 from typing import Optional
 
 from django.db.models import QuerySet

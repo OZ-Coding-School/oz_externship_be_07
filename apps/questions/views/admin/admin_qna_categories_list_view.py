@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -27,13 +27,21 @@ class AdminCategoryPagination(PageNumberPagination):
     max_page_size = 100
 
     def get_paginated_response(self, data: Any) -> Response:
+        request = self.request
+        if request is None:
+            return Response({"success": False, "Message": "Request is Missing"}, status=400)
+
+        current_page = int(request.query_params.get(self.page_query_param, 1))
+        current_size = int(request.query_params.get(self.page_size_query_param, str(self.page_size)))
+
+        total_count = self.page.paginator.count if self.page else 0
+
         return Response(
             {
-                "success": True,
-                "result": {
-                    "count": self.page.paginator.count,  # type: ignore[union-attr]
-                    "next": self.get_next_link(),
-                    "previous": self.get_previous_link(),
+                "page": current_page,
+                "size": current_size,
+                "total_count": total_count,
+                "categories": {
                     "data": data,
                 },
             }

@@ -7,5 +7,7 @@ from apps.questions.views.admin.admin_qna_categories_list_view import (
 app_name = "admin_questions"
 
 urlpatterns = [
-    path("categories/", AdminCategoryAPIView.as_view(), name="admin-category"),
+    path("admin/qna/categories/",
+         AdminCategoryAPIView.as_view(),
+         name="admin-category"),
 ]

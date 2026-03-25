@@ -482,11 +482,9 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         with transaction.atomic():
             if post_count > 0:
                 Post.objects.filter(category_id=category.pk).delete()
-                category.delete()
-                return post_count
-
             category.delete()
-            return 0
+
+        return post_count
 
 
 @admin.register(PostLike)

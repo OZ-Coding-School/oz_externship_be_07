@@ -339,8 +339,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
         if post_count == 0:
             notice = (
-                f'비활성 카테고리 "{category.name}(#{category.pk})"는 '
-                "연결된 게시글이 없어 카테고리만 삭제됩니다."
+                f'비활성 카테고리 "{category.name}(#{category.pk})"는 ' "연결된 게시글이 없어 카테고리만 삭제됩니다."
             )
             if notice not in deleted_objects:
                 deleted_objects.append(notice)

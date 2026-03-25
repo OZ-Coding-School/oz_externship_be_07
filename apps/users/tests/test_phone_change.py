@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
@@ -7,8 +9,13 @@ User = get_user_model()
 
 
 class PhoneChangeAPITest(APITestCase):
-    def setUp(self) -> None:
-        self.user = User.objects.create_user(
+    user: Any
+    other_user: Any
+    url: str
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.user = User.objects.create_user(
             email="giveup@gg.com",
             nickname="무너진현오",
             phone_number="01011112222",
@@ -16,7 +23,7 @@ class PhoneChangeAPITest(APITestCase):
             birthday="2000-09-25",
             gender="M",
         )
-        self.other_user = User.objects.create_user(
+        cls.other_user = User.objects.create_user(
             email="tekai@wall.com",
             nickname="버티는고건님",
             phone_number="01099998888",
@@ -24,8 +31,10 @@ class PhoneChangeAPITest(APITestCase):
             birthday="2000-09-25",
             gender="M",
         )
+        cls.url = reverse("users:change-phone")
+
+    def setUp(self) -> None:
         self.client.force_authenticate(user=self.user)
-        self.url = reverse("users:change-phone")
 
     def test_phone_change_success(self) -> None:
         new_number = "01055556666"

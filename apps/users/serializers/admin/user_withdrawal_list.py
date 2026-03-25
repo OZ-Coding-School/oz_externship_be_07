@@ -1,3 +1,5 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from apps.users.models.models import User, Withdrawal
@@ -6,11 +8,13 @@ from apps.users.models.models import User, Withdrawal
 class AdminUserSimpleSerializer(serializers.ModelSerializer[User]):
     class Meta:
         model = User
-        fields = ["id", "name", "nickname", "role", "email"]
+        fields = ["id", "email", "name", "role", "birthday"]
 
 
 class AdminUserWithdrawalListSerializer(serializers.ModelSerializer[Withdrawal]):
     user = AdminUserSimpleSerializer(read_only=True)
+    reason_display = serializers.CharField(source="get_reason_display", read_only=True)
+    withdrawn_at = serializers.DateTimeField(source="created_at", read_only=True)
 
     class Meta:
         model = Withdrawal
@@ -18,7 +22,8 @@ class AdminUserWithdrawalListSerializer(serializers.ModelSerializer[Withdrawal])
             "id",
             "user",
             "reason",
-            "created_at",
+            "reason_display",
+            "withdrawn_at",
         ]
 
 

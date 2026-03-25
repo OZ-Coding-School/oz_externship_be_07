@@ -6,18 +6,7 @@ from apps.users.models.models import User, Withdrawal
 class AdminUserWithdrawalUserSerializer(serializers.ModelSerializer[Withdrawal]):
     class Meta:
         model = User
-        fields = [
-            "id",
-            "email",
-            "name",
-            "role",
-            "birthday",
-            "nickname",
-            "gender",
-            "status",
-            "profile_img_url",
-            "created_at",
-        ]
+        fields = ["id", "name", "nickname", "role", "email"]
 
 
 class AdminUserWithdrawalListSerializer(serializers.ModelSerializer[Withdrawal]):
@@ -28,8 +17,7 @@ class AdminUserWithdrawalListSerializer(serializers.ModelSerializer[Withdrawal])
         model = Withdrawal
         fields = [
             "id",
-            "nickname",
-            "role",
+            "user",
             "reason",
             "created_at",
         ]

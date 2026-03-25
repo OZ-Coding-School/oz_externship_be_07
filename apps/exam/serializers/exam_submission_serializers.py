@@ -25,11 +25,18 @@ def _build_questions(
         submitted_val = answer_map.get(q_id)
         correct_val = q_info.get("answer")
 
+        raw_options = q_info.get("options", q_info.get("options_json"))
+        if isinstance(raw_options, str):
+            try:
+                raw_options = json.loads(raw_options)
+            except (json.JSONDecodeError, ValueError):
+                raw_options = []
+
         question_data: dict[str, Any] = {
             "id": q_id,
             "question": q_info.get("question"),
             "prompt": q_info.get("prompt", ""),
-            "options": q_info.get("options", []),
+            "options": raw_options if raw_options is not None else [],
             "type": q_info.get("type", ""),
             "answer": correct_val,
             "point": q_info.get("point", 0),

@@ -6,7 +6,6 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework import mixins, status, viewsets
-from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -15,7 +14,6 @@ from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.community.models import PostComment
 from apps.community.serializers.comment_serializers import PostCommentSerializer
 from apps.community.services.comment_service import CommentService
-from apps.users.choices import UserRole
 
 
 class CommentViewSet(
@@ -32,36 +30,6 @@ class CommentViewSet(
 
     lookup_field = "id"
     lookup_url_kwarg = "comment_id"
-
-    def get_object(self) -> PostComment:
-        try:
-            post_id = int(self.kwargs["post_id"])
-            comment_id = int(self.kwargs["comment_id"])
-        except (KeyError, ValueError):
-            raise ValidationError("잘못된 요청입니다.")
-
-        comment = PostComment.objects.filter(id=comment_id, post_id=post_id).select_related("author").first()
-
-        if not comment:
-            raise ValidationError("해당 댓글을 찾을 수 없습니다.")
-
-        if not self.request.user or self.request.user.id is None:
-            raise PermissionDenied("권한이 없습니다.")
-
-        user = self.request.user
-        user_role = getattr(user, "role", None)
-
-        is_admin = user_role in [
-            UserRole.OM,
-            UserRole.TA,
-            UserRole.ADMIN,
-            UserRole.LC,
-        ]
-
-        if not (comment.author_id == user.id or is_admin):
-            raise PermissionDenied("권한이 없습니다.")
-
-        return comment
 
     @extend_schema(
         summary="댓글 목록",

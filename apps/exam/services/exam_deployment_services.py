@@ -237,7 +237,8 @@ class ExamDeploymentService:
 
         cls._ensure_user_can_view_exam(user=user, deployment=deployment)
 
-        if not verified:
+        is_staff = getattr(user, "role", None) in STAFF_ROLES
+        if not is_staff and not verified:
             raise DeploymentForbiddenError("권한이 없습니다.")
 
         if cls._is_deployment_closed(deployment=deployment):

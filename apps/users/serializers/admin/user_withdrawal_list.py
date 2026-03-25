@@ -11,6 +11,12 @@ class AdminUserSimpleSerializer(serializers.ModelSerializer[User]):
         fields = ["id", "email", "name", "role", "birthday"]
 
 
+class AdminUserDetailSimpleSerializer(serializers.ModelSerializer[User]):
+    class Meta:
+        model = User
+        fields = ["id", "email", "nickname", "name", "gender", "role", "status", "profile_img_url", "created_at"]
+
+
 class AdminUserWithdrawalListSerializer(serializers.ModelSerializer[Withdrawal]):
     user = AdminUserSimpleSerializer(read_only=True)
     reason_display = serializers.CharField(source="get_reason_display", read_only=True)
@@ -18,16 +24,11 @@ class AdminUserWithdrawalListSerializer(serializers.ModelSerializer[Withdrawal])
 
     class Meta:
         model = Withdrawal
-        fields = [
-            "id",
-            "user",
-            "reason",
-            "reason_display",
-            "withdrawn_at",
-        ]
+        fields = ["id", "user", "reason", "reason_display", "withdrawn_at"]
 
 
 class AdminUserWithdrawalDetailSerializer(AdminUserWithdrawalListSerializer):
+    user: Any = AdminUserSimpleSerializer(read_only=True)
     assigned_courses = serializers.ReadOnlyField()
 
     class Meta(AdminUserWithdrawalListSerializer.Meta):

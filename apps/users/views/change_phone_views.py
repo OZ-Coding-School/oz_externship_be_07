@@ -1,5 +1,7 @@
 from typing import Any, cast
 
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -8,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.users.serializers.change_phone_serializers import PhoneNumberChangeSerializer
+
+User = get_user_model()
 
 
 class ChangePhoneNumberView(APIView):
@@ -32,18 +36,32 @@ class ChangePhoneNumberView(APIView):
     )
     def patch(self, request: Request) -> Response:
         serializer = PhoneNumberChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if not serializer.is_valid():
-            if "이미 등록된" in str(serializer.errors):
-                return Response({"error_detail": "이미 등록된 휴대폰 번호입니다."}, status=status.HTTP_409_CONFLICT)
+        token = serializer.validated_data["phone_verify_token"]
 
-            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        cache_key = f"sms_token:{token}"
+        phone_token = cache.get(cache_key)
+
+        if not phone_token:
+            return Response(
+                {"error_detail": {"code": ["인증 토큰이 유효하지 않거나 만료되었습니다."]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if User.objects.filter(phone_number=phone_token).exists():
+            return Response(
+                {"error_detail": "이미 등록된 휴대폰 번호입니다."},
+                status=status.HTTP_409_CONFLICT,
+            )
 
         user = cast(Any, request.user)
-        user.phone_number = serializer.validated_data["phone_number"]
+        user.phone_number = phone_token
         user.save(update_fields=["phone_number"])
 
+        cache.delete(cache_key)
+
         return Response(
-            {"detail": "휴대폰 번호 변경에 성공하였습니다.", "phone_number": user.phone_number},
+            {"detail": "휴대폰 번호 변경에 성공했습니다.", "phone_number": user.phone_number},
             status=status.HTTP_200_OK,
         )

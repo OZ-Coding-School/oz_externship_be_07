@@ -52,27 +52,29 @@ class AdminUserWithdrawalGetTest(TestCase):
         self.client = APIClient()
 
     def test_get_withdrawal_list_success_200(self) -> None:
-        """목록 조회"""
+        """목록 조회 성공 테스트"""
         self.client.force_authenticate(user=self.admin_user)
         url = reverse(self.LIST_URL_NAME)
 
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["nickname"], "머리아파아")
 
     def test_get_withdrawal_list_filter_search(self) -> None:
-        """이름 검색 필터링"""
+        """이름 검색 필터링 테스트"""
         self.client.force_authenticate(user=self.admin_user)
         url = reverse(self.LIST_URL_NAME)
 
         response = self.client.get(url, {"search": "우와아"})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]["user"]["name"], "우와아")
+        self.assertEqual(response.data["results"][0]["nickname"], "머리아파아")
 
     def test_get_withdrawal_detail_success_200(self) -> None:
-        """상세 조회"""
+        """상세 조회 성공 테스트"""
         self.client.force_authenticate(user=self.admin_user)
         url = reverse(self.DETAIL_URL_NAME, kwargs={"withdrawal_id": self.withdrawal.id})
 
@@ -80,22 +82,25 @@ class AdminUserWithdrawalGetTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.withdrawal.id)
-        self.assertEqual(response.data["user"]["name"], "우와아")
+        self.assertEqual(response.data["nickname"], "머리아파아")
+        self.assertIn("assigned_courses", response.data)
 
     def test_get_withdrawal_detail_fail_404(self) -> None:
-        """존재하지 않는 ID로 상세 조회"""
+        """존재하지 않는 ID로 상세 조회 시 404 확인"""
         self.client.force_authenticate(user=self.admin_user)
         url = reverse(self.DETAIL_URL_NAME, kwargs={"withdrawal_id": 99999})
 
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("error_detail", response.data)
 
     def test_get_withdrawal_fail_403_forbidden(self) -> None:
-        """실패: 비권한 유저 접근"""
+        """비권한 유저 접근 차단 테스트"""
         self.client.force_authenticate(user=self.normal_user)
         url = reverse(self.LIST_URL_NAME)
 
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data["error_detail"], "권한이 없습니다.")

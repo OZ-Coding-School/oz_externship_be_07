@@ -11,8 +11,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.permissions import IsStaffUser
 from apps.subject.core.error_responses import ErrorResponseSerializer
-from apps.subject.core.permissions import IsStaffUser
 from apps.subject.serializers.subject_serializers import (
     SubjectCreateRequestSerializer,
     SubjectCreateResponseSerializer,
@@ -26,7 +26,7 @@ class SubjectListCreateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsStaffUser]
 
     @extend_schema(
-        tags=["admin_students"],
+        tags=["subjects"],
         summary="어드민 과목 생성 API",
         parameters=[
             OpenApiParameter(
@@ -130,7 +130,7 @@ class SubjectListCreateAPIView(APIView):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
-        tags=["admin_students"],
+        tags=["subjects"],
         summary="어드민 과목 목록 API",
         parameters=[
             OpenApiParameter(
@@ -182,7 +182,7 @@ class SubjectScatterAPIView(APIView):
     permission_classes = [IsAuthenticated, IsStaffUser]
 
     @extend_schema(
-        tags=["admin_students"],
+        tags=["subjects"],
         summary="어드민 과목별 학습시간/점수 산점도 조회",
         parameters=[
             OpenApiParameter(

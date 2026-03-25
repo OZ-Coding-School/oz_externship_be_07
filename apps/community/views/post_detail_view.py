@@ -1,17 +1,16 @@
-from typing import Any, NoReturn, cast
+from typing import Any, cast
 
 from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import NotAuthenticated, NotFound, PermissionDenied
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.community.core.extend_schema import value_list
-from apps.community.core.post_permissions import PostPermission
+from apps.community.core.permissions import PostPermission
 from apps.community.models.post_model import Post
 from apps.community.serializers.post_cud_serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer

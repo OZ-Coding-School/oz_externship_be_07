@@ -1,6 +1,6 @@
 import hashlib
 import time
-from typing import Any, cast
+from typing import Any, Sequence, cast
 from urllib.parse import urlparse
 
 from admin_auto_filters.filters import AutocompleteFilter
@@ -424,7 +424,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 level=messages.SUCCESS,
             )
 
-    def _build_category_bulk_delete_preview_text(self, categories: list[PostCategory]) -> str:
+    def _build_category_bulk_delete_preview_text(self, categories: Sequence[PostCategory]) -> str:
         selected_count = len(categories)
         preview_categories = categories[:ADMIN_PREVIEW_LIMIT]
         preview_names = [category.name or "(이름 없음)" for category in preview_categories]

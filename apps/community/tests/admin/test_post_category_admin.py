@@ -79,6 +79,22 @@ class PostCategoryAdminTest(TestCase):
         prefix = PostCategoryAdmin.DELETE_CONFIRM_SESSION_KEY_PREFIX
         return f"{prefix}:bulk:{token}"
 
+    def _assert_category_exists(self, category: PostCategory, should_exist: bool) -> None:
+        self.assertEqual(PostCategory.objects.filter(pk=category.pk).exists(), should_exist)
+
+    def _assert_post_exists(self, post: Post, should_exist: bool) -> None:
+        self.assertEqual(Post.objects.filter(pk=post.pk).exists(), should_exist)
+
+    def _expire_bulk_confirm_ttl(self, category_ids: list[int]) -> None:
+        session_key = self._bulk_confirm_session_key(category_ids)
+        session = self.client.session
+        self.assertIn(session_key, session)
+
+        payload = session[session_key]
+        payload["ts"] = int(time.time()) - (ADMIN_DELETE_CONFIRM_TTL_SECONDS + 1)
+        session[session_key] = payload
+        session.save()
+
     def test_delete_view_blocks_active_category(self) -> None:
         """활성 카테고리 상세 차단 확인"""
         url = reverse("admin:community_postcategory_delete", args=[self.active_category.pk])
@@ -86,7 +102,7 @@ class PostCategoryAdminTest(TestCase):
         response = self.client.post(url, {"post": "yes"}, follow=True)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(PostCategory.objects.filter(pk=self.active_category.pk).exists())
+        self._assert_category_exists(self.active_category, True)
         self.assertContains(response, "활성 카테고리")
         self.assertContains(response, "삭제할 수 없습니다")
 
@@ -152,8 +168,8 @@ class PostCategoryAdminTest(TestCase):
         response = self.client.post(url, {"post": "yes"}, follow=True)  # "post": "yes" -> 확인 후, 최종 삭제 요청
 
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(PostCategory.objects.filter(pk=self.inactive_with_posts.pk).exists())
-        self.assertFalse(Post.objects.filter(pk=self.post_in_inactive.pk).exists())
+        self._assert_category_exists(self.inactive_with_posts, False)
+        self._assert_post_exists(self.post_in_inactive, False)
 
     def test_bulk_delete_requires_second_confirmation_and_deletes_only_inactive(self) -> None:
         """목록 삭제 2회 실행 시 비활성 카테고리만 삭제되는지 확인"""
@@ -162,16 +178,16 @@ class PostCategoryAdminTest(TestCase):
         self.assertEqual(first.status_code, 200)
         self.assertContains(first, "활성 카테고리는 삭제할 수 없습니다")
         self.assertContains(first, "삭제 확인:")
-        self.assertTrue(PostCategory.objects.filter(pk=self.active_category.pk).exists())
-        self.assertTrue(PostCategory.objects.filter(pk=self.inactive_with_posts.pk).exists())
+        self._assert_category_exists(self.active_category, True)
+        self._assert_category_exists(self.inactive_with_posts, True)
 
         second = self._bulk_delete([self.active_category.pk, self.inactive_with_posts.pk])
 
         self.assertEqual(second.status_code, 200)
         self.assertContains(second, "삭제 완료: 카테고리 1개, 게시글 1개")
-        self.assertTrue(PostCategory.objects.filter(pk=self.active_category.pk).exists())
-        self.assertFalse(PostCategory.objects.filter(pk=self.inactive_with_posts.pk).exists())
-        self.assertFalse(Post.objects.filter(pk=self.post_in_inactive.pk).exists())
+        self._assert_category_exists(self.active_category, True)
+        self._assert_category_exists(self.inactive_with_posts, False)
+        self._assert_post_exists(self.post_in_inactive, False)
 
     def test_bulk_delete_ttl_expired_requires_first_step_again(self) -> None:
         """TTL 만료 후 목록 삭제 재확인 단계 초기화 확인"""
@@ -181,19 +197,12 @@ class PostCategoryAdminTest(TestCase):
         self.assertEqual(first_step.status_code, 200)
         self.assertContains(first_step, "삭제 확인:")
 
-        session_key = self._bulk_confirm_session_key(target_ids)
-        session = self.client.session
-        self.assertIn(session_key, session)
-
-        payload = session[session_key]
-        payload["ts"] = int(time.time()) - (ADMIN_DELETE_CONFIRM_TTL_SECONDS + 1)  # TTL(60초) 만료
-        session[session_key] = payload
-        session.save()
+        self._expire_bulk_confirm_ttl(target_ids)
 
         second_step = self._bulk_delete(target_ids)
         self.assertEqual(second_step.status_code, 200)
         self.assertContains(second_step, "삭제 확인:")  # 다시 1단계
-        self.assertTrue(PostCategory.objects.filter(pk=self.inactive_no_posts.pk).exists())
+        self._assert_category_exists(self.inactive_no_posts, True)
 
     def test_bulk_delete_inactive_without_posts(self) -> None:
         """게시글 없는 비활성 카테고리 목록 삭제 확인"""
@@ -202,4 +211,4 @@ class PostCategoryAdminTest(TestCase):
 
         self.assertEqual(second.status_code, 200)
         self.assertContains(second, "삭제 완료: 카테고리 1개, 게시글 0개")
-        self.assertFalse(PostCategory.objects.filter(pk=self.inactive_no_posts.pk).exists())
+        self._assert_category_exists(self.inactive_no_posts, False)

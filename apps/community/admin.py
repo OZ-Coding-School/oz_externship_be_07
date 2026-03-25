@@ -1,6 +1,6 @@
 import hashlib
 import time
-from typing import Any, cast
+from typing import Any, Sequence, cast
 from urllib.parse import urlparse
 
 from admin_auto_filters.filters import AutocompleteFilter
@@ -12,6 +12,13 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import Truncator
 
+from apps.community.core.constants import (
+    ADMIN_AUTOCOMPLETE_LIMIT,
+    ADMIN_COMMENT_PREVIEW_LENGTH,
+    ADMIN_DELETE_CONFIRM_TOKEN_LENGTH,
+    ADMIN_DELETE_CONFIRM_TTL_SECONDS,
+    ADMIN_PREVIEW_LIMIT,
+)
 from apps.community.models.category_model import PostCategory
 from apps.community.models.comment_model import CommentTag, PostComment
 from apps.community.models.post_model import Post, PostAttachment, PostImage, PostLike
@@ -22,7 +29,7 @@ def _is_safe_external_url(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
-def _comment_preview(content: str, limit: int = 16) -> str:
+def _comment_preview(content: str, limit: int = ADMIN_COMMENT_PREVIEW_LENGTH) -> str:
     return Truncator((content or "").replace("\n", " ")).chars(limit)
 
 
@@ -89,10 +96,20 @@ class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    CREATE_FIELDSETS = (
+        ("기본 정보", {"fields": ("title", "author", "category")}),
+        ("내용", {"fields": ("content",)}),
+        ("운영", {"fields": ("is_notice", "is_visible")}),
+    )
+    CHANGE_FIELDSETS = (
+        ("기본 정보", {"fields": ("title", "author", "category")}),
+        ("내용", {"fields": ("content",)}),
+        ("운영", {"fields": ("view_count", "like_count", "is_notice", "is_visible")}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
     AUTOCOMPLETE_APP_LABEL = "community"
     AUTOCOMPLETE_MODEL_NAME = "postcomment"
     AUTOCOMPLETE_FIELD_NAME = "post"
-    AUTOCOMPLETE_LIMIT = 5
 
     list_display = (
         "id",
@@ -112,23 +129,13 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     raw_id_fields = ("author",)
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
-    readonly_fields = ("like_count", "created_at", "updated_at")
-    fieldsets = (
-        ("기본 정보", {"fields": ("title", "author", "category")}),
-        ("내용", {"fields": ("content",)}),
-        ("운영", {"fields": ("view_count", "like_count", "is_notice", "is_visible")}),
-        ("일시", {"fields": ("created_at", "updated_at")}),
-    )
+    readonly_fields = ("view_count", "like_count", "created_at", "updated_at")
     inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
 
     def get_fieldsets(self, request: HttpRequest, obj: Post | None = None) -> Any:
         if obj is None:
-            return (
-                ("기본 정보", {"fields": ("title", "author", "category")}),
-                ("내용", {"fields": ("content",)}),
-                ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
-            )
-        return self.fieldsets
+            return self.CREATE_FIELDSETS
+        return self.CHANGE_FIELDSETS
 
     def formfield_for_foreignkey(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Any:
         if db_field.name != "category":
@@ -175,7 +182,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         keyword = search_term.strip()
 
         if keyword == "":
-            return ordered_qs[: self.AUTOCOMPLETE_LIMIT], False
+            return ordered_qs[:ADMIN_AUTOCOMPLETE_LIMIT], False
 
         return ordered_qs.filter(title__icontains=keyword), False
 
@@ -217,6 +224,16 @@ class PostCommentPostAutocompleteFilter(AutocompleteFilter):  # type: ignore[mis
 
 @admin.register(PostComment)
 class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    CREATE_FIELDSETS = (
+        ("기본 정보", {"fields": ("author", "post")}),
+        ("내용", {"fields": ("content",)}),
+    )
+    CHANGE_FIELDSETS = (
+        ("기본 정보", {"fields": ("author", "post")}),
+        ("내용", {"fields": ("content",)}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
+
     list_display = ("id", "author", "post", "content_preview", "created_at")
     search_fields = ("content", "author__nickname", "post__title")
     list_filter = (PostCommentPostAutocompleteFilter,)
@@ -225,20 +242,12 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
     readonly_fields = ("created_at", "updated_at")
-    fieldsets = (
-        ("기본 정보", {"fields": ("author", "post")}),
-        ("내용", {"fields": ("content",)}),
-        ("일시", {"fields": ("created_at", "updated_at")}),
-    )
     inlines = [CommentTagInline]
 
     def get_fieldsets(self, request: HttpRequest, obj: PostComment | None = None) -> Any:
         if obj is None:
-            return (
-                ("기본 정보", {"fields": ("author", "post")}),
-                ("내용", {"fields": ("content",)}),
-            )
-        return self.fieldsets
+            return self.CREATE_FIELDSETS
+        return self.CHANGE_FIELDSETS
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
         queryset = super().get_queryset(request).select_related("author", "post")
@@ -251,10 +260,12 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
 @admin.register(PostCategory)
 class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    CREATE_FIELDSETS = (("기본 정보", {"fields": ("name", "status")}),)
+    CHANGE_FIELDSETS = (
+        ("기본 정보", {"fields": ("name", "status")}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
     DELETE_CONFIRM_SESSION_KEY_PREFIX = "community_category_delete_confirm"
-    DELETE_CONFIRM_TTL_SECONDS = 60
-    PREVIEW_LIMIT = 3
-    DELETE_CONFIRM_TOKEN_LENGTH = 32
     ACTIVE_CATEGORY_DELETE_BLOCK_MESSAGE = (
         '활성 카테고리 "{name}(#{pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.'
     )
@@ -267,15 +278,11 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     ordering = ("id",)
     readonly_fields = ("created_at", "updated_at")
     actions = ("delete_category_by_policy",)
-    fieldsets = (
-        ("기본 정보", {"fields": ("name", "status")}),
-        ("일시", {"fields": ("created_at", "updated_at")}),
-    )
 
     def get_fieldsets(self, request: HttpRequest, obj: PostCategory | None = None) -> Any:
         if obj is None:
-            return (("기본 정보", {"fields": ("name", "status")}),)
-        return self.fieldsets
+            return self.CREATE_FIELDSETS
+        return self.CHANGE_FIELDSETS
 
     def save_model(self, request: HttpRequest, obj: PostCategory, form: Any, change: bool) -> None:
         should_warn = False
@@ -323,38 +330,37 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(objs, request)
         model_count_dict = dict(model_count)
 
-        if len(objs) == 1 and isinstance(objs[0], PostCategory):
-            category = objs[0]
-            post_queryset = Post.objects.filter(category_id=category.pk)
-            post_count = post_queryset.count()
+        if len(objs) != 1 or not isinstance(objs[0], PostCategory):
+            return deleted_objects, model_count_dict.items(), perms_needed, protected
 
-            if post_count > 0:
-                protected = []
+        category = objs[0]
+        post_queryset = Post.objects.filter(category_id=category.pk)
+        post_count = post_queryset.count()
 
-                notice = (
-                    f'⚠️ 비활성 카테고리 "{category.name}(#{category.pk})" 삭제 시 '
-                    f"연결된 게시글 {post_count}건도 함께 삭제되며 복구할 수 없습니다."
-                )
-                if notice not in deleted_objects:
-                    deleted_objects.append(notice)
+        if post_count == 0:
+            notice = (
+                f'비활성 카테고리 "{category.name}(#{category.pk})"는 ' "연결된 게시글이 없어 카테고리만 삭제됩니다."
+            )
+            if notice not in deleted_objects:
+                deleted_objects.append(notice)
+            return deleted_objects, model_count_dict.items(), perms_needed, protected
 
-                model_count_dict[str(Post._meta.verbose_name_plural)] = post_count
+        protected = []
+        notice = (
+            f'⚠️ 비활성 카테고리 "{category.name}(#{category.pk})" 삭제 시 '
+            f"연결된 게시글 {post_count}건도 함께 삭제되며 복구할 수 없습니다."
+        )
+        if notice not in deleted_objects:
+            deleted_objects.append(notice)
 
-                preview_rows = list(post_queryset.order_by("-id").values_list("id", "title")[: self.PREVIEW_LIMIT])
-                preview_items = [f"{title} (#{post_id})" for post_id, title in preview_rows]
-                if post_count > self.PREVIEW_LIMIT:
-                    preview_items.append(f"... 외 {post_count - self.PREVIEW_LIMIT}건")
+        model_count_dict[str(Post._meta.verbose_name_plural)] = post_count
 
-                deleted_objects.append(f"연결 게시글 {post_count}건: {', '.join(preview_items)}")
+        preview_rows = list(post_queryset.order_by("-id").values_list("id", "title")[:ADMIN_PREVIEW_LIMIT])
+        preview_items = [f"{title} (#{post_id})" for post_id, title in preview_rows]
+        if post_count > ADMIN_PREVIEW_LIMIT:
+            preview_items.append(f"... 외 {post_count - ADMIN_PREVIEW_LIMIT}건")
 
-            else:
-                notice = (
-                    f'비활성 카테고리 "{category.name}(#{category.pk})"는 '
-                    "연결된 게시글이 없어 카테고리만 삭제됩니다."
-                )
-                if notice not in deleted_objects:
-                    deleted_objects.append(notice)
-
+        deleted_objects.append(f"연결 게시글 {post_count}건: {', '.join(preview_items)}")
         return deleted_objects, model_count_dict.items(), perms_needed, protected
 
     def delete_model(self, request: HttpRequest, obj: PostCategory) -> None:
@@ -376,7 +382,8 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         queryset: QuerySet[PostCategory],
     ) -> None:
         active_queryset = queryset.filter(status=True)
-        inactive_queryset = queryset.filter(status=False)
+        inactive_queryset = queryset.filter(status=False).annotate(post_count=Count("posts")).order_by("id")
+        inactive_categories = list(inactive_queryset)
 
         if active_queryset.exists():
             blocked_names = ", ".join(f"{c.name}(#{c.pk})" for c in active_queryset)
@@ -386,20 +393,12 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 level=messages.WARNING,
             )
 
-        if not inactive_queryset.exists():
+        if not inactive_categories:
             return
 
-        selected_ids = list(inactive_queryset.values_list("id", flat=True))
+        selected_ids = [category.id for category in inactive_categories]
         token = self._generate_token(selected_ids)
-
-        selected_count = len(selected_ids)
-        preview_names = list(inactive_queryset.values_list("name", flat=True)[: self.PREVIEW_LIMIT])
-        safe_names = [name if name else "(이름 없음)" for name in preview_names]
-
-        if selected_count > self.PREVIEW_LIMIT:
-            preview_text = f"{', '.join(safe_names)} 외 {selected_count - self.PREVIEW_LIMIT}개"
-        else:
-            preview_text = ", ".join(safe_names)
+        preview_text = self._build_category_bulk_delete_preview_text(inactive_categories)
 
         confirmed = self._require_delete_confirmation(
             request=request,
@@ -413,8 +412,8 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         deleted_category_count = 0
         deleted_post_count = 0
 
-        for category in inactive_queryset:
-            post_count = Post.objects.filter(category_id=category.pk).count()
+        for category in inactive_categories:
+            post_count = int(getattr(category, "post_count", 0))
             deleted_post_count += self._delete_category_with_related_posts(category, post_count)
             deleted_category_count += 1
 
@@ -425,9 +424,18 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
                 level=messages.SUCCESS,
             )
 
+    def _build_category_bulk_delete_preview_text(self, categories: Sequence[PostCategory]) -> str:
+        selected_count = len(categories)
+        preview_categories = categories[:ADMIN_PREVIEW_LIMIT]
+        preview_names = [category.name or "(이름 없음)" for category in preview_categories]
+
+        if selected_count > ADMIN_PREVIEW_LIMIT:
+            return f"{', '.join(preview_names)} 외 {selected_count - ADMIN_PREVIEW_LIMIT}개"
+        return ", ".join(preview_names)
+
     def _generate_token(self, selected_ids: list[int]) -> str:
         token_raw = ",".join(str(pk) for pk in sorted(selected_ids))
-        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[: self.DELETE_CONFIRM_TOKEN_LENGTH]
+        return hashlib.sha256(token_raw.encode("utf-8")).hexdigest()[:ADMIN_DELETE_CONFIRM_TOKEN_LENGTH]
 
     def _is_valid_confirmation_payload(
         self,
@@ -446,7 +454,7 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         except ValueError:
             return False
 
-        return now_ts - ts <= self.DELETE_CONFIRM_TTL_SECONDS
+        return now_ts - ts <= ADMIN_DELETE_CONFIRM_TTL_SECONDS
 
     def _require_delete_confirmation(
         self,
@@ -474,11 +482,9 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
         with transaction.atomic():
             if post_count > 0:
                 Post.objects.filter(category_id=category.pk).delete()
-                category.delete()
-                return post_count
-
             category.delete()
-            return 0
+
+        return post_count
 
 
 @admin.register(PostLike)

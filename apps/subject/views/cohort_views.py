@@ -25,6 +25,7 @@ def check_authenticated(request: Request) -> Response | None:
         )
     return None
 
+
 class CohortListAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, CanViewCohortList]
 

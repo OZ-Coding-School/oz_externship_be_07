@@ -3,12 +3,13 @@ import logging
 from typing import Any, Iterator, cast
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
 from google import genai
 
 from apps.chatbot.choices import BotTypeChoices, ChatbotModelChoices, MessageRoleChoices
 from apps.chatbot.prompts.support_context import SUPPORT_SYSTEM_PROMPT
 
+cache = caches["chatbot"]
 logger = logging.getLogger(__name__)
 
 

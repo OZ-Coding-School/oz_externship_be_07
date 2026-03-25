@@ -7,6 +7,10 @@ from .choices import ChatbotModelChoices, MessageRoleChoices
 
 
 class ChatbotSessions(TimeStampModel):
+    """
+    [DEPRECATED - 2026.03.25] 더 이상 사용하지 않는 레거시 모델입니다.
+    """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -36,6 +40,10 @@ class ChatbotSessions(TimeStampModel):
 
 
 class ChatbotCompletions(TimeStampModel):
+    """
+    [DEPRECATED - 2026.03.25] 더 이상 사용하지 않는 레거시 모델입니다.
+    """
+
     session = models.ForeignKey(
         ChatbotSessions,
         on_delete=models.CASCADE,

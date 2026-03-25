@@ -15,7 +15,6 @@ MAX_POINT_PER_QUESTION = 10
 class ExamQuestionService:
 
     @staticmethod
-
     def create_question(exam: Exam, data: dict[str, Any]) -> ExamQuestion:
 
         current_count = ExamQuestion.objects.filter(exam=exam).count()
@@ -51,7 +50,6 @@ class ExamQuestionService:
         )
 
     @staticmethod
-
     def update_question(question: ExamQuestion, data: dict[str, Any]) -> ExamQuestion:
 
         if "point" in data:

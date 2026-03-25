@@ -1,3 +1,6 @@
+import json
+from typing import Any
+
 from rest_framework import serializers
 
 from apps.exam.models.exam_models import Exam
@@ -48,12 +51,20 @@ class ExamListSerializer(serializers.ModelSerializer[Exam]):
 # 쪽지시험 상세 조회 API - quesitons
 class ExamQuestionDetailSerializer(serializers.ModelSerializer[ExamQuestion]):
     question_id = serializers.IntegerField(source="id")
-    options = serializers.JSONField(source="options_json")
+    options = serializers.SerializerMethodField()
     correct_answer = serializers.JSONField(source="answer")
 
     class Meta:
         model = ExamQuestion
         fields = ["question_id", "type", "question", "prompt", "point", "options", "correct_answer", "explanation"]
+
+    def get_options(self, obj: ExamQuestion) -> Any:
+        if not obj.options_json:
+            return None
+        try:
+            return json.loads(obj.options_json)
+        except ValueError:
+            return None
 
 
 # 쪽지시험 상세 조회 API - subject

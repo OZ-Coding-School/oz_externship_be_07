@@ -6,7 +6,6 @@ from django.utils import timezone
 
 from apps.community.core.redis import RedisClient
 from apps.community.signals.user_signal import (
-    remove_user_search_data,
     stringify_user_tag,
 )
 from apps.users.models.models import User
@@ -35,15 +34,16 @@ class Command(BaseCommand):
         sync_user = 0
         with redis_conn.pipeline() as pipe:
             for user, old_data in user_with_old_data:
-                if user.status in ["DEACTIVATED", "WITHDREW"]:
-                    remove_user_search_data(user.id)
-                    continue
-
                 new_data = stringify_user_tag(user)
                 info_key = f"user_info:{user.id}"
 
                 if old_data:
                     pipe.zrem("user_search", old_data)
+
+                if user.status in ["DEACTIVATED", "WITHDREW"]:
+                    pipe.delete(info_key)
+                    continue
+
                 pipe.zadd("user_search", {new_data: 0})
                 pipe.set(info_key, new_data)
                 sync_user += 1

@@ -1,4 +1,10 @@
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework import mixins, status, viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
@@ -29,6 +35,16 @@ class CommentViewSet(
         summary="댓글 목록",
         description="특정 게시글의 모든 댓글 list",
         tags=["posts"],
+        parameters=[
+            OpenApiParameter(
+                name="ordering",
+                type=OpenApiTypes.STR,
+                required=False,
+                description="정렬 순서 (recent: 최신순, old: 오래된순)",
+                default="recent",
+                enum=["recent", "old"],
+            ),
+        ],
         examples=[
             OpenApiExample(
                 name="댓글 목록 예시",
@@ -56,14 +72,16 @@ class CommentViewSet(
         ],
     )
     def list(self, request: Request, post_id: int) -> Response:
-        queryset = PostComment.objects.filter(post_id=post_id).select_related("author").all()
+        ordering = request.query_params.get("ordering", "recent")
+        queryset = CommentService.get_comment_tags(post_id=post_id, ordering=ordering)
         page = self.paginate_queryset(queryset)
 
-        if isinstance(page, list):
+        if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        return Response({"error_detail": "해당 게시글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @extend_schema(
         summary="댓글 작성",
@@ -118,16 +136,17 @@ class CommentViewSet(
         },
     )
     def update(self, request: Request, post_id: int, comment_id: int) -> Response:
-        instance = self.get_object()
-
-        serializer = self.get_serializer(instance, data=request.data)
+        comment = self.get_object()
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        comment = CommentService.update_comment_tags(
-            comment_id=instance.id, content=serializer.validated_data.get("content")
+        updated_comment = CommentService.update_comment_tags(
+            post_id=comment.post_id,
+            comment_id=comment.id,
+            content=serializer.validated_data.get("content"),
         )
 
-        return Response({"detail": "댓글이 수정되었습니다.", "data": self.get_serializer(comment).data})
+        return Response({"detail": "댓글이 수정되었습니다.", "data": self.get_serializer(updated_comment).data})
 
     @extend_schema(
         summary="댓글 삭제",
@@ -140,8 +159,10 @@ class CommentViewSet(
         },
     )
     def destroy(self, request: Request, post_id: int, comment_id: int) -> Response:
-        instance = self.get_object()
-
-        CommentService.delete_comment_tags(comment_id=instance.id)
+        comment = self.get_object()
+        CommentService.delete_comment_tags(
+            post_id=comment.post_id,
+            comment_id=comment.id,
+        )
 
         return Response({"detail": "댓글이 삭제되었습니다."}, status=status.HTTP_200_OK)

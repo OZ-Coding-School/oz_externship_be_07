@@ -99,7 +99,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     CREATE_FIELDSETS = (
         ("기본 정보", {"fields": ("title", "author", "category")}),
         ("내용", {"fields": ("content",)}),
-        ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
+        ("운영", {"fields": ("is_notice", "is_visible")}),
     )
     CHANGE_FIELDSETS = (
         ("기본 정보", {"fields": ("title", "author", "category")}),
@@ -129,7 +129,7 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     raw_id_fields = ("author",)
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
-    readonly_fields = ("like_count", "created_at", "updated_at")
+    readonly_fields = ("view_count", "like_count", "created_at", "updated_at")
     inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
 
     def get_fieldsets(self, request: HttpRequest, obj: Post | None = None) -> Any:

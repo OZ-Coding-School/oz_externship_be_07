@@ -7,7 +7,6 @@ from apps.users.models.models import User
 
 
 class CohortStudentService:
-
     @staticmethod
     def get_student_scores(*, student_id: int) -> list[dict[str, Any]]:
         user = get_object_or_404(User, id=student_id)
@@ -16,11 +15,11 @@ class CohortStudentService:
 
         result: dict[str, list[int]] = {}
 
-        for sub in submissions:
-            subject = sub.deployment.exam.subject.title
+        for submission in submissions:
+            subject = submission.deployment.exam.subject.title
             if subject not in result:
                 result[subject] = []
-            result[subject].append(sub.score)
+            result[subject].append(submission.score)
 
         return [
             {

@@ -35,7 +35,6 @@ class QuestionCreateView:
                 category_id=serializer.validated_data["category_id"],
                 title=serializer.validated_data["title"],
                 content=serializer.validated_data["content"],
-                image_url_list=serializer.validated_data.get("image_urls"),
             )
 
             response_serializer = QuestionCreateResponseSerializer(new_question)

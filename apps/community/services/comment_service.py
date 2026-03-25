@@ -58,15 +58,13 @@ class CommentService:
 
     @staticmethod
     @transaction.atomic
-    def update_comment_tags(post_id: int, comment_id: int, author: Any, content: str) -> PostComment:
+    def update_comment_tags(post_id: int, comment_id: int, content: str) -> PostComment:
         """
         댓글과 태그 유저 수정
         """
         update_comment = PostComment.objects.filter(id=comment_id, post_id=post_id).first()
         if not update_comment:
             raise ValidationError("해당 댓글을 찾을 수 없습니다.")
-        if update_comment.author != author:
-            raise PermissionDenied("권한이 없습니다.")
 
         PostComment.objects.filter(id=comment_id).update(content=content)
 
@@ -76,15 +74,13 @@ class CommentService:
 
     @staticmethod
     @transaction.atomic
-    def delete_comment_tags(post_id: int, comment_id: int, author: Any) -> None:
+    def delete_comment_tags(post_id: int, comment_id: int) -> None:
         """
         댓글과 태그 유저 삭제
         """
         delete_comment = PostComment.objects.filter(id=comment_id, post_id=post_id).first()
         if not delete_comment:
             raise ValidationError("해당 댓글을 찾을 수 없습니다.")
-        if delete_comment.author != author:
-            raise PermissionDenied("권한이 없습니다.")
 
         CommentTag.objects.filter(comment_id=comment_id).delete()
         delete_comment.delete()

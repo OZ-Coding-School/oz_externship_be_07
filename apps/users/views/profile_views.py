@@ -10,6 +10,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.users.choices import UserStatus
 from apps.users.serializers.profile_serializers import (
     NicknameCheckSerializer,
     ProfileImageSerializer,
@@ -83,9 +84,10 @@ class ProfileView(APIView):
         serializer = UserWithdrawalSerializer(data=request.data)
 
         if serializer.is_valid():
+            user = cast(Any, request.user)
             serializer.save(user=request.user, due_date=timezone.now().date() + timedelta(days=30))
 
-            user = request.user
+            user.status = UserStatus.DEACTIVATED
             user.is_active = False
             user.save()
 

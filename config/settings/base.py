@@ -104,7 +104,7 @@ if not REDIS_HOST or not REDIS_PORT:
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/15",  # Redis 서버 주소
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/3",  # Redis 서버 주소
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },

@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.users.views.account_recovery_views import AccountRecoveryView
 from apps.users.views.available_courses import AvailableCourseListAPIView
 from apps.users.views.change_phone_views import ChangePhoneNumberView
 from apps.users.views.enroll_student import EnrollStudentAPIView
@@ -48,4 +49,5 @@ urlpatterns = [
     path("me/profile-image", ProfileImageView.as_view(), name="profile-image"),
     path("change-phone", ChangePhoneNumberView.as_view(), name="change-phone"),
     path("me/enrolled-courses", MyEnrolledCourseView.as_view(), name="me-enrolled-courses"),
+    path("restore", AccountRecoveryView.as_view(), name="restore"),
 ]

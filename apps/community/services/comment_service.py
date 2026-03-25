@@ -47,8 +47,6 @@ class CommentService:
         post = Post.objects.filter(id=post_id).first()
         if not post:
             raise ValidationError("해당 게시글을 찾을 수 없습니다.")
-        if not author or author.id is None:
-            raise PermissionDenied("자격 인증 데이터가 제공되지 않았습니다.")
 
         comment = PostComment.objects.create(post_id=post_id, author=author, content=content)
 

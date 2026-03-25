@@ -96,6 +96,17 @@ class PostCommentInline(admin.TabularInline):  # type: ignore[type-arg]
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    CREATE_FIELDSETS = (
+        ("기본 정보", {"fields": ("title", "author", "category")}),
+        ("내용", {"fields": ("content",)}),
+        ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
+    )
+    CHANGE_FIELDSETS = (
+        ("기본 정보", {"fields": ("title", "author", "category")}),
+        ("내용", {"fields": ("content",)}),
+        ("운영", {"fields": ("view_count", "like_count", "is_notice", "is_visible")}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
     AUTOCOMPLETE_APP_LABEL = "community"
     AUTOCOMPLETE_MODEL_NAME = "postcomment"
     AUTOCOMPLETE_FIELD_NAME = "post"
@@ -119,22 +130,12 @@ class PostAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
     readonly_fields = ("like_count", "created_at", "updated_at")
-    fieldsets = (
-        ("기본 정보", {"fields": ("title", "author", "category")}),
-        ("내용", {"fields": ("content",)}),
-        ("운영", {"fields": ("view_count", "like_count", "is_notice", "is_visible")}),
-        ("일시", {"fields": ("created_at", "updated_at")}),
-    )
     inlines = [PostAttachmentInline, PostImageInline, PostCommentInline]
 
     def get_fieldsets(self, request: HttpRequest, obj: Post | None = None) -> Any:
         if obj is None:
-            return (
-                ("기본 정보", {"fields": ("title", "author", "category")}),
-                ("내용", {"fields": ("content",)}),
-                ("운영", {"fields": ("view_count", "is_notice", "is_visible")}),
-            )
-        return self.fieldsets
+            return self.CREATE_FIELDSETS
+        return self.CHANGE_FIELDSETS
 
     def formfield_for_foreignkey(self, db_field: Any, request: HttpRequest, **kwargs: Any) -> Any:
         if db_field.name != "category":
@@ -223,6 +224,16 @@ class PostCommentPostAutocompleteFilter(AutocompleteFilter):  # type: ignore[mis
 
 @admin.register(PostComment)
 class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    CREATE_FIELDSETS = (
+        ("기본 정보", {"fields": ("author", "post")}),
+        ("내용", {"fields": ("content",)}),
+    )
+    CHANGE_FIELDSETS = (
+        ("기본 정보", {"fields": ("author", "post")}),
+        ("내용", {"fields": ("content",)}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
+
     list_display = ("id", "author", "post", "content_preview", "created_at")
     search_fields = ("content", "author__nickname", "post__title")
     list_filter = (PostCommentPostAutocompleteFilter,)
@@ -231,20 +242,12 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
     readonly_fields = ("created_at", "updated_at")
-    fieldsets = (
-        ("기본 정보", {"fields": ("author", "post")}),
-        ("내용", {"fields": ("content",)}),
-        ("일시", {"fields": ("created_at", "updated_at")}),
-    )
     inlines = [CommentTagInline]
 
     def get_fieldsets(self, request: HttpRequest, obj: PostComment | None = None) -> Any:
         if obj is None:
-            return (
-                ("기본 정보", {"fields": ("author", "post")}),
-                ("내용", {"fields": ("content",)}),
-            )
-        return self.fieldsets
+            return self.CREATE_FIELDSETS
+        return self.CHANGE_FIELDSETS
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[PostComment]:
         queryset = super().get_queryset(request).select_related("author", "post")
@@ -257,6 +260,11 @@ class PostCommentAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
 
 @admin.register(PostCategory)
 class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    CREATE_FIELDSETS = (("기본 정보", {"fields": ("name", "status")}),)
+    CHANGE_FIELDSETS = (
+        ("기본 정보", {"fields": ("name", "status")}),
+        ("일시", {"fields": ("created_at", "updated_at")}),
+    )
     DELETE_CONFIRM_SESSION_KEY_PREFIX = "community_category_delete_confirm"
     ACTIVE_CATEGORY_DELETE_BLOCK_MESSAGE = (
         '활성 카테고리 "{name}(#{pk})"는 삭제할 수 없습니다. 비활성화 후 다시 시도하세요.'
@@ -270,15 +278,11 @@ class PostCategoryAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     ordering = ("id",)
     readonly_fields = ("created_at", "updated_at")
     actions = ("delete_category_by_policy",)
-    fieldsets = (
-        ("기본 정보", {"fields": ("name", "status")}),
-        ("일시", {"fields": ("created_at", "updated_at")}),
-    )
 
     def get_fieldsets(self, request: HttpRequest, obj: PostCategory | None = None) -> Any:
         if obj is None:
-            return (("기본 정보", {"fields": ("name", "status")}),)
-        return self.fieldsets
+            return self.CREATE_FIELDSETS
+        return self.CHANGE_FIELDSETS
 
     def save_model(self, request: HttpRequest, obj: PostCategory, form: Any, change: bool) -> None:
         should_warn = False

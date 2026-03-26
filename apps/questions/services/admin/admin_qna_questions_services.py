@@ -15,7 +15,6 @@ class AdminQuestionService:
         answer_status: str | None = None,
         sort: str | None = "latest",
     ) -> dict[str, Any]:
-
         queryset: QuerySet[Questions] = Questions.objects.select_related(
             "author", "category", "category__parent"
         ).prefetch_related("answers")

@@ -6,12 +6,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from apps.questions.models import QuestionCategories
+from apps.questions.models import Answers, QuestionCategories, Questions
 from apps.users.models.models import User
 
 
 class AdminQuestionListTests(TestCase):
     category: QuestionCategories
+    parent_category: QuestionCategories
+    question: Questions
     url: str
     admin_user: User
 
@@ -31,6 +33,27 @@ class AdminQuestionListTests(TestCase):
             is_staff=True,
             is_superuser=True,
         )
+
+        # 임의의 카테고리 생성
+        cls.parent_category = QuestionCategories.objects.create(name="테스트")
+        cls.category = QuestionCategories.objects.create(name="백엔드", parent=cls.parent_category)
+
+        # 임의의 질문 생성
+        cls.question = Questions.objects.create(
+            title="Test Question",
+            content="test cotent 50 넘어야 프리뷰 로직이 실행. " * 5,
+            author=cls.admin_user,
+            category=cls.category,
+        )
+
+        # 답변 생성
+        Answers.objects.create(
+            questions=cls.question,
+            author=cls.admin_user,
+            content="Test Answer",
+        )
+
+        cls.url = reverse("admin_questions:admin-question-list")
 
     def test_get_question_list_full_coverage(self) -> None:
         client = APIClient()

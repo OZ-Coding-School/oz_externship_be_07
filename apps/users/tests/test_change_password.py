@@ -20,7 +20,7 @@ class PasswordChangeTest(APITestCase):
             password="oldPassword123!",
             name="테스터",
             nickname="tester",
-            phone_number="010-1111-2222",
+            phone_number="010-1111-2223",
             gender="M",
             birthday=datetime.date(1995, 5, 5),
         )

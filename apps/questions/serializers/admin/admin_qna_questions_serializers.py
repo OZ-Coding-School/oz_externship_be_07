@@ -46,5 +46,5 @@ class AdminQuestionListSerializer(serializers.ModelSerializer):  # type: ignore[
 class AdminQuestionListResponseSerializer(serializers.Serializer):  # type: ignore[type-arg]
     page = serializers.IntegerField()
     size = serializers.IntegerField()
-    total_count = serializers.IntegerField()
-    questions = AdminQuestionListSerializer(many=True)
+    total_count = serializers.IntegerField(required=False, allow_null=True)
+    questions = AdminQuestionListSerializer(many=True, required=False, allow_null=True)

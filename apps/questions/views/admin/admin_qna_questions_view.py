@@ -20,20 +20,13 @@ class AdminQuestionListAPIView(APIView):
 
     @extend_schema(
         summary="관리자 질의응답 목록 조회",
-        description="수강생들이 등록한 질의응답을 목록으로 조회합니다. 검색 및 필터링 기능을 적용할 수 있습니다.",
         parameters=[
-            OpenApiParameter(name="page", description="페이지 번호", required=False, type=int, default=1),
-            OpenApiParameter(name="size", description="페이지당 항목 수", required=False, type=int, default=20),
-            OpenApiParameter(
-                name="search_keyword", description="검색어 (제목, 내용, 닉네임)", required=False, type=str
-            ),
-            OpenApiParameter(name="category_id", description="카테고리 ID", required=False, type=int),
-            OpenApiParameter(
-                name="answer_status", description="답변 상태 (answered, unanswered)", required=False, type=str
-            ),
-            OpenApiParameter(
-                name="sort", description="정렬 (latest, oldest)", required=False, type=str, default="latest"
-            ),
+            OpenApiParameter(name="page", type=int, default=1),
+            OpenApiParameter(name="size", type=int, default=20),
+            OpenApiParameter(name="search_keyword", type=str),
+            OpenApiParameter(name="category_id", type=int),
+            OpenApiParameter(name="answer_status", type=str),
+            OpenApiParameter(name="sort", type=str, default="latest"),
         ],
         responses={200: AdminQuestionListResponseSerializer},
         tags=["Admin - Questions"],
@@ -46,8 +39,8 @@ class AdminQuestionListAPIView(APIView):
             page, size = 1, 20
 
         search_keyword = request.query_params.get("search_keyword")
-        category_id_raw = request.query_params.get("category_id")
-        category_id: int | None = int(category_id_raw) if category_id_raw else None
+        cat_id_raw = request.query_params.get("category_id")
+        category_id = int(cat_id_raw) if cat_id_raw else None
         answer_status = request.query_params.get("answer_status")
         sort = request.query_params.get("sort", "latest")
 
@@ -60,33 +53,24 @@ class AdminQuestionListAPIView(APIView):
             sort=sort,
         )
 
-        queryset: QuerySet[Questions] = Questions.objects.select_related("author", "category").prefetch_related(
-            "answers"
-        )
-
+        queryset: QuerySet[Questions] = Questions.objects.select_related("author", "category").all()
         if search_keyword:
             queryset = queryset.filter(
                 Q(title__icontains=search_keyword)
                 | Q(content__icontains=search_keyword)
                 | Q(author__nickname__icontains=search_keyword)
             )
-
         if category_id:
             queryset = queryset.filter(category_id=category_id)
-
         if answer_status == "answered":
             queryset = queryset.filter(answers__isnull=False).distinct()
         elif answer_status == "unanswered":
             queryset = queryset.filter(answers__isnull=True)
 
-        if sort == "oldest":
-            queryset = queryset.order_by("created_at")
-        else:
-            queryset = queryset.order_by("-created_at")
+        queryset = queryset.order_by("created_at" if sort == "oldest" else "-created_at")
 
         result["total_count"] = queryset.count()
         result["questions"] = queryset[(page - 1) * size : page * size]
 
         serializer = AdminQuestionListResponseSerializer(result)
-
         return Response(serializer.data, status=status.HTTP_200_OK)

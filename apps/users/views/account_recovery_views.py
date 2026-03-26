@@ -32,8 +32,7 @@ class AccountRecoveryView(APIView):
     def post(self, request: Request) -> Response:
         serializer = AccountRecoverySerializer(data=request.data)
 
-        if not serializer.is_valid():
-            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data.get("user")
         cache_key = serializer.validated_data.get("cache_key")
@@ -43,7 +42,7 @@ class AccountRecoveryView(APIView):
 
         user.is_active = True
         user.status = UserStatus.ACTIVATED
-        user.save()
+        user.save(update_fields=["is_active", "status"])
 
         cache.delete(cache_key)
         Withdrawal.objects.filter(user=user).delete()

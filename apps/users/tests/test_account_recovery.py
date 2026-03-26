@@ -77,5 +77,5 @@ class AccountRecoveryTest(APITestCase):
         response = self.client.post(self.url, data=data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        error_detail = cast(dict[str, Any], response.data.get("error_detail"))
-        self.assertIn("email_token", error_detail)
+
+        self.assertIn("email_token", response.data)

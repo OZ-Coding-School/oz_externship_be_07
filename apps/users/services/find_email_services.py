@@ -1,28 +1,23 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from rest_framework.exceptions import ValidationError
-
-from apps.users.services.send_sms_services import SendSmsService
-from apps.users.services.verify_sms_services import VerifySmsService
 
 User = get_user_model()
 
 
 class FindEmailService:
     @staticmethod
-    def send_verification_sms(name: str, phone_number: str) -> None:
-        if not User.objects.filter(name=name, phone_number=phone_number).exists():
-            raise ValidationError({"non_field_errors": ["일치하는 사용자 정보가 없습니다."]})
+    def verify_sms_token(name: str, sms_token: str) -> str:
+        cache_key = f"sms_token:{sms_token}"
+        phone_number = cache.get(cache_key)
 
-        SendSmsService().send_sms_code(phone_number=phone_number)
+        if not phone_number:
+            raise ValidationError({"sms_token": ["휴대폰 인증 실패 - 인증 토큰이 유효하지 않거나 만료되었습니다."]})
 
-    @staticmethod
-    def verify_sms_code(name: str, phone_number: str, code: str) -> str:
-        is_verified = VerifySmsService().verify_code(phone_number=phone_number, code=code)
-
-        if not is_verified:
-            raise ValidationError({"code": ["휴대폰 인증 실패 - 인증코드가 유효하지 않습니다."]})
         try:
             user = User.objects.get(name=name, phone_number=phone_number)
+            cache.delete(cache_key)
+
             return FindEmailService.mask_email(str(user.email))
         except User.DoesNotExist:
             raise ValidationError({"non_field_errors": ["일치하는 사용자 정보가 없습니다."]})

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 from django.core.cache import caches
 from django.http import StreamingHttpResponse
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -80,6 +81,7 @@ class ChatbotIntegrationTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(ChatbotSessions.objects.filter(id=self.session.id).exists())
 
+    @override_settings(GEMINI_API_KEY="fake_key_for_test")
     @patch("apps.chatbot.services.chatbot_service.genai.Client")
     def test_chatbot_completion_streaming(self, mock_genai: MagicMock) -> None:
         """AI 스트리밍 응답"""

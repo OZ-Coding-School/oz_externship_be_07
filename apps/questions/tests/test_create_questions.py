@@ -12,8 +12,12 @@ class QuestionCreateTest(TestCase):
     large_category: QuestionCategories
     medium_category: QuestionCategories
     small_category: QuestionCategories
+    user: User
+    admin: User
     student: User
     url: str
+
+    client: APIClient
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -28,7 +32,7 @@ class QuestionCreateTest(TestCase):
             password="pw1234",
             name="오즈",
             nickname="깡통",
-            phone_number="010-1234-1234",
+            phone_number="010-8537-1753",
             birthday="2000-04-01",
             gender="MALE",
             role=UserRole.USER,
@@ -38,7 +42,7 @@ class QuestionCreateTest(TestCase):
             password="pw1234",
             name="코딩",
             nickname="학습",
-            phone_number="010-1234-1234",
+            phone_number="010-4857-3364",
             birthday="2000-04-01",
             gender="MALE",
             role=UserRole.STUDENT,
@@ -92,7 +96,7 @@ class QuestionCreateTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_question_fail_category_id(self) -> None:
-        self.client.force_authenticate(self.user.student)
+        self.client.force_authenticate(user=self.student)
         data = {
             "category_id": 9999,
             "title": "Ivaalid Category",

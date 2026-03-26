@@ -1,10 +1,10 @@
-from typing import Any, cast, NoReturn
+from typing import Any, NoReturn, cast
 
 from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import NotFound, NotAuthenticated, PermissionDenied
+from rest_framework.exceptions import NotAuthenticated, NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -63,7 +63,7 @@ class PostDetailAPIView(APIView):
         super().permission_denied(request, message, code)
 
     @staticmethod
-    def _author_check(author_id: int, request:Request) -> None:
+    def _author_check(author_id: int, request: Request) -> None:
         user_role = getattr(request.user, "role", None)
         is_staff = user_role in [
             UserRole.TA,

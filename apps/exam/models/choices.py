@@ -7,7 +7,7 @@ class QuestionType(models.TextChoices):
     OX = "OX"
     SHORT_ANSWER = "SHORT_ANSWER"
     ORDERING = "ORDERING"
-    FULL_BLANK = "FULL_BLANK"
+    FILL_BLANK = "FILL_BLANK"
 
 
 class DeploymentStatus(models.TextChoices):

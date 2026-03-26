@@ -5,7 +5,7 @@ from rest_framework import serializers
 from apps.questions.models import Questions
 
 
-# admin qna questions 조회
+# 어드민 질의응답 목록 조회
 class AdminQuestionListSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     question_id = serializers.IntegerField(source="id")
     category_path = serializers.SerializerMethodField()

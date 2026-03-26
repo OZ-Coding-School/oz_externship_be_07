@@ -158,7 +158,7 @@ class AIAnswerViewSet(viewsets.GenericViewSet[Any]):
 
     # AI 답변 생성/조회
     @extend_schema(
-        tags=["AI Answer"],
+        summary="AI 답변 생성/조회",
         responses={
             201: OpenApiResponse(description="AI 답변 생성/조회 성공"),
             401: OpenApiResponse(description="로그인한 사용자만 요청할 수 있습니다."),

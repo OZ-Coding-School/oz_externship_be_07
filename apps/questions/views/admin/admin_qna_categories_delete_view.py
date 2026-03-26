@@ -19,6 +19,7 @@ class AdminCategoryDeleteAPIView(APIView):
     permission_classes = [IsAdminUser]
 
     @extend_schema(
+        summary="관리자 카테고리 삭제",
         description="카테고리를 삭제하고 관련 질문을 일반질문 카테고리로 이관합니다.",
         responses={200: AdminCategoryDeleteSerializer},
         tags=["Admin - Questions"],

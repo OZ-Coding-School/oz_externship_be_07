@@ -50,6 +50,7 @@ class AdminCategoryAPIView(APIView):
     permission_classes = [IsAdminUser]
 
     @extend_schema(
+        summary="어드민 카테고리 목록 조회",
         description="카테고리 타입별 필터링 및 이름 검색 기능을 제공합니다.",
         parameters=[
             OpenApiParameter(name="page", description="페이지 번호", type=int, default=1),
@@ -83,6 +84,7 @@ class AdminCategoryAPIView(APIView):
         )
 
     @extend_schema(
+        summary="관리자 카테고리 등록",
         request=AdminCategorySerializer,
         responses={201: AdminCategorySerializer},
         tags=["Admin - Questions"],

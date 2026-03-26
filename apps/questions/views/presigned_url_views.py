@@ -13,6 +13,7 @@ class AnswerPresignedUrlView(BasePresignedUrlView):
 
     # 답변 이미지 Presigned URL 발급
     @extend_schema(
+        summary="답변 이미지 Presigned URL 발급",
         tags=["Answers"],
         request=PresignedUrlRequestSerializer,
         responses={
@@ -30,6 +31,7 @@ class QuestionPresignedUrlView(BasePresignedUrlView):
 
     # 질문 이미지 Presigned URL 발급
     @extend_schema(
+        summary="질문 이미지 Presigned URL 발급",
         tags=["qna"],
         request=PresignedUrlRequestSerializer,
         responses={

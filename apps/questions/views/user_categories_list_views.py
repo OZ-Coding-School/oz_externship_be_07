@@ -21,7 +21,8 @@ class UserCategoryListView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["user_category"],
+        tags=["questions"],
+        summary="유저 카테고리 목록 조회",
         description="수강생 권한을 가진 유저가 카테고리 목록을 조회합니다.",
         responses={200: UserCategorySerializer(many=True)},
     )

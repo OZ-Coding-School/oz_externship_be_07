@@ -20,6 +20,7 @@ class AdminCategoryCreateAPIView(APIView):
     permission_classes = [IsAdminUser]
 
     @extend_schema(
+        summary="관리자 카테고리 등록",
         request=AdminCategorySerializer,
         responses={201: AdminCategorySerializer},
         tags=["Admin - Questions"],

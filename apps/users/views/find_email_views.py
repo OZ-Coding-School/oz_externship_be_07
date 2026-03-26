@@ -14,9 +14,9 @@ class FindEmailView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        summary="이메일 찾기 API",
+        summary="이메일 찾기",
         tags=["Accounts"],
-        description="이름과 핸드폰번호를 입력하고 인증을 통해 일부 가려진 상태의 이메일을 확인합니다.",
+        description="이름과 휴대폰인증 후 받은 sms_token을 입력하여 일부 가려진 상태의 이메일을 확인합니다.",
         request=FindEmailSerializer,
         responses={
             200: OpenApiResponse(
@@ -33,20 +33,15 @@ class FindEmailView(APIView):
     )
     def post(self, request: Request) -> Response:
         serializer = FindEmailSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         try:
-            masked_email = FindEmailService.verify_sms_code(
+            masked_email = FindEmailService.verify_sms_token(
                 name=serializer.validated_data["name"],
-                phone_number=serializer.validated_data["phone_number"],
-                code=serializer.validated_data["code"],
+                sms_token=serializer.validated_data["sms_token"],
             )
 
             return Response({"email": masked_email}, status=status.HTTP_200_OK)
 
         except ValidationError as e:
             return Response({"error_detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
-
-        except ValueError as e:
-            return Response({"error_detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -6,6 +6,7 @@ from apps.users.views.change_password_views import PasswordChangeView
 from apps.users.views.change_phone_views import ChangePhoneNumberView
 from apps.users.views.enroll_student import EnrollStudentAPIView
 from apps.users.views.find_email_views import FindEmailView
+from apps.users.views.find_password_views import PasswordFindView
 from apps.users.views.login_views import LoginView
 from apps.users.views.logout_views import LogoutView
 from apps.users.views.mycourse_check_views import MyEnrolledCourseView
@@ -54,4 +55,5 @@ urlpatterns = [
     path("me/enrolled-courses", MyEnrolledCourseView.as_view(), name="me-enrolled-courses"),
     path("change-password", PasswordChangeView.as_view(), name="change-password"),
     path("restore", AccountRecoveryView.as_view(), name="restore"),
+    path("find-password", PasswordFindView.as_view(), name="find-password"),
 ]

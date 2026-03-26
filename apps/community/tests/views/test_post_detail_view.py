@@ -90,7 +90,6 @@ class PostDetailAPIViewTest(TestCase):
         data = {"title": "테스트 수정 title", "content": "테스트 수정 #content", "category_id": self.category.pk}
         response = self.client.put(url, data, content_type="application/json")
         get_data = response.json()
-        print(get_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(get_data["title"], data["title"])
         self.assertEqual(get_data["content"], data["content"])

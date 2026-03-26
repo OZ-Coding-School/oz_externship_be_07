@@ -58,16 +58,23 @@ class AdminQuestionListTests(TestCase):
     def test_get_question_list_full_coverage(self) -> None:
         client = APIClient()
         client.force_authenticate(user=self.admin_user)
-        params: Mapping[str, Any] = {
+        params_answerd: Mapping[str, Any] = {
             "page": 1,
             "size": 10,
             "search_keyword": "테스트",
             "category_id": self.category.id,
             "answer_status": "unanswered",
+            "sort": "latest",
+        }
+        client.get(self.url, data=params_answerd, format="json")
+
+        params_unanswered: Mapping[str, Any] = {
+            "page": 1,
+            "size": 10,
+            "answer_status": "unanswered",
             "sort": "oldest",
         }
-
-        response = cast(Response, client.get(self.url, data=params, format="json"))
+        response = cast(Response, client.get(self.url, data=params_unanswered, format="json"))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

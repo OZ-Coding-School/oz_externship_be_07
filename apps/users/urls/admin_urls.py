@@ -11,6 +11,10 @@ from apps.users.views.admin.user_enrollment_reject import AdminEnrollmentRejectA
 from apps.users.views.admin.user_management import AdminUserDeleteAPIView
 from apps.users.views.admin.user_role_change import AdminUserRoleUpdateAPIView
 from apps.users.views.admin.user_search import StudentManagementViewSet
+from apps.users.views.admin.user_withdrawal_analytics import (
+    WithdrawalMonthlyReasonStatsAPIView,
+    WithdrawalReasonCountAPIView,
+)
 from apps.users.views.admin.user_withdrawal_list import AdminUserWithdrawalAPIView
 
 router = DefaultRouter()
@@ -26,5 +30,15 @@ urlpatterns = [
     path("withdrawals/<int:withdrawal_id>/", AdminUserWithdrawalAPIView.as_view(), name="admin-withdrawal-detail"),
     path("analytics/signup/trends/", AdminSignupTrendAPIView.as_view(), name="admin-signup-trend"),
     path("analytics/withdrawals/trends/", AdminWithdrawalTrendAPIView.as_view(), name="admin-withdrawal-trend"),
+    path(
+        "analytics/withdrawal-reasons/counts/",
+        WithdrawalReasonCountAPIView.as_view(),
+        name="admin-withdrawal-reasons-counts",
+    ),
+    path(
+        "analytics/withdrawal-reasons/stats/monthly/",
+        WithdrawalMonthlyReasonStatsAPIView.as_view(),
+        name="admin-withdrawal-reasons-monthly-stats",
+    ),
     path("", include(router.urls)),
 ]

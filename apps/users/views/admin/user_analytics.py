@@ -39,7 +39,7 @@ class BaseAnalyticsTrendAPIView(APIView):
         401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),
         403: OpenApiResponse(description="권한이 없습니다."),
     },
-    tags=["admin_analytics"],
+    tags=["admin_accounts"],
 )
 class AdminSignupTrendAPIView(BaseAnalyticsTrendAPIView):
     model_class = User
@@ -57,7 +57,7 @@ class AdminSignupTrendAPIView(BaseAnalyticsTrendAPIView):
         401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),
         403: OpenApiResponse(description="권한이 없습니다."),
     },
-    tags=["admin_analytics"],
+    tags=["admin_accounts"],
 )
 class AdminWithdrawalTrendAPIView(BaseAnalyticsTrendAPIView):
     model_class = Withdrawal

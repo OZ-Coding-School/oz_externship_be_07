@@ -80,7 +80,7 @@ class ChatbotIntegrationTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(ChatbotSessions.objects.filter(id=self.session.id).exists())
 
-    @patch("google.genai.Client")
+    @patch("apps.chatbot.services.chatbot_service.genai.Client")
     def test_chatbot_completion_streaming(self, mock_genai: MagicMock) -> None:
         """AI 스트리밍 응답"""
         url = reverse("chatbot:session-completions", kwargs={"session_id": self.session.id})

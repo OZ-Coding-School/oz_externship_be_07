@@ -1,6 +1,5 @@
-from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from apps.questions.models import QuestionCategories, QuestionImages, Questions
 from apps.users.choices import UserRole

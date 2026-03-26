@@ -1,6 +1,4 @@
-from typing import cast
-
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny
@@ -13,7 +11,6 @@ from apps.questions.services.user_categories_list_services import (
     QuestionCategoryService,
 )
 from apps.users.choices import UserRole
-from apps.users.models.models import User
 
 
 # API명세서 102번 유저 카테고리 조회

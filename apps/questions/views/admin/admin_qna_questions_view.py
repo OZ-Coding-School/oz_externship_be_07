@@ -1,3 +1,4 @@
+from django.db.models import Q, QuerySet
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
@@ -5,6 +6,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.questions.models import Questions
 from apps.questions.serializers.admin.admin_qna_questions_serializers import (
     AdminQuestionListResponseSerializer,
 )
@@ -41,11 +43,11 @@ class AdminQuestionListAPIView(APIView):
             page = int(request.query_params.get("page", 1))
             size = int(request.query_params.get("size", 20))
         except ValueError:
-            page = 1
-            size = 20
+            page, size = 1, 20
 
         search_keyword = request.query_params.get("search_keyword")
-        category_id = request.query_params.get("category_id")
+        category_id_raw = request.query_params.get("category_id")
+        category_id: int | None = int(category_id_raw) if category_id_raw else None
         answer_status = request.query_params.get("answer_status")
         sort = request.query_params.get("sort", "latest")
 
@@ -53,10 +55,37 @@ class AdminQuestionListAPIView(APIView):
             page=page,
             size=size,
             search_keyword=search_keyword,
-            category_id=int(category_id) if category_id else None,
+            category_id=category_id,
             answer_status=answer_status,
             sort=sort,
         )
+
+        queryset: QuerySet[Questions] = Questions.objects.select_related("author", "category").prefetch_related(
+            "answers"
+        )
+
+        if search_keyword:
+            queryset = queryset.filter(
+                Q(title__icontains=search_keyword)
+                | Q(content__icontains=search_keyword)
+                | Q(author__nickname__icontains=search_keyword)
+            )
+
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+
+        if answer_status == "answered":
+            queryset = queryset.filter(answers__isnull=False).distinct()
+        elif answer_status == "unanswered":
+            queryset = queryset.filter(answers__isnull=True)
+
+        if sort == "oldest":
+            queryset = queryset.order_by("created_at")
+        else:
+            queryset = queryset.order_by("-created_at")
+
+        result["total_count"] = queryset.count()
+        result["questions"] = queryset[(page - 1) * size : page * size]
 
         serializer = AdminQuestionListResponseSerializer(result)
 

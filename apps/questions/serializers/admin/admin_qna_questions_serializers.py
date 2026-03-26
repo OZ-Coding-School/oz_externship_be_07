@@ -5,7 +5,6 @@ from rest_framework import serializers
 from apps.questions.models import Questions
 
 
-# 어드민 질의응답 목록 조회
 class AdminQuestionListSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     question_id = serializers.IntegerField(source="id")
     category_path = serializers.SerializerMethodField()
@@ -38,9 +37,7 @@ class AdminQuestionListSerializer(serializers.ModelSerializer):  # type: ignore[
         return " > ".join(reversed(path))
 
     def get_content_preview(self, obj: Questions) -> str:
-        if obj.content and len(obj.content) > 50:
-            return obj.content[:50] + "..."
-        return obj.content
+        return (obj.content[:50] + "...") if obj.content and len(obj.content) > 50 else obj.content
 
     def get_has_answer(self, obj: Questions) -> bool:
         return obj.answers.exists()

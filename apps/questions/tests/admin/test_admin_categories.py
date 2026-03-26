@@ -24,8 +24,8 @@ class AdminQuestionListTests(TestCase):
         cls.admin_user = User.objects.create_superuser(
             email="admin@test.com",
             password="admin123",
-            name="testadmin",
-            nickname="testadmin",
+            name="test",
+            nickname="test",
             phone_number="010-1111-2222",
             gender="MALE",
             birthday="1970-01-01",
@@ -61,7 +61,7 @@ class AdminQuestionListTests(TestCase):
         params_answered: Mapping[str, Any] = {
             "page": 1,
             "size": 10,
-            "search_keyword": "테스트",
+            "search_keyword": "test",
             "category_id": self.category.id,
             "answer_status": "unanswered",
             "sort": "latest",

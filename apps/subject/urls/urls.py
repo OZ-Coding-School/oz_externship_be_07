@@ -18,7 +18,7 @@ urlpatterns = [
         name="subject-scatter",
     ),
     path(
-        "course/",
+        "course",
         CourseListAPIView.as_view(),
         name="course-list",
     ),

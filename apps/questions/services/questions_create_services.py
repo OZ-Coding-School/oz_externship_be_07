@@ -1,9 +1,8 @@
-from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from apps.questions.models import QuestionCategories, QuestionImages, Questions
+from apps.users.choices import UserRole
 from apps.users.models.models import User
 
 
@@ -18,10 +17,18 @@ class QuestionCreateService:
         image_url_list: list[str] | None = None,
     ) -> Questions:
 
-        if user.role != "STUDENT":
-            raise PermissionDenied("질문 등록은 수강생 권한이 필요합니다.")
+        # 수강생과 어드민 권한
+        allowed_roles = [UserRole.STUDENT, UserRole.ADMIN]
 
-        category = QuestionCategories.objects.get(id=category_id)
+        # 수강생 이상 권한은 조회 가능
+        if user.role not in allowed_roles:
+            raise PermissionDenied("질문 등록 권한이 없습니다.")
+
+        # 카테고리 존재 여부 확인
+        try:
+            category = QuestionCategories.objects.get(id=category_id)
+        except QuestionCategories.DoesNotExist:
+            raise ValidationError("존재하지 않는 카테고리입니다.")
 
         is_sub_category = category.parent is not None and category.parent.parent is not None
 

@@ -42,7 +42,7 @@ class QuestionCreateView:
 
         # 카테고리 계층 오류 및 비즈니스 제약 위반
         except (ValidationError, ValueError) as e:
-            error_msg = getattr(e, "message", str(e))
+            error_msg = e.detail if hasattr(e, "detail") else str(e)
             return Response({"error_detail": error_msg}, status=status.HTTP_400_BAD_REQUEST)
         # 권한 부족
         except PermissionDenied as e:

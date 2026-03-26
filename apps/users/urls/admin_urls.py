@@ -1,6 +1,10 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from apps.users.views.admin.user_analytics import (
+    AdminSignupTrendAPIView,
+    AdminWithdrawalTrendAPIView,
+)
 from apps.users.views.admin.user_enrollment import AdminUserEnrollmentViewSet
 from apps.users.views.admin.user_enrollment_accept import AdminEnrollmentAcceptAPIView
 from apps.users.views.admin.user_enrollment_reject import AdminEnrollmentRejectAPIView
@@ -20,5 +24,7 @@ urlpatterns = [
     path("accounts/<int:account_id>/role/", AdminUserRoleUpdateAPIView.as_view(), name="admin-user-role-update"),
     path("withdrawals/", AdminUserWithdrawalAPIView.as_view(), name="admin-withdrawal-list"),
     path("withdrawals/<int:withdrawal_id>/", AdminUserWithdrawalAPIView.as_view(), name="admin-withdrawal-detail"),
+    path("analytics/signup/trends/", AdminSignupTrendAPIView.as_view(), name="admin-signup-trend"),
+    path("analytics/withdrawals/trends/", AdminWithdrawalTrendAPIView.as_view(), name="admin-withdrawal-trend"),
     path("", include(router.urls)),
 ]

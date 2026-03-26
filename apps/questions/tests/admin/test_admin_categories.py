@@ -1,20 +1,21 @@
 from typing import Any, Mapping, cast
 
+from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.test import APITestCase
 
-from apps.questions.models import QuestionCategories  # 모델 임포트 확인
+from apps.questions.models import QuestionCategories
 
 
-class AdminQuestionListTests(APITestCase):
+class AdminQuestionListTests(TestCase):
     category: QuestionCategories
     url: str
 
-    def setUp(self) -> None:
-        self.category = QuestionCategories.objects.create(name="테스트 카테고리")
-        self.url = reverse("admin_questions:admin_question_list")
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.category = QuestionCategories.objects.create(name="테스트 카테고리")
+        cls.url = reverse("admin_questions:admin_question_list")
 
     def test_get_question_list_full_coverage(self) -> None:
         params: Mapping[str, Any] = {

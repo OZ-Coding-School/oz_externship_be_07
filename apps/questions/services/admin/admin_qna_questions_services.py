@@ -4,7 +4,7 @@ from django.db.models import Q, QuerySet
 
 from apps.questions.models import Questions
 
-
+# 관리자 질의응답 목록 조회
 class AdminQuestionService:
     @staticmethod
     def get_question_list(

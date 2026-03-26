@@ -24,7 +24,11 @@ class QuestionCreateService:
         if user.role not in allowed_roles:
             raise PermissionDenied("질문 등록 권한이 없습니다.")
 
-        category = QuestionCategories.objects.get(id=category_id)
+        # 카테고리 존재 여부 확인
+        try:
+            category = QuestionCategories.objects.get(id=category_id)
+        except QuestionCategories.DoesNotExist:
+            raise ValidationError("존재하지 않는 카테고리입니다.")
 
         is_sub_category = category.parent is not None and category.parent.parent is not None
 

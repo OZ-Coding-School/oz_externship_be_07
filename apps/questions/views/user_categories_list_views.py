@@ -2,7 +2,7 @@ from typing import cast
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -36,10 +36,8 @@ class UserCategoryListView(APIView):
         if user.role not in allowed_roles:
             raise PermissionDenied("카테고리 조회 권한이 없습니다.")
 
-        try:
-            categories = QuestionCategoryService.get_user_category_list().filter(parent__isnull=True)
-            serializer = UserCategorySerializer(categories, many=True)
-            return Response({"categories": serializer.data}, status=status.HTTP_200_OK)
+        # 단순 조회이므로 try-except문 제거
+        categories = QuestionCategoryService.get_user_category_list().filter(parent__isnull=True)
+        serializer = UserCategorySerializer(categories, many=True)
 
-        except ValidationError:
-            return Response({"error_detail": "유효하지 않은 카테고리 조회입니다."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"categories": serializer.data}, status=status.HTTP_200_OK)

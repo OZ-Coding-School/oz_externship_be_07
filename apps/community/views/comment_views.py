@@ -49,7 +49,7 @@ class CommentViewSet(
             OpenApiExample(
                 name="댓글 목록 예시",
                 description="정상응답 데이터",
-                value= {
+                value={
                     "id": 1,
                     "content": "첫 테스트",
                     "author": {

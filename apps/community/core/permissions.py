@@ -33,6 +33,6 @@ class IsSelfOrReadOnly(permissions.BasePermission):
             UserRole.LC,
         ]
 
-        if obj.author_id != request.user.id and is_staff:
+        if obj.author_id != request.user.id and not is_staff:
             raise PermissionDenied(detail={"error_detail": "권한이 없습니다."})
         return True

@@ -21,6 +21,7 @@ class UserCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
 
     def get_children(self, obj: QuestionCategories) -> Any:
         children = obj.children.all()
-        if children.exists():
+
+        if children:
             return UserCategorySerializer(children, many=True).data
         return []

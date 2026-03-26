@@ -61,7 +61,7 @@ class AdminUserWithdrawalGetTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["user"]["nickname"], "머리아파아")
+        self.assertEqual(response.data["results"][0]["user"]["name"], "우와아")
 
     def test_get_withdrawal_list_filter_search(self) -> None:
         """이름 검색 필터링 테스트"""
@@ -71,7 +71,7 @@ class AdminUserWithdrawalGetTest(TestCase):
         response = self.client.get(url, {"search": "우와아"})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["results"][0]["user"]["nickname"], "머리아파아")
+        self.assertEqual(response.data["results"][0]["user"]["name"], "우와아")
 
     def test_get_withdrawal_detail_success_200(self) -> None:
         """상세 조회 성공 테스트"""
@@ -82,7 +82,7 @@ class AdminUserWithdrawalGetTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.withdrawal.id)
-        self.assertEqual(response.data["user"]["nickname"], "머리아파아")
+        self.assertEqual(response.data["user"]["name"], "우와아")
         self.assertIn("assigned_courses", response.data)
 
     def test_get_withdrawal_detail_fail_404(self) -> None:

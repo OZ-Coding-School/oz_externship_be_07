@@ -105,11 +105,11 @@ class QuestionCreateTest(TestCase):
         response = self.client.post(self.url, data=data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         error_msg = response.data.get("error_detail")
-        self.assertIn("존재하지 않는 카테고리입니다.", str(error_msg))
+        self.assertIn("존재하지 않는 카테고리 입니다.", str(error_msg))
 
     # 대분류 선택만 하고 ValueError 발생
     def test_create_question_view_fail_category(self) -> None:
-        self.client.force_login(user=self.student)
+        self.client.force_authenticate(user=self.student)
         data = {
             "category_id": self.large_category.id,
             "title": "Fail Test",
@@ -121,7 +121,7 @@ class QuestionCreateTest(TestCase):
 
     # serializer 검증실패
     def test_create_view_validation_error(self) -> None:
-        self.client.force_login(user=self.student)
+        self.client.force_authenticate(user=self.student)
         data = {"title": "필수 필드 누락 데이터"}
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

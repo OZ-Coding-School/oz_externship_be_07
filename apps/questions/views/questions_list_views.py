@@ -34,7 +34,6 @@ class QuestionListView(APIView):
 
     @extend_schema(
         tags=["questions"],
-        summary="질문 조회",
         description="질문 목록을 조회하며, 전역 설정된 페이지네이션이 적용됩니다.",
         parameters=[
             OpenApiParameter(name="category_id", description="카테고리 ID필터", type=int),
@@ -81,7 +80,6 @@ class QuestionListView(APIView):
 
     @extend_schema(
         tags=["questions"],
-        summary="질문 등록",
         description="새로운 질문을 등록합니다.",
         request=QuestionCreateSerializer,
         responses={201: QuestionCreateResponseSerializer},
@@ -101,7 +99,6 @@ class QuestionListDetailView(APIView):
 
     @extend_schema(
         tags=["questions"],
-        summary="질문 상세 조회",
         description="질문 상세조회을 조회하고 조회수를 1 올립니다.",
         responses={200: QuestionListDetailSerializer},
     )
@@ -117,7 +114,6 @@ class QuestionListDetailView(APIView):
 
     @extend_schema(
         tags=["questions"],
-        summary="질문 수정",
         description="기존 질문 내용을 수정합니다.",
         request=QuestionUpdateSerializer,
         responses={200: QuestionUpdateResponseSerializer},

@@ -1,6 +1,5 @@
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
 
 from apps.questions.models import QuestionCategories, QuestionImages, Questions

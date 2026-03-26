@@ -40,10 +40,11 @@ class UserProfileSerializer(serializers.ModelSerializer[Any]):
             "gender",
             "birthday",
             "profile_img_url",
+            "role",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "email", "phone_number", "created_at", "updated_at"]
+        read_only_fields = ["id", "email", "phone_number", "role", "created_at", "updated_at"]
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer[Any]):

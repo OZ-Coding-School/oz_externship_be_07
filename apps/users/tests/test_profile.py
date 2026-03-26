@@ -46,7 +46,7 @@ class ProfileAPITest(APITestCase):
         url = reverse("users:profile-image")
         image_url = "https://oz-externship.s3.ap-northeast-2.amazonaws.com/uploads/images/profiles/photo.png"
         data = {"profile_img_url": image_url}
-        response = self.client.put(url, data)
+        response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["profile_img_url"], image_url)
 

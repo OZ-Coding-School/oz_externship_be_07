@@ -142,7 +142,7 @@ class ProfileImageView(APIView):
             ),
         },
     )
-    def put(self, request: Request) -> Response:
+    def patch(self, request: Request) -> Response:
         user = cast(Any, request.user)
 
         serializer = ProfileImageSerializer(data=request.data)

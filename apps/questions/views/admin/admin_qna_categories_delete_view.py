@@ -27,6 +27,12 @@ class AdminCategoryDeleteAPIView(APIView):
     def delete(self, request: Request, category_id: int) -> Response:
         target_category = get_object_or_404(QuestionCategories, id=category_id)
 
+        if target_category.name == "일반질문" and target_category.parent is None:
+            return Response(
+                {"error_detail": "기본 카테고리는 삭제할 수 없습니다."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
         result = AdminCategoryDeleteService.execute_delete(target_category)
 
         serializer = AdminCategoryDeleteSerializer(result)

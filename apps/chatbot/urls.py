@@ -1,17 +1,20 @@
 from django.urls import path
 
 from . import views
-from .views import ChatbotCompletionView
+from .views import (
+    ChatbotCompletionView,
+    ChatbotSessionDetailView,
+    ChatbotSessionListCreateView,
+    ChatbotSupportCreateView,
+)
 
 app_name = "chatbot"
 
 urlpatterns = [
-    # 챗봇 세션 생성
-    path("sessions", views.ChatbotSessionCreateView.as_view(), name="session-create"),
-    # 대화시작, 내역 조회
-    path(
-        "<str:bot_type>/sessions/<str:session_id>/completions",
-        views.ChatbotCompletionView.as_view(),
-        name="chatbot-completions",
-    ),
+    # QnA 챗봇
+    path("sessions", views.ChatbotSessionListCreateView.as_view(), name="session-list-create"),
+    path("sessions/<int:session_id>", views.ChatbotSessionDetailView.as_view(), name="session-detail"),
+    path("sessions/<int:session_id>/completions", views.ChatbotCompletionView.as_view(), name="session-completions"),
+    # CS 챗봇
+    path("support", views.ChatbotSupportCreateView.as_view(), name="session-support-create"),
 ]

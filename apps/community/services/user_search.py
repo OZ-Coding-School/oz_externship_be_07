@@ -12,16 +12,9 @@ class UserSearchService:
         redis_conn = RedisClient.get_index(name="user_search")
 
         start = f"[{nickname}".encode("utf-8")
-
-        nickname_bytes = nickname.encode("utf-8")
-        nickname_bytes_list = list(nickname_bytes)
-        last_byte = nickname_bytes_list.pop()
-
-        if last_byte < 255:
-            end_payload = bytes(nickname_bytes_list + [last_byte + 1])
-            end = b"(" + end_payload
-        else:
-            end = f"[{nickname}\xff\xff".encode("utf-8")
+        next_char = chr(ord(nickname[-1]) + 1)
+        end_str = nickname[:-1] + next_char
+        end = f"({end_str}".encode("utf-8")
 
         list_results = redis_conn.execute_command("ZRANGEBYLEX", "user_search", start, end)
 

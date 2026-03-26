@@ -49,23 +49,16 @@ class CommentViewSet(
             OpenApiExample(
                 name="댓글 목록 예시",
                 description="정상응답 데이터",
-                value={
-                    "count": 254,
-                    "next": "https://api.example.com/posts/1/comments/?page=3",
-                    "previous": "https://api.example.com/posts/1/comments/?page=1",
-                    "results": [
-                        {
-                            "id": 1,
-                            "content": "첫 테스트",
-                            "author": {
-                                "id": 1,
-                                "nickname": "테스트",
-                                "profile_img_url": "https://example.com/uploads/images/users/profiles/image.png",
-                            },
-                            "created_at": "2026-03-10T17:00:000",
-                            "updated_at": "2026-03-10T18:00:000",
-                        },
-                    ],
+                value= {
+                    "id": 1,
+                    "content": "첫 테스트",
+                    "author": {
+                        "id": 1,
+                        "nickname": "테스트",
+                        "profile_img_url": "https://example.com/uploads/images/users/profiles/image.png",
+                    },
+                    "created_at": "2026-03-10T17:00:000",
+                    "updated_at": "2026-03-10T18:00:000",
                 },
                 response_only=True,
             )

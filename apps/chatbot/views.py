@@ -3,6 +3,7 @@ from typing import Any
 
 from django.conf import settings
 from django.http import StreamingHttpResponse
+from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -25,6 +26,7 @@ from apps.chatbot.serializers import (
     ChatbotSessionListSerializer,
 )
 from apps.chatbot.services.chatbot_service import ChatbotService
+from apps.questions.models import Questions
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,8 @@ class ChatbotSessionListCreateView(APIView):
         """[QnA] 새로운 챗봇 세션 생성"""
         question_id = request.data.get("question_id")
 
+        get_object_or_404(Questions, id=question_id)
+
         session, created = ChatbotSessions.objects.get_or_create(
             user=request.user,
             question_id=question_id,
@@ -70,10 +74,10 @@ class ChatbotSessionListCreateView(APIView):
             },
         )
 
-        return Response(
-            {"session_id": session.id, "created": created, "message": "세션이 준비되었습니다."},
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
+        serializer = ChatbotSessionListSerializer(session)
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+
+        return Response(serializer.data, status=status_code)
 
 
 # QnA 챗봇 세션 단일 조회 및 삭제
@@ -136,6 +140,11 @@ class ChatbotCompletionView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         user_message = serializer.validated_data["message"]
+
+        api_key = getattr(settings, "GEMINI_API_KEY", None)
+
+        if not api_key:
+            return Response({"error": "AI API 키가 설정되지 않았습니다."}, status=500)
 
         try:
             # ChatbotService의 Generator 받아옴

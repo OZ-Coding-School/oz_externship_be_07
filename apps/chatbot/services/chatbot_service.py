@@ -90,7 +90,7 @@ class ChatbotService:
             formatted_contents = [
                 {
                     "role": "user" if message_row.role == MessageRoleChoices.USER.value else "model",
-                    "part": [{"text": message_row.message}],
+                    "parts": [{"text": message_row.message}],
                 }
                 for message_row in history_qs
             ]
@@ -99,7 +99,11 @@ class ChatbotService:
             response = client.models.generate_content_stream(
                 model=target_model,
                 contents=cast(list[Any], formatted_contents),
-                config={"system_instruction": system_instruction, "temperature": 0.7},
+                config={
+                    "system_instruction": system_instruction,
+                    "temperature": 0.7,
+                    "max_output_tokens": 1024,
+                },
             )
 
             # chunk 합체

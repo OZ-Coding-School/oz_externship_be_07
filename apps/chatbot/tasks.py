@@ -18,16 +18,14 @@ def delete_expired_chatbot_sessions() -> int:
     time_threshold = timezone.now() - timedelta(hours=1)
 
     # 1시간 넘은 세션들 필터링
-    expired_sessions = ChatbotSessions.objects.filter(created_at__lt=time_threshold)
-
-    # 삭제될 세션 개수 파악
+    expired_sessions = ChatbotSessions.objects.filter(updated_at__lt=time_threshold)
     count = expired_sessions.count()
 
     if count > 0:
         #  일괄 삭제 (Cascade 옵션, completions 도 같이 날라감)
         expired_sessions.delete()
-        logger.info(f"🧹 [Celery] 3시간 경과 챗봇 세션 {count}개 정리 완료.")
+        logger.info(f" [Celery] 1시간 경과 챗봇 세션 {count}개 정리 완료.")
     else:
-        logger.info("🧹 [Celery] 삭제할 만료 챗봇 세션이 없습니다.")
+        logger.info(" [Celery] 삭제할 만료 챗봇 세션이 없습니다.")
 
     return count

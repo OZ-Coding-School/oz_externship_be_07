@@ -1,160 +1,160 @@
-import json
+from __future__ import annotations
+
 import logging
-from typing import Any, Iterator, cast
+from typing import TYPE_CHECKING, Any, Iterator, cast
 
 from django.conf import settings
 from django.core.cache import caches
+from django.db.models import QuerySet
 from google import genai
 
 from apps.chatbot.choices import BotTypeChoices, ChatbotModelChoices, MessageRoleChoices
+from apps.chatbot.exceptions import ChatbotThrottledError, SessionNotFoundError
+from apps.chatbot.models import ChatbotCompletions, ChatbotSessions
 from apps.chatbot.prompts.support_context import SUPPORT_SYSTEM_PROMPT
 
 chatbot_cache = caches["chatbot"]
 logger = logging.getLogger(__name__)
 
 
-class ChatbotCacheManager:
-    """Redis 키 생성 및 관리 전담 클래스"""
-
-    @staticmethod
-    def get_history_key(bot_type: str, session_id: str) -> str:
-        return f"chatbot:{bot_type.lower()}:history:{session_id}"
-
-    @staticmethod
-    def get_limit_key(bot_type: str, session_id: str) -> str:
-        return f"chatbot:{bot_type.lower()}:limit:{session_id}"
-
-    @staticmethod
-    def get_usage_count_key(bot_type: str, session_id: str) -> str:
-        """횟수 제한용 Redis 키 생성"""
-        return f"chatbot:{bot_type.lower()}:count:{session_id}"
-
-
 class ChatbotService:
-    SESSION_TTL = 3600
-
-    @staticmethod
-    def check_and_increment_limit(bot_type: str, session_id: str, user: Any) -> None:
-        """
-        QnA 챗봇에 질문한 횟수를 확인하고 1 증가 (최대 3회)
-        """
-
-        count_key = ChatbotCacheManager.get_usage_count_key(bot_type, session_id)
-        current_count = caches["chatbot"].get(count_key, 0)
-
-        if current_count >= 3:
-            raise PermissionError(
-                "질문 가능 횟수(3회)를 초과했습니다. 궁금하신 사항은 질문 게시판을 이용하시기 바랍니다."
-            )
-
-        caches["chatbot"].set(count_key, current_count + 1, timeout=3600)
 
     @classmethod
-    def get_ephemeral_history(cls, bot_type: str, session_id: str) -> list[dict[str, Any]]:
-        """
-        Redis에서 특정 세션의 대화 내역 조회
-        """
-        history_key = ChatbotCacheManager.get_history_key(bot_type, session_id)
-        return chatbot_cache.get(history_key) or []
-
-    @classmethod
-    def delete_ephemeral_session(cls, bot_type: str, session_id: str) -> None:
-        """
-        특정 봇 타입의 특정 세션 Redis 캐시 초기화
-        """
-        history_key = ChatbotCacheManager.get_history_key(bot_type, session_id)
-        caches["chatbot"].delete(history_key)
-
-    @classmethod
-    def delete_ephemeral_history(cls, bot_type: str, session_id: str) -> None:
-        history_key = ChatbotCacheManager.get_history_key(bot_type, session_id)
-        caches["chatbot"].delete(history_key)
-
-    @staticmethod
-    def _append_to_history(bot_type: str, session_id: str, role: str, message: str) -> None:
-        """
-        Redis 대화내역에 새로운 메시지 추가 (내부용)
-        """
-        history_key = ChatbotCacheManager.get_history_key(bot_type, session_id)
-        history = chatbot_cache.get(history_key, [])
-        history.append({"role": role, "message": message})
-        chatbot_cache.set(history_key, history, timeout=ChatbotService.SESSION_TTL)
-
-    @classmethod
-    def stream_ephemeral_response(
-        cls,
-        session_id: str,
-        user_message: str,
-        api_key: str,
-        bot_type: str = "qna",
-    ) -> Iterator[str]:
-        """
-        [통합 챗봇 스트리밍] bot_type에 따라 프롬프트를 다르게 주입, 스트리밍 반환.
-            - bot_type="qna": 기존 대화 내역 사용,
-            - bot_type="support": CS 전용 시스템 프롬프트 주입
-        """
-        ChatbotService._append_to_history(bot_type, session_id, MessageRoleChoices.USER.value, user_message)
-
-        target_model = ChatbotModelChoices.GEMINI_2_0_FLASH_LITE_001.value
-        system_instruction = "당신은 오즈코딩스쿨의 전문적인 프로그래밍 QnA 튜터입니다."
-
-        if bot_type == BotTypeChoices.SUPPORT.value:
-            system_instruction = (
-                SUPPORT_SYSTEM_PROMPT if SUPPORT_SYSTEM_PROMPT else "오즈코딩스쿨의 친절한 상담원입니다."
-            )
-            target_model = ChatbotModelChoices.GEMINI_2_5_FLASH.value
-
-        raw_history = ChatbotService.get_ephemeral_history(bot_type, session_id)
-        formatted_contents = [
-            {
-                "role": "user" if msg["role"] == MessageRoleChoices.USER.value else "model",
-                "parts": [{"text": msg["message"]}],
-            }
-            for msg in raw_history
-        ]
+    def stream_stateless_response(cls, user_message: str, api_key: str) -> Iterator[str]:
+        """[CS 상담 전용]DB저장 없는 1회성 스트리밍"""
 
         client = genai.Client(api_key=api_key)
-        full_response = ""
 
-        history_key = ChatbotCacheManager.get_history_key(bot_type, session_id)
-        history = caches["chatbot"].get(history_key, [])
+        target_model = ChatbotModelChoices.GEMINI_2_5_FLASH_LITE.value
 
-        history.append({"role": "user", "message": user_message})  # 유저 메시지 저장
-        full_ai_response = ""
+        system_instruction = SUPPORT_SYSTEM_PROMPT if SUPPORT_SYSTEM_PROMPT else "오즈코딩스쿨의 친절한 상담원입니다."
+
+        formatted_contents = [{"role": "user", "parts": [{"text": user_message}]}]
+
+        # AI 스트리밍 요청
+        response = client.models.generate_content_stream(
+            model=target_model,
+            contents=cast(list[Any], formatted_contents),
+            config={"system_instruction": system_instruction, "temperature": 0.7},
+        )
+
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
+
+    @classmethod
+    def get_session_or_404(cls, session_id: int) -> ChatbotSessions:
+        """DB에서 세션을 가져오고 없으면 404 에러 발생"""
+        try:
+            return ChatbotSessions.objects.get(id=session_id)
+        except ChatbotSessions.DoesNotExist:
+            raise SessionNotFoundError(f"ID가 {session_id}인 세션을 찾을 수 없습니다.")
+
+    @classmethod
+    def stream_db_response(cls, session_id: int, user_message: str, api_key: str) -> Iterator[str]:
+        """[QnA 전용] DB 기반 스트리밍 + Redis Lock 구조"""
+
+        # 클라 초기화
+        client = genai.Client(api_key=api_key)
+
+        # Redis Lock 체크로 동시 요청 방지
+        lock_key = f"chatbot:responding:{session_id}"
+        if chatbot_cache.get(lock_key):
+            raise ChatbotThrottledError("AI가 아직 이전 질문에 답변중입니다. 잠시 후 다시 시도해주세요.")
+
+        chatbot_cache.set(lock_key, True, timeout=180)
 
         try:
-            logger.info(f"Chatbot Start | Type: {bot_type} | Model: {target_model}")
+            # 세션 조회, 유저 질문 db에 먼저 저장
+            session = cls.get_session_or_404(session_id)
+            ChatbotCompletions.objects.create(
+                session=session,
+                message=user_message,
+                role=MessageRoleChoices.USER.value,
+            )
+            # 프폼프트에 들어갈 질문글 컨텍스트 가져오기
+            question_title = session.question.title if session.question else "일반 프로그래밍 질문"
+            question_content = session.question.content if session.question else ""
 
+            # 모델 및 프롬프트 세팅
+            target_model = session.using_model
+            system_instruction = f"""
+            당신은 오즈코딩스쿨의 전문적인 프로그래밍 QnA 튜터입니다.
+            아래는 사용자가 현재 열람 중인 질문글 정보입니다.
+            [제목]: {question_title}
+            [내용]: {question_content}
+            """
+
+            # 이전 대화 내역 DB에서 불러오기
+            history_qs = session.completions.all().order_by("created_at")
+            formatted_contents = [
+                {
+                    "role": "user" if message_row.role == MessageRoleChoices.USER.value else "model",
+                    "part": [{"text": message_row.message}],
+                }
+                for message_row in history_qs
+            ]
+
+            # AI 스트리밍 요청
             response = client.models.generate_content_stream(
                 model=target_model,
                 contents=cast(list[Any], formatted_contents),
-                config={
-                    "system_instruction": system_instruction,
-                    "temperature": 0.7,
-                    "max_output_tokens": 1000,  # 무한 루프 방지용 토큰 제한
-                },
+                config={"system_instruction": system_instruction, "temperature": 0.7},
             )
 
+            # chunk 합체
+            final_ai_message = ""
             for chunk in response:
-                # 차단되었거나 텍스트가 없는 경우 처리
-                text = getattr(chunk, "text", None)
-                if text:
-                    full_response += text
-                    payload = {"role": MessageRoleChoices.ASSISTANT.value, "content": text}
-                    yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                if chunk.text:
+                    final_ai_message += chunk.text
+                    yield chunk.text
 
-            # AI 응답 저장
-            if full_response.strip():
-                ChatbotService._append_to_history(
-                    bot_type, session_id, MessageRoleChoices.ASSISTANT.value, full_response
-                )
-            else:
-                raise ValueError("AI가 빈 응답을 생성했습니다.")
+            # 스트리밍 끝, AI답변을 db에 저장
+            ChatbotCompletions.objects.create(
+                session=session, message=final_ai_message, role=MessageRoleChoices.ASSISTANT.value
+            )
 
         except Exception as e:
-            logger.error(f"[챗봇 스트리밍 에러 ({bot_type})]: {e}", exc_info=True)  # exc_info로 트레이스백 포함
-            error_payload = {"error_detail": "현재 서비스 이용이 원활하지 않습니다. 잠시 후 다시 시도해 주세요."}
-            yield f"data: {json.dumps(error_payload, ensure_ascii=False)}\n\n"
+            logger.error(f"Chatbot Service Error: {e}")
+            raise e
 
         finally:
-            yield "data: [DONE]\n\n"
+            # 어쨋든 lock 키 삭제
+            chatbot_cache.delete(lock_key)
+
+    @classmethod
+    def get_user_sessions(cls, user: Any) -> QuerySet[ChatbotSessions]:
+        """[조회] 특정 유저의 챗봇 세션 목록 조회 최신순"""
+        return ChatbotSessions.objects.filter(user=user).order_by("-updated_at")
+
+    @classmethod
+    def get_session_detail_for_user(cls, session_id: int, user: Any) -> ChatbotSessions:
+        """[조회] 특정 유저의 단일 세션과 대화내역 조회"""
+        try:
+            qs: QuerySet[ChatbotSessions] = ChatbotSessions.objects.prefetch_related("completions")
+            return qs.get(id=session_id, user=user)
+        except ChatbotSessions.DoesNotExist:
+            raise SessionNotFoundError("접근 권한이 없거나, 존재하지 않는 세션입니다.")
+
+    @classmethod
+    def delete_session(cls, session_id: int, user: Any) -> None:
+        """[삭제] 세션 삭제, 대화 내역 자동 삭제(Cascade)"""
+        session = cls.get_session_detail_for_user(session_id, user)
+        session.delete()
+
+
+# class ChatbotCacheManager:
+#     """Redis 키 생성 및 관리 전담 클래스"""
+
+#     @staticmethod
+#     def get_history_key(bot_type: str, session_id: int) -> str:
+#         return f"chatbot:{bot_type.lower()}:history:{session_id}"
+
+#     @staticmethod
+#     def get_limit_key(bot_type: str, session_id: int) -> str:
+#         return f"chatbot:{bot_type.lower()}:limit:{session_id}"
+
+#     @staticmethod
+#     def get_usage_count_key(bot_type: str, session_id: int) -> str:
+#         """횟수 제한용 Redis 키 생성"""
+#         return f"chatbot:{bot_type.lower()}:count:{session_id}"

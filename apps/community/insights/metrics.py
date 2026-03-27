@@ -19,13 +19,16 @@ def _pct(numerator: int, denominator: int) -> float:
         return 0.0
     return round((numerator / denominator) * INSIGHT_RATE_SCALE, 2)
 
+
 def _avg(total: int, denominator: int) -> float:
     if denominator <= 0:
         return 0.0
     return round(total / denominator, 2)
 
+
 def _delta(current_value: float | int, previous_value: float | int) -> float:
     return round(float(current_value) - float(previous_value), 2)
+
 
 def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
     post_user_ids = set(
@@ -54,6 +57,7 @@ def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
         ).values_list("user_id", flat=True)
     )
     return post_user_ids | comment_user_ids | like_user_ids
+
 
 def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dict[str, Any]:
     cutoff_24h = window_end - timedelta(hours=24)
@@ -162,6 +166,7 @@ def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dic
     }
 
     return {"metrics": metrics, "raw": raw}
+
 
 def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
     now = snapshot_at or timezone.now()

@@ -1,77 +1,43 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from rest_framework import serializers
 
-from apps.questions.models import Questions
+from apps.chatbot.models import ChatbotCompletions, ChatbotSessions
 
-from .models import ChatbotCompletions, ChatbotSessions
-
-
-class ChatbotSessionCreateSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    """
-    AI 챗봇 세션 생성 <POST>
-    /api/v1/chatbot/sessions
-
-    """
-
-    user: serializers.HiddenField = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    question: serializers.PrimaryKeyRelatedField[Questions] = serializers.PrimaryKeyRelatedField(
-        queryset=Questions.objects.all(),
-    )
-
-    class Meta:
-        model = ChatbotSessions
-        fields = ["user", "question", "title", "using_model"]
+if TYPE_CHECKING:
+    from django.db.models import Model
 
 
-class SupportSessionCreateSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    """
-    AI 시스템 챗봇 세션 생성 <POST>
-    /api/v1/chatbot/support
-    """
-
-    class Meta:
-        model = ChatbotSessions
-        fields = ["title", "using_model"]
-
-
-class ChatbotSessionReadSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    """
-    <GET> //api/v1/chatbot/sessions (목록 조회)
-    <POST> 세션 성공 성공 시 응답
-    """
-
-    question_id: serializers.IntegerField = serializers.IntegerField(
-        source="question.id", read_only=True, allow_null=True
-    )
-
-    class Meta:
-        model = ChatbotSessions
-        fields = ["id", "user_id", "question_id", "title", "using_model", "created_at", "updated_at"]
-        read_only_fields = fields
-
-
-class ChatbotCompletionRequestSerializer(serializers.Serializer[Any]):
-    """
-    <POST> /api/v1/chatbot/sessions/{session_id}/completions
-    사용자 메시지 입력 검증용
-    """
-
-    message: serializers.CharField = serializers.CharField(
-        required=True,
-        allow_blank=False,
-        error_messages={"required": "이 필드는 필수 항목입니다.", "blank": "이 필드는 blank 일 수 없습니다."},
-    )
-
-
-class ChatbotCompletionReadSerializer(serializers.ModelSerializer[ChatbotCompletions]):
-    """
-    <GET> /api/v1/chatbot/sessions/{session_id}/completions
-    챗봇 대화 내역 조회 응답용
-    """
-
+class ChatbotCompletionSerializer(serializers.ModelSerializer[ChatbotCompletions]):
     class Meta:
         model = ChatbotCompletions
-        fields = ["id", "message", "role", "created_at"]
-        read_only_fields = fields
+        fields = ["id", "role", "message", "created_at"]
+
+
+# 세션 목록 조회
+class ChatbotSessionListSerializer(serializers.ModelSerializer[ChatbotSessions]):
+    class Meta:
+        model = ChatbotSessions
+        fields = ["id", "title", "question", "using_model", "created_at", "updated_at"]
+
+
+# 특정 세션 + 대화 내역 '전체' 조회용
+class ChatbotSessionDetailSerializer(serializers.ModelSerializer[ChatbotSessions]):
+    # 역참조 (related_name="completions")를 이용해 채팅 내역 싹 가져오기
+    completions = ChatbotCompletionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ChatbotSessions
+        fields = ["id", "title", "question", "using_model", "created_at", "completions"]
+
+
+class ChatbotCompletionRequestSerializer(serializers.Serializer[dict[str, str]]):
+    """유저가 AI에게 보내는 채팅 메시지를 검증"""
+
+    message = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        help_text="AI에게 보낼 질문 메시지",
+    )

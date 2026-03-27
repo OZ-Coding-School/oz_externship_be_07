@@ -2,6 +2,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab  # type: ignore
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -298,3 +299,11 @@ CELERY_TIMEZONE = "Asia/Seoul"
 CELERY_ENABLE_UTC = False
 
 CELERY_RESULT_EXPIRES = 3600
+
+CELERY_BEAT_SCHEDULE = {
+    "cleanup-expired-chatbot-sessions": {
+        "task": "apps.chatbot.tasks.delete_expired_chatbot_sessions",
+        # 매시간 0분마다 실행 (예: 1시 정각, 2시 정각 ...)
+        "schedule": crontab(minute=0),
+    },
+}

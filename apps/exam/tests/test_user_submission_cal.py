@@ -265,16 +265,18 @@ class ExamSubmissionAPITest(APITestCase):
         내부적으로 json.loads()가 정상 작동하는지 테스트
         """
         # 1. snapshot을 문자열로 직렬화하여 새로운 Deployment 생성
-        string_snapshot = json.dumps([
-            {
-                "id": 99,
-                "question": "JSON 문자열 스냅샷 테스트",
-                "type": "SINGLE_CHOICE",
-                "options": ["A", "B"],
-                "answer": ["A"],
-                "point": 10
-            }
-        ])
+        string_snapshot = json.dumps(
+            [
+                {
+                    "id": 99,
+                    "question": "JSON 문자열 스냅샷 테스트",
+                    "type": "SINGLE_CHOICE",
+                    "options": ["A", "B"],
+                    "answer": ["A"],
+                    "point": 10,
+                }
+            ]
+        )
 
         str_deployment = ExamDeployment.objects.create(
             cohort=self.cohort,
@@ -290,9 +292,7 @@ class ExamSubmissionAPITest(APITestCase):
         submission_data = {
             "deployment_id": str_deployment.pk,
             "started_at": "2026-03-27T14:00:00Z",
-            "answers": [
-                {"question_id": 99, "type": "SINGLE_CHOICE", "submitted_answer": "A"}
-            ]
+            "answers": [{"question_id": 99, "type": "SINGLE_CHOICE", "submitted_answer": "A"}],
         }
 
         # 3. API 호출 (서비스 레이어의 _calculate_score 내부에서 isinstance(snapshot, str) 로직이 실행됨)

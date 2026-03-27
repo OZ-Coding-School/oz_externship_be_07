@@ -113,6 +113,7 @@ def build_post_detail_response(post: Post) -> dict[str, Any]:
             "nickname": post.author.nickname,
             "profile_img_url": post.author.profile_img_url,
         },
+        "category_id": post.category.id,
         "category_name": post.category.name,
         "title": post.title,
         "content": post_detail_file_presigned_url(post.content),

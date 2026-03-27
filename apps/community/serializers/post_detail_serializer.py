@@ -24,6 +24,7 @@ class PostDetailSerializer(serializers.Serializer[dict[str, Any]]):
     id = serializers.IntegerField()
     title = serializers.CharField()
     author = PostDetailAuthorSerializer()
+    category_id = serializers.IntegerField()
     category_name = serializers.CharField()
     content = serializers.CharField()
     view_count = serializers.IntegerField()

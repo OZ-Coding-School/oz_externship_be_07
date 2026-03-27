@@ -1,6 +1,5 @@
-from typing import Any
-
 from datetime import date, datetime, timedelta
+from typing import Any
 
 from django.test import TestCase
 from django.utils import timezone

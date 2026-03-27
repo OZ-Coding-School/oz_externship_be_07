@@ -57,10 +57,10 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
     def test_warning_blocks_good(self) -> None:
         """WARNING이 하나라도 있으면 GOOD으로 판정되지 않는지 검증"""
         payload = self._payload(
-            response=35.0,   # WARNING(<40, >=20)
+            response=35.0,  # WARNING(<40, >=20)
             comments=2.0,
             activation=20.0,
-            new_users=0,    # core 3/4 가능해도 WARNING 존재 시 GOOD 금지
+            new_users=0,  # core 3/4 가능해도 WARNING 존재 시 GOOD 금지
             top1=50.0,
         )
         report = build_insight_report(payload)

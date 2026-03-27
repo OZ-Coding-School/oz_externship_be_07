@@ -5,10 +5,13 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.permissions import IsStaffUser
+from apps.users.choices import WithdrawalReason
 from apps.users.serializers.admin.user_withdrawal_analytics import (
     WithdrawalMonthlyReasonStatsSerializer,
     WithdrawalReasonCountSerializer,
@@ -20,6 +23,8 @@ from apps.users.services.admin.user_withdrawal_analytics import (
 
 
 class BaseWithdrawalAnalyticsAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsStaffUser]
+
     def get_dates(self, request: Request) -> tuple[datetime, datetime]:
         from_date_str = request.query_params.get("from_date")
         to_date_str = request.query_params.get("to_date")
@@ -82,6 +87,9 @@ class WithdrawalMonthlyReasonStatsAPIView(BaseWithdrawalAnalyticsAPIView):
 
         if not reason:
             raise ValidationError({"reason": "필수 파라미터입니다."})
+
+        if reason not in WithdrawalReason.values:
+            raise ValidationError({"reason": f"'{reason}'은(는) 유효하지 않은 탈퇴 사유 코드입니다."})
 
         from_date, to_date = self.get_dates(request)
         data = get_monthly_withdrawal_reason_stats_service(reason, from_date, to_date)

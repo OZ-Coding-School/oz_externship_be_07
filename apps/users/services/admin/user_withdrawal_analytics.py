@@ -4,7 +4,8 @@ from typing import Any
 from django.db.models import Case, CharField, Count, F, Value, When
 from django.db.models.functions import TruncMonth
 
-from apps.users.models.models import Withdrawal, WithdrawalReason
+from apps.users.choices import WithdrawalReason
+from apps.users.models.models import Withdrawal
 
 
 def get_withdrawal_reason_counts_service(from_date: datetime, to_date: datetime) -> dict[str, Any]:

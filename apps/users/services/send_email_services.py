@@ -18,9 +18,6 @@ class SendEmailService:
         return "".join(secrets.choice(charset) for _ in range(6))
 
     def send_email_code(self, email: str) -> None:
-        if not User.objects.filter(email=email).exists():
-            raise APIException("가입되지 않은 이메일 주소입니다.")
-
         limit_key = f"limit:{email}"
         verify_key = f"verify:{email}"
 

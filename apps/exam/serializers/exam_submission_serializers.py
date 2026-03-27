@@ -17,13 +17,32 @@ def _build_questions(
     include_blank_count: bool = False,
     include_number: bool = False,
 ) -> list[dict[str, Any]]:
-    answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
+
+    answer_map = {}
+    for ans in submitted_answers:
+        try:
+            q_id_key = int(ans.get("question_id", 0))
+            answer_map[q_id_key] = ans.get("submitted_answer")
+        except (ValueError, TypeError):
+            continue
+
     questions = []
 
     for index, q_info in enumerate(snapshot, start=1):
-        q_id = q_info.get("id")
+        raw_q_id = q_info.get("id")
+        if raw_q_id is None:
+            continue
+        q_id = int(raw_q_id)
+
         submitted_val = answer_map.get(q_id)
         correct_val = q_info.get("answer")
+
+        is_correct = False
+        if submitted_val == correct_val:
+            is_correct = True
+        elif isinstance(correct_val, list) and len(correct_val) > 0:
+            if submitted_val == correct_val[0]:
+                is_correct = True
 
         raw_options = q_info.get("options", q_info.get("options_json"))
         if isinstance(raw_options, str):
@@ -41,7 +60,7 @@ def _build_questions(
             "answer": correct_val,
             "point": q_info.get("point", 0),
             "explanation": q_info.get("explanation", ""),
-            "is_correct": correct_val == submitted_val,
+            "is_correct": is_correct,
             "submitted_answer": submitted_val,
         }
 

@@ -19,12 +19,13 @@ def _pct(numerator: int, denominator: int) -> float:
         return 0.0
     return round((numerator / denominator) * INSIGHT_RATE_SCALE, 2)
 
-
 def _avg(total: int, denominator: int) -> float:
     if denominator <= 0:
         return 0.0
     return round(total / denominator, 2)
 
+def _delta(current_value: float | int, previous_value: float | int) -> float:
+    return round(float(current_value) - float(previous_value), 2)
 
 def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
     post_user_ids = set(
@@ -54,34 +55,29 @@ def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
     )
     return post_user_ids | comment_user_ids | like_user_ids
 
+def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dict[str, Any]:
+    cutoff_24h = window_end - timedelta(hours=24)
 
-def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
-    now = snapshot_at or timezone.now()
-    since = now - timedelta(days=INSIGHT_WINDOW_DAYS)
-    cutoff_24h = now - timedelta(hours=24)
-
-    # 7일 내 공개 게시글(사용자에게 보이는 게시글만)
     window_posts = Post.objects.filter(
         is_visible=True,
         category__status=True,
-        created_at__gte=since,
-        created_at__lt=now,
+        created_at__gte=window_start,
+        created_at__lt=window_end,
     )
     posts_7d_visible_count = window_posts.count()
 
-    # 게시글당 평균 댓글/좋아요
     comments_7d_on_visible_posts_count = PostComment.objects.filter(
         post__in=window_posts,
-        created_at__gte=since,
-        created_at__lt=now,
+        created_at__gte=window_start,
+        created_at__lt=window_end,
     ).count()
 
+    # 7일 내 게시글에 대한 현재 활성 좋아요 스냅샷(좋아요 이벤트 수 아님)
     current_active_likes_on_7d_posts_count = PostLike.objects.filter(
         post__in=window_posts,
         is_liked=True,
-    ).count()  # 7일 내 게시글에 대한 "현재 활성 좋아요 상태" 스냅샷(좋아요 이벤트 수 아님)
+    ).count()
 
-    # 24시간 응답률(분모: 작성 후 24h가 지난 게시글)
     eligible_posts = window_posts.filter(created_at__lt=cutoff_24h)
     eligible_posts_24h_count = eligible_posts.count()
 
@@ -96,7 +92,6 @@ def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
         .count()
     )
 
-    # 카테고리별 게시글 수(활성 카테고리만)
     category_rows = list(
         PostCategory.objects.filter(status=True)
         .annotate(
@@ -104,8 +99,8 @@ def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
                 "posts",
                 filter=Q(
                     posts__is_visible=True,
-                    posts__created_at__gte=since,
-                    posts__created_at__lt=now,
+                    posts__created_at__gte=window_start,
+                    posts__created_at__lt=window_end,
                 ),
             )
         )
@@ -118,19 +113,20 @@ def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
     category_post_total = sum(active_category_post_counts.values())
     top_category_count = max(active_category_post_counts.values(), default=0)
 
-    # 유저 활성화/정착
+    activity_user_ids = _activity_user_ids(window_start, window_end)
+    community_active_users_count_7d = len(activity_user_ids)
+
     lms_active_users_count = User.objects.filter(
         is_active=True,
         status=UserStatus.ACTIVATED,
+        created_at__lt=window_end,
     ).count()
 
-    activity_user_ids = _activity_user_ids(since, now)
-    community_active_users_count_7d = len(activity_user_ids)
-
+    # 정착률 분모: 상태 필터 없이 해당 기간 가입자 전체
     new_user_ids = set(
         User.objects.filter(
-            created_at__gte=since,
-            created_at__lt=now,
+            created_at__gte=window_start,
+            created_at__lt=window_end,
         ).values_list("id", flat=True)
     )
     new_users_count = len(new_user_ids)
@@ -159,10 +155,56 @@ def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
         "category_post_total": category_post_total,
     }
 
+    return {"metrics": metrics, "raw": raw}
+
+def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
+    now = snapshot_at or timezone.now()
+    current_start = now - timedelta(days=INSIGHT_WINDOW_DAYS)
+    current_end = now
+
+    previous_end = current_start
+    previous_start = previous_end - timedelta(days=INSIGHT_WINDOW_DAYS)
+
+    current = _compute_window_metrics(current_start, current_end)
+    previous = _compute_window_metrics(previous_start, previous_end)
+
+    # delta = current - previous
+    deltas = {
+        "user_activation_rate_delta": _delta(
+            current["metrics"]["user_activation_rate"],
+            previous["metrics"]["user_activation_rate"],
+        ),
+        "new_user_settlement_rate_delta": _delta(
+            current["metrics"]["new_user_settlement_rate"],
+            previous["metrics"]["new_user_settlement_rate"],
+        ),
+        "new_users_count_delta": _delta(
+            current["metrics"]["new_users_count"],
+            previous["metrics"]["new_users_count"],
+        ),
+        "avg_comments_per_post_delta": _delta(
+            current["metrics"]["avg_comments_per_post"],
+            previous["metrics"]["avg_comments_per_post"],
+        ),
+        "avg_likes_per_post_delta": _delta(
+            current["metrics"]["avg_likes_per_post"],
+            previous["metrics"]["avg_likes_per_post"],
+        ),
+        "response_rate_within_24h_delta": _delta(
+            current["metrics"]["response_rate_within_24h"],
+            previous["metrics"]["response_rate_within_24h"],
+        ),
+        "top1_category_share_delta": _delta(
+            current["metrics"]["top1_category_share"],
+            previous["metrics"]["top1_category_share"],
+        ),
+    }
+
     return {
         "snapshot_at": now,
-        "window_start": since,
-        "window_end": now,
-        "metrics": metrics,
-        "raw": raw,
+        "current_window": {"start": current_start, "end": current_end},
+        "previous_window": {"start": previous_start, "end": previous_end},
+        "current": current,
+        "previous": previous,
+        "deltas": deltas,
     }

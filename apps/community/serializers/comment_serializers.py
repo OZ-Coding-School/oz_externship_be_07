@@ -7,11 +7,12 @@ from apps.community.models.comment_model import PostComment
 
 class PostCommentSerializer(serializers.ModelSerializer["PostComment"]):
     nickname = serializers.ReadOnlyField(source="author.nickname")
+    profile_img_url = serializers.ReadOnlyField(source="author.profile_img_url")
 
     class Meta:
         model = PostComment
-        fields = ["id", "post", "author", "nickname", "content", "created_at", "updated_at"]
-        read_only_fields = ["id", "post", "author", "nickname", "created_at", "updated_at"]
+        fields = ["id", "post", "author", "nickname", "profile_img_url", "content", "created_at", "updated_at"]
+        read_only_fields = ["id", "post", "author", "nickname", "profile_img_url", "created_at", "updated_at"]
 
 
 class PostCommentUserSearchSerializer(serializers.Serializer[Any]):

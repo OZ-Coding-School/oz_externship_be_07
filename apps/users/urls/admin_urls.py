@@ -1,6 +1,10 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from apps.users.views.admin.admin_user_search_views import (
+    AdminUserSearchDetailView,
+    AdminUserSearchListView,
+)
 from apps.users.views.admin.user_analytics import (
     AdminSignupTrendAPIView,
     AdminWithdrawalTrendAPIView,
@@ -49,4 +53,6 @@ urlpatterns = [
         name="admin-student-enrollment-trends",
     ),
     path("", include(router.urls)),
+    path("accounts", AdminUserSearchListView.as_view(), name="admin-user-list"),
+    path("accounts/<int:account_id>", AdminUserSearchDetailView.as_view(), name="admin-user-detail"),
 ]

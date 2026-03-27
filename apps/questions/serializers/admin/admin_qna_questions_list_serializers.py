@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from rest_framework import serializers
 
@@ -36,7 +36,7 @@ class AdminAnswerListSerializer(serializers.ModelSerializer[Any]):
 class AdminQuestionDetailSerializer(serializers.ModelSerializer[Any]):
     question_id = serializers.IntegerField(source="id")
     images = serializers.SerializerMethodField()
-    author = AdminQuestionAuthorSerializer(source="*", read_only=True)
+    author = AdminQuestionAuthorSerializer(source="author")
     has_answer = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
@@ -57,8 +57,8 @@ class AdminQuestionDetailSerializer(serializers.ModelSerializer[Any]):
             "answers",
         ]
 
-    def get_images(self, obj: Questions) -> List[str]:
+    def get_images(self, obj: Questions) -> list[str]:
         return [img.img_url for img in obj.images.all()]
 
     def get_has_answer(self, obj: Questions) -> bool:
-        return obj.answers.exists()
+        return bool(obj.answers.all())

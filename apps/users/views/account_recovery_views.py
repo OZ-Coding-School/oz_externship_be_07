@@ -18,6 +18,7 @@ User = get_user_model()
 
 class AccountRecoveryView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(
         summary="계정 복구 API",

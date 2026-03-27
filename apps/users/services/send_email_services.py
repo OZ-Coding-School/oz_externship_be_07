@@ -2,11 +2,14 @@ import secrets
 import string
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.mail import send_mail
 from rest_framework.exceptions import APIException, Throttled
 
 from apps.users.constants import RATE_LIMIT_TIMEOUT, VERIFICATION_CODE_TIMEOUT
+
+User = get_user_model()
 
 
 class SendEmailService:
@@ -15,6 +18,9 @@ class SendEmailService:
         return "".join(secrets.choice(charset) for _ in range(6))
 
     def send_email_code(self, email: str) -> None:
+        if not User.objects.filter(email=email).exists():
+            raise APIException("가입되지 않은 이메일 주소입니다.")
+
         limit_key = f"limit:{email}"
         verify_key = f"verify:{email}"
 

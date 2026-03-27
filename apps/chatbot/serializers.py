@@ -1,43 +1,38 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from rest_framework import serializers
 
 from apps.chatbot.models import ChatbotCompletions, ChatbotSessions
 
-if TYPE_CHECKING:
-    from django.db.models import Model
+
+class ChatbotSessionSerializer(serializers.ModelSerializer[ChatbotSessions]):
+    """세션 생성/목록 조회 응답용 — 명세서 필드: id, user, question_id, title, using_model, created_at, updated_at"""
+
+    question_id = serializers.IntegerField(source="question.id", read_only=True, allow_null=True)
+
+    class Meta:
+        model = ChatbotSessions
+        fields = ["id", "user", "question_id", "title", "using_model", "created_at", "updated_at"]
+        read_only_fields = fields
 
 
 class ChatbotCompletionSerializer(serializers.ModelSerializer[ChatbotCompletions]):
+    """대화내역 조회 응답용 — 명세서 필드: id, message, role, created_at"""
+
     class Meta:
         model = ChatbotCompletions
-        fields = ["id", "role", "message", "created_at"]
-
-
-# 세션 목록 조회
-class ChatbotSessionListSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    class Meta:
-        model = ChatbotSessions
-        fields = ["id", "title", "question", "using_model", "created_at", "updated_at"]
-
-
-# 특정 세션 + 대화 내역 '전체' 조회용
-class ChatbotSessionDetailSerializer(serializers.ModelSerializer[ChatbotSessions]):
-    # 역참조 (related_name="completions")를 이용해 채팅 내역 싹 가져오기
-    completions = ChatbotCompletionSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = ChatbotSessions
-        fields = ["id", "title", "question", "using_model", "created_at", "completions"]
+        fields = ["id", "message", "role", "created_at"]
+        read_only_fields = fields
 
 
 class ChatbotCompletionRequestSerializer(serializers.Serializer[dict[str, str]]):
-    """유저가 AI에게 보내는 채팅 메시지를 검증"""
+    """유저가 AI에게 보내는 채팅 메시지 검증"""
 
     message = serializers.CharField(
         required=True,
         allow_blank=False,
-        help_text="AI에게 보낼 질문 메시지",
+        error_messages={
+            "required": "이 필드는 필수 항목입니다.",
+            "blank": "이 필드는 blank일 수 없습니다.",
+        },
     )

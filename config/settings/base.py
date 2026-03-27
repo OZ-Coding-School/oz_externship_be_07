@@ -237,15 +237,16 @@ SPECTACULAR_SETTINGS = {
         "filter": True,  # True 이면 Swagger UI에서 'Filter by Tag' 검색이 가능합니다
     },
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
-    "SECURITY": [
-        {
+    "SECURITY": [{"BearerAuth": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
             "BearerAuth": {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
             }
         }
-    ],
+    },
 }
 
 # SMTP Settings

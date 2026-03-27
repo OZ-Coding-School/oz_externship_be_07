@@ -1,12 +1,18 @@
+import datetime
+from typing import Any
 from unittest.mock import MagicMock, patch
 
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+User = get_user_model()
+
 
 class SendEmailTest(APITestCase):
+    user: Any
     url: str
     valid_email: str
 
@@ -14,6 +20,15 @@ class SendEmailTest(APITestCase):
     def setUpTestData(cls) -> None:
         cls.url = reverse("users:email-send")
         cls.valid_email = "user@example.com"
+        cls.user = User.objects.create_user(
+            email=cls.valid_email,
+            password="oldPassword123!",
+            name="테스터",
+            nickname="tester",
+            phone_number="010-1111-2223",
+            gender="M",
+            birthday=datetime.date(1995, 5, 5),
+        )
 
     def setUp(self) -> None:
         self.client = APIClient()

@@ -13,6 +13,7 @@ class EmailSendView(APIView):
     permission_classes = [AllowAny]
     serializer_class = EmailSendSerializer
     service = SendEmailService()
+    authentication_classes = []
 
     @extend_schema(
         summary="이메일 인증 발송 API",

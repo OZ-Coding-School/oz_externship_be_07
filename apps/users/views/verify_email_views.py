@@ -14,6 +14,7 @@ class EmailVerifyView(APIView):
     permission_classes = [AllowAny]
     serializer_class = EmailVerifySerializer
     service = EmailVerifyService()
+    authentication_classes = []
 
     @extend_schema(
         summary="이메일 인증 확인 API",

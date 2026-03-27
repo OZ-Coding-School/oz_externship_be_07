@@ -58,6 +58,7 @@ def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
 def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dict[str, Any]:
     cutoff_24h = window_end - timedelta(hours=24)
 
+    # 게시글
     window_posts = Post.objects.filter(
         is_visible=True,
         category__status=True,
@@ -66,18 +67,20 @@ def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dic
     )
     posts_7d_visible_count = window_posts.count()
 
+    # 댓글
     comments_7d_on_visible_posts_count = PostComment.objects.filter(
         post__in=window_posts,
         created_at__gte=window_start,
         created_at__lt=window_end,
     ).count()
 
-    # 7일 내 게시글에 대한 현재 활성 좋아요 스냅샷(좋아요 이벤트 수 아님)
+    # 좋아요: 7일 내 게시글에 대한 현재 활성 좋아요 스냅샷(좋아요 이벤트 수 아님)
     current_active_likes_on_7d_posts_count = PostLike.objects.filter(
         post__in=window_posts,
         is_liked=True,
     ).count()
 
+    # 24시간 응답률
     eligible_posts = window_posts.filter(created_at__lt=cutoff_24h)
     eligible_posts_24h_count = eligible_posts.count()
 
@@ -92,6 +95,7 @@ def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dic
         .count()
     )
 
+    # 카테고리 분포
     category_rows = list(
         PostCategory.objects.filter(status=True)
         .annotate(
@@ -113,6 +117,7 @@ def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dic
     category_post_total = sum(active_category_post_counts.values())
     top_category_count = max(active_category_post_counts.values(), default=0)
 
+    # 유저 활성화/정착률
     activity_user_ids = _activity_user_ids(window_start, window_end)
     community_active_users_count_7d = len(activity_user_ids)
 
@@ -132,6 +137,7 @@ def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dic
     new_users_count = len(new_user_ids)
     active_new_users_count_7d = len(activity_user_ids & new_user_ids)
 
+    # 최종결과 조립
     metrics = {
         "user_activation_rate": _pct(community_active_users_count_7d, lms_active_users_count),
         "new_user_settlement_rate": _pct(active_new_users_count_7d, new_users_count),

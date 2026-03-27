@@ -45,13 +45,24 @@ class ExamUserSubmissionService:
         if isinstance(snapshot, str):
             snapshot = json.loads(snapshot)
 
-        answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
+        answer_map = {
+            int(ans.get("question_id")): ans.get("submitted_answer")
+            for ans in submitted_answers if ans.get("question_id") is not None
+        }
+
         total_score = 0
         correct_count = 0
 
         for q_info in snapshot:
             q_id = q_info.get("id")
             correct_val = q_info.get("answer")
+
+            if isinstance(correct_val, str):
+                try:
+                    correct_val = json.loads(correct_val)
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
             submitted_val = answer_map.get(q_id)
 
             if submitted_val == correct_val:

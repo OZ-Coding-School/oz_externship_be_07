@@ -17,13 +17,27 @@ def _build_questions(
     include_blank_count: bool = False,
     include_number: bool = False,
 ) -> list[dict[str, Any]]:
-    answer_map = {ans.get("question_id"): ans.get("submitted_answer") for ans in submitted_answers}
+
+    answer_map = {}
+    for ans in submitted_answers:
+        try:
+            q_id_key = int(ans.get("question_id", 0))
+            answer_map[q_id_key] = ans.get("submitted_answer")
+        except (ValueError, TypeError):
+            continue
+
     questions = []
 
     for index, q_info in enumerate(snapshot, start=1):
         q_id = q_info.get("id")
         submitted_val = answer_map.get(q_id)
         correct_val = q_info.get("answer")
+
+        if isinstance(correct_val, str):
+            try:
+                correct_val = json.loads(correct_val)
+            except (json.JSONDecodeError, ValueError):
+                pass
 
         raw_options = q_info.get("options", q_info.get("options_json"))
         if isinstance(raw_options, str):

@@ -44,10 +44,12 @@ def get_student_enrollment_trend_service(interval: str) -> dict[str, Any]:
         period_str = current.strftime(date_format)
         count = stats_dict.get(period_str, 0)
 
-        items.append({
-            "period": period_str,
-            "count": count,
-        })
+        items.append(
+            {
+                "period": period_str,
+                "count": count,
+            }
+        )
 
         total += count
 

@@ -198,6 +198,15 @@ def compute_metrics(snapshot_at: datetime | None = None) -> dict[str, Any]:
             current["metrics"]["top1_category_share"],
             previous["metrics"]["top1_category_share"],
         ),
+        # 활성화율 델타 해석 보조용 raw 변화량(분자/분모)
+        "community_active_users_count_7d_delta": _delta(
+            current["raw"]["community_active_users_count_7d"],
+            previous["raw"]["community_active_users_count_7d"],
+        ),
+        "lms_active_users_count_delta": _delta(
+            current["raw"]["lms_active_users_count"],
+            previous["raw"]["lms_active_users_count"],
+        ),
     }
 
     return {

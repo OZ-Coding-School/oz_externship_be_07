@@ -142,7 +142,7 @@ def update_post(instance: Post, title: str, content: str, category: PostCategory
     instance.content = content
     instance.category = category
 
-    instance.save()
+    instance.save(update_fields=["title", "content", "category", "updated_at"])
 
 
 def post_delete(instance: Post) -> None:

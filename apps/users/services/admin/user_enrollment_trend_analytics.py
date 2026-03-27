@@ -1,6 +1,6 @@
 from typing import Any
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 from django.db.models import Count, Func
 from django.db.models.functions import TruncMonth, TruncYear
 from django.utils import timezone

@@ -59,7 +59,7 @@ class AdminCategoryAPIView(APIView):
             OpenApiParameter(name="category_type", description="카테고리 타입 (large, medium, small)", type=str),
         ],
         responses={200: AdminQnaCategoryListSerializer(many=True)},
-        tags=["Admin - Questions"],
+        tags=["Admin_qna"],
     )
     def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         search_keyword = request.query_params.get("search_keyword")
@@ -87,7 +87,7 @@ class AdminCategoryAPIView(APIView):
         summary="관리자 카테고리 등록",
         request=AdminCategorySerializer,
         responses={201: AdminCategorySerializer},
-        tags=["Admin - Questions"],
+        tags=["Admin_qna"],
     )
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         serializer = AdminCategorySerializer(data=request.data)

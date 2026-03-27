@@ -39,7 +39,7 @@ class AdminUserWithdrawalAPIView(APIView):
             403: OpenApiResponse(description="권한이 없습니다."),
             404: OpenApiResponse(description="회원탈퇴 정보를 찾을 수 없습니다."),
         },
-        tags=["admin_accounts"],
+        tags=["Admin_accounts"],
     )
     def get(self, request: Request, withdrawal_id: int | None = None) -> Response:
         if withdrawal_id is not None:
@@ -75,7 +75,7 @@ class AdminUserWithdrawalAPIView(APIView):
             403: OpenApiResponse(description="권한이 없습니다."),
             404: OpenApiResponse(description="회원탈퇴 정보를 찾을 수 없습니다."),
         },
-        tags=["admin_accounts"],
+        tags=["Admin_accounts"],
     )
     def delete(self, request: Request, withdrawal_id: int) -> Response:
         try:

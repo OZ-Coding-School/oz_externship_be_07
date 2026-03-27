@@ -43,7 +43,7 @@ class DeploymentCheckCodeAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["exams"],
+        tags=["Exams"],
         summary="쪽지시험 참가 코드 검증 API",
         request=DeploymentCheckCodeRequestSerializer,
         responses={

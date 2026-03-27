@@ -20,7 +20,7 @@ class AdminUserWithdrawalRestoreAPIView(APIView):
 
     @extend_schema(
         summary="어드민 페이지 탈퇴 취소 API",
-        tags=["admin_accounts"],
+        tags=["Admin_accounts"],
         responses={
             200: OpenApiResponse(description="회원 탈퇴 취소처리 완료."),
             401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),

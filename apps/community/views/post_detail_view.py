@@ -59,7 +59,7 @@ class PostDetailAPIView(APIView):
     @extend_schema(
         summary="게시글 상세 조회",
         description="게시글에 대한 상세한 정보 조회",
-        tags=["posts"],
+        tags=["Posts"],
         responses={
             200: PostDetailSerializer,
             404: PostDetailNotFoundSerializer,
@@ -106,7 +106,7 @@ class PostDetailAPIView(APIView):
     @extend_schema(
         summary="게시글 좋아요 반영",
         description="게시글 좋아요 상태를 반영합니다.",
-        tags=["posts"],
+        tags=["Posts"],
         request=PostLikeRequestSerializer,
         responses={
             200: PostLikeResponseSerializer,
@@ -144,7 +144,7 @@ class PostDetailAPIView(APIView):
     @extend_schema(
         summary="게시글 수정",
         description="게시글을 수정합니다.",
-        tags=["posts"],
+        tags=["Posts"],
         request=PostUpdateSerializer,
         examples=[value_list["200"], value_list["400"], value_list["401"], value_list["403"], value_list["404"]],
         responses={
@@ -177,7 +177,7 @@ class PostDetailAPIView(APIView):
     @extend_schema(
         summary="게시글 삭제",
         description="게시글을 삭제합니다.",
-        tags=["posts"],
+        tags=["Posts"],
         examples=[value_list["200_delete"], value_list["400"], value_list["401"], value_list["403"], value_list["404"]],
         responses={
             200: OpenApiTypes.OBJECT,

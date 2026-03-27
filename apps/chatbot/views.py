@@ -34,7 +34,7 @@ class ChatbotSessionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["chatbot"],
+        tags=["Chatbot"],
         summary="QnA 챗봇 세션 목록 조회",
         parameters=[
             OpenApiParameter(name="cursor", type=str, description="커서"),
@@ -50,7 +50,7 @@ class ChatbotSessionListCreateView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
     @extend_schema(
-        tags=["chatbot"],
+        tags=["Chatbot"],
         summary="QnA 챗봇 세션 생성",
         request=ChatbotCompletionRequestSerializer,
         responses={
@@ -80,7 +80,7 @@ class ChatbotSessionDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["chatbot"],
+        tags=["Chatbot"],
         summary="QnA 챗봇 세션 삭제",
         responses={
             204: OpenApiResponse(description="삭제 성공"),
@@ -101,7 +101,7 @@ class ChatbotCompletionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["chatbot"],
+        tags=["Chatbot"],
         summary="QnA 챗봇 대화내역 조회",
         parameters=[
             OpenApiParameter(name="cursor", type=str, description="커서"),
@@ -121,7 +121,7 @@ class ChatbotCompletionListCreateView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
     @extend_schema(
-        tags=["chatbot"],
+        tags=["Chatbot"],
         summary="QnA 챗봇 대화 생성 (SSE 스트리밍)",
         request=ChatbotCompletionRequestSerializer,
         responses={
@@ -170,7 +170,7 @@ class ChatbotSupportView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["chatbot"],
+        tags=["Chatbot"],
         summary="CS 상담 챗봇 (1회성 스트리밍)",
         request=ChatbotCompletionRequestSerializer,
         responses={

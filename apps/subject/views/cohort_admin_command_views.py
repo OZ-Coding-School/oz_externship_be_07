@@ -34,7 +34,7 @@ class AdminCohortCreateAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
-        tags=["admin_students"],
+        tags=["Admin_students"],
         summary="어드민 페이지 기수 등록 API",
         request=CohortCreateRequestSerializer,
         responses={
@@ -86,7 +86,7 @@ class AdminCohortUpdateAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated, IsSubjectStaffUser]
 
     @extend_schema(
-        tags=["admin_students"],
+        tags=["Admin_students"],
         summary="어드민 페이지 기수 정보 수정 API",
         request=CohortUpdateRequestSerializer,
         responses={

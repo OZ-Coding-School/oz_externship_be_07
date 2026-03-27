@@ -23,7 +23,7 @@ class AdminCategoryCreateAPIView(APIView):
         summary="관리자 카테고리 등록",
         request=AdminCategorySerializer,
         responses={201: AdminCategorySerializer},
-        tags=["Admin - Questions"],
+        tags=["Admin_qna"],
     )
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         serializer = AdminCategorySerializer(data=request.data)

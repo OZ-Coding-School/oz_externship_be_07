@@ -20,7 +20,7 @@ class AdminUserRoleUpdateAPIView(APIView):
 
     @extend_schema(
         summary="어드민 페이지 권한 변경 API",
-        tags=["admin_accounts"],
+        tags=["Admin_accounts"],
         request=AdminUserRoleUpdateSerializer,
         responses={
             200: OpenApiResponse(description="권한이 변경되었습니다."),

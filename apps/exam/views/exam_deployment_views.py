@@ -30,7 +30,7 @@ class DeploymentListAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["exams"],
+        tags=["Exams"],
         summary="쪽지시험 목록 조회 API",
         parameters=[DeploymentListQuerySerializer],
         responses={
@@ -76,7 +76,7 @@ class DeploymentDetailAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["exams"],
+        tags=["Exams"],
         summary="쪽지시험 응시 문제풀이 API",
         responses={
             200: OpenApiResponse(response=DeploymentDetailResponseSerializer, description="OK"),
@@ -127,7 +127,7 @@ class DeploymentStatusAPIView(SubjectBaseAPIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["exams"],
+        tags=["Exams"],
         summary="쪽지시험 상태 확인 API",
         responses={
             200: OpenApiResponse(response=DeploymentStatusResponseSerializer, description="OK"),

@@ -34,7 +34,7 @@ class CommentViewSet(
     @extend_schema(
         summary="댓글 목록",
         description="특정 게시글의 모든 댓글 list",
-        tags=["posts"],
+        tags=["Posts"],
         parameters=[
             OpenApiParameter(
                 name="ordering",
@@ -86,7 +86,7 @@ class CommentViewSet(
     @extend_schema(
         summary="댓글 작성",
         description="댓글 작성 api",
-        tags=["posts"],
+        tags=["Posts"],
         examples=[
             OpenApiExample(
                 name="댓글 등록 예시",
@@ -119,7 +119,7 @@ class CommentViewSet(
     @extend_schema(
         summary="댓글 수정",
         description="댓글 수정 api",
-        tags=["posts"],
+        tags=["Posts"],
         examples=[
             OpenApiExample(
                 name="댓글 수정 성공 예시",
@@ -150,7 +150,7 @@ class CommentViewSet(
 
     @extend_schema(
         summary="댓글 삭제",
-        tags=["posts"],
+        tags=["Posts"],
         responses={
             200: OpenApiResponse(description="댓글이 삭제되었습니다"),
             401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),

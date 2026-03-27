@@ -46,7 +46,7 @@ class AdminExamDeploymentCreateAPIView(AdminExamDeploymentCommandBaseAPIView):
     permission_classes = [IsAuthenticated, CanCreateExamDeployment]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 생성 API",
         request=ExamDeploymentCreateSerializer,
         responses={
@@ -107,7 +107,7 @@ class AdminExamDeploymentUpdateAPIView(AdminExamDeploymentCommandBaseAPIView):
     permission_classes = [IsAuthenticated, CanUpdateExamDeployment]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 정보 수정 API",
         request=ExamDeploymentUpdateSerializer,
         responses={
@@ -149,7 +149,7 @@ class AdminExamDeploymentStatusUpdateAPIView(AdminExamDeploymentCommandBaseAPIVi
     permission_classes = [IsAuthenticated, CanUpdateExamDeploymentStatus]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 on/off API",
         request=ExamDeploymentStatusUpdateSerializer,
         responses={
@@ -203,7 +203,7 @@ class AdminExamDeploymentDeleteAPIView(AdminExamDeploymentCommandBaseAPIView):
     permission_classes = [IsAuthenticated, CanDeleteExamDeployment]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 삭제 API",
         responses={
             200: ExamDeploymentDeleteResponseSerializer,

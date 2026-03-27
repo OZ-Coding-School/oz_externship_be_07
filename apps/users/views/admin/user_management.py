@@ -20,7 +20,7 @@ class AdminUserDeleteAPIView(APIView):
 
     @extend_schema(
         summary="어드민 페이지 사용자 삭제 API",
-        tags=["admin_accounts"],
+        tags=["Admin_accounts"],
         responses={
             200: OpenApiResponse(description="유저 데이터가 삭제되었습니다."),
             401: OpenApiResponse(description="자격 인증 데이터가 제공되지 않았습니다."),

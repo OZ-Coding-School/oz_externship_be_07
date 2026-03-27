@@ -60,7 +60,7 @@ class WithdrawalReasonCountAPIView(BaseWithdrawalAnalyticsAPIView):
             OpenApiParameter("to_date", type=OpenApiTypes.DATE, description="종료일 (YYYY-MM-DD)"),
         ],
         responses={200: WithdrawalReasonCountSerializer},
-        tags=["admin_accounts"],
+        tags=["Admin_accounts"],
     )
     def get(self, request: Request) -> Response:
         from_date, to_date = self.get_dates(request)
@@ -80,7 +80,7 @@ class WithdrawalMonthlyReasonStatsAPIView(BaseWithdrawalAnalyticsAPIView):
             OpenApiParameter("to_date", type=OpenApiTypes.DATE, description="종료일 (YYYY-MM-DD)"),
         ],
         responses={200: WithdrawalMonthlyReasonStatsSerializer},
-        tags=["admin_accounts"],
+        tags=["Admin_accounts"],
     )
     def get(self, request: Request) -> Response:
         reason = request.query_params.get("reason")

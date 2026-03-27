@@ -27,7 +27,7 @@ class AnswerViewSet(viewsets.GenericViewSet[Any]):
 
     # 답변 등록
     @extend_schema(
-        tags=["Answers"],
+        tags=["Qna"],
         request=AnswerCreateUpdateSerializer,
         responses={
             201: OpenApiResponse(description="답변 등록 성공"),
@@ -58,7 +58,7 @@ class AnswerViewSet(viewsets.GenericViewSet[Any]):
 
     # 답변 수정
     @extend_schema(
-        tags=["Answers"],
+        tags=["Qna"],
         request=AnswerCreateUpdateSerializer,
         responses={
             200: OpenApiResponse(description="답변 수정 성공"),
@@ -90,7 +90,7 @@ class AnswerViewSet(viewsets.GenericViewSet[Any]):
 
     # 답변 채택
     @extend_schema(
-        tags=["Answers"],
+        tags=["Qna"],
         responses={
             200: OpenApiResponse(description="채택 성공"),
             401: OpenApiResponse(description="로그인한 사용자만 답변을 채택할 수 있습니다."),
@@ -121,7 +121,7 @@ class AnswerViewSet(viewsets.GenericViewSet[Any]):
 
     # 답변 댓글 등록
     @extend_schema(
-        tags=["Answers"],
+        tags=["Qna"],
         request=CommentCreateSerializer,
         responses={
             201: OpenApiResponse(description="댓글 등록 성공"),

@@ -64,6 +64,7 @@ class PostDetailAPIViewTest(TestCase):
         self.assertEqual(data["title"], self.post.title)
         self.assertEqual(data["content"], self.post.content)
         self.assertEqual(data["author"]["id"], self.user.id)
+        self.assertEqual(data["category_id"], self.category.id)
         self.assertEqual(data["category_name"], self.category.name)
         for field in ("view_count", "like_count", "created_at", "updated_at"):
             self.assertIn(field, data)

@@ -74,6 +74,7 @@ class PostDetailAPIView(APIView):
                         "nickname": "testuser",
                         "profile_img_url": "https://example.com/profile.png",
                     },
+                    "category_id": "1",
                     "category_name": "자유게시판",
                     "title": "테스트 게시글",
                     "content": "게시글 내용입니다.",

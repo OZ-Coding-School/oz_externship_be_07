@@ -113,6 +113,7 @@ def build_post_detail_response(post: Post) -> dict[str, Any]:
             "nickname": post.author.nickname,
             "profile_img_url": post.author.profile_img_url,
         },
+        "category_id": post.category.id,
         "category_name": post.category.name,
         "title": post.title,
         "content": post_detail_file_presigned_url(post.content),
@@ -141,7 +142,7 @@ def update_post(instance: Post, title: str, content: str, category: PostCategory
     instance.content = content
     instance.category = category
 
-    instance.save()
+    instance.save(update_fields=["title", "content", "category", "updated_at"])
 
 
 def post_delete(instance: Post) -> None:

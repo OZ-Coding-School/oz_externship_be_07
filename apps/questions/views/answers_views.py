@@ -162,6 +162,7 @@ class AIAnswerViewSet(viewsets.GenericViewSet[Any]):
 
     # AI 답변 생성/조회
     @extend_schema(
+        tags=["Qna"],
         summary="AI 답변 생성/조회",
         responses={
             201: OpenApiResponse(description="AI 답변 생성/조회 성공"),

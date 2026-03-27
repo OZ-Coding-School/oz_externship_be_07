@@ -1,81 +1,70 @@
-from typing import Any, Mapping, cast
+from datetime import date
+from typing import Any
 
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from apps.questions.models import Answers, QuestionCategories, Questions
-from apps.questions.serializers.admin.admin_qna_questions_serializers import (
-    AdminQuestionListSerializer,  # 추가
-)
+from apps.questions.models import QuestionCategories
 from apps.users.models.models import User
 
 
-class AdminQuestionListTests(TestCase):
-    category: QuestionCategories
-    parent_category: QuestionCategories
-    question: Questions
-    url: str
+class AdminCategoryTests(TestCase):
     admin_user: User
+    parent_category: QuestionCategories
+    url: str
+    client: APIClient
 
     @classmethod
     def setUpTestData(cls) -> None:
-        # 1. 관리자 생성
         cls.admin_user = User.objects.create_superuser(
-            email="admin@test.com",
-            password="admin123",
-            name="test",
-            nickname="test",
-            phone_number="010-1111-2222",
-            gender="MALE",
-            birthday="1970-01-01",
-            role="ADMIN",
-            is_staff=True,
-            is_superuser=True,
+            email="admin@admin.com",
+            password="password123",
+            birthday=date(1990, 1, 1),
         )
+        cls.parent_category = QuestionCategories.objects.create(name="기본 카테고리")
 
-        cls.parent_category = QuestionCategories.objects.create(name="부모")
-        cls.category = QuestionCategories.objects.create(name="자식", parent=cls.parent_category)
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.admin_user)
+        try:
+            self.url = reverse("admin_questions:admin_category_create")
+        except Exception:
+            self.url = "/api/v1/admin/qna/categories/"
 
-        cls.question = Questions.objects.create(
-            title="Test Question",
-            content="이 본문은 50자가 확실히 넘어야 시리얼라이저의 프리뷰 로직이 실행됩니다. " * 10,
-            author=cls.admin_user,
-            category=cls.category,
-        )
-
-        Answers.objects.create(
-            questions=cls.question,
-            author=cls.admin_user,
-            content="Test Answer",
-        )
-        cls.url = reverse("admin_questions:admin-question-list")
-
-    def test_get_question_list_full_coverage(self) -> None:
-        client = APIClient()
-        client.force_authenticate(user=self.admin_user)
-
-        params_answered: Mapping[str, Any] = {
-            "page": 1,
-            "size": 10,
-            "search_keyword": "Test",
-            "answer_status": "answered",
-            "sort": "latest",
+    def test_create_category_success(self) -> None:
+        data: dict[str, Any] = {
+            "name": "신규 카테고리",
+            "category_type": "medium",
+            "parent_id": self.parent_category.id,
         }
-        client.get(self.url, data=params_answered, format="json")
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        params_unanswered: Mapping[str, Any] = {
-            "page": 1,
-            "size": 10,
-            "answer_status": "unanswered",
-            "sort": "oldest",
+    def test_create_category_required_fields_missing(self) -> None:
+        data: dict[str, Any] = {
+            "category_type": "medium",
+            "parent_id": self.parent_category.id,
         }
-        response = cast(Response, client.get(self.url, data=params_unanswered, format="json"))
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        serializer = AdminQuestionListSerializer(instance=self.question)
-        _ = serializer.data
+    def test_create_category_parent_not_found(self) -> None:
+        non_existent_id = self.parent_category.id + 9999
+        data: dict[str, Any] = {
+            "name": "하위 카테고리",
+            "category_type": "small",
+            "parent_id": non_existent_id,
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("questions", response.data)
+    def test_create_category_duplicate_name(self) -> None:
+        data: dict[str, Any] = {
+            "name": "기본 카테고리",
+            "category_type": "large",
+            "parent_id": None,
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)

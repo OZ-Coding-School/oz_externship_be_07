@@ -18,6 +18,12 @@ def _build_questions(
     include_number: bool = False,
 ) -> list[dict[str, Any]]:
 
+    if isinstance(snapshot, str):
+        try:
+            snapshot = json.loads(snapshot)
+        except json.JSONDecodeError:
+            snapshot = []
+
     answer_map = {}
     for ans in submitted_answers:
         try:

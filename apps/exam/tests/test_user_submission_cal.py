@@ -258,3 +258,56 @@ class ExamSubmissionAPITest(APITestCase):
         multiple_choice_q = next(q for q in questions if q["id"] == 13)
         self.assertEqual(multiple_choice_q["submitted_answer"], ["useState", "useEffect", "useRef"])
         self.assertEqual(multiple_choice_q["type"], "MULTIPLE_CHOICE")
+
+    def test_create_submission_with_string_snapshot(self) -> None:
+        """
+        questions_snapshot_json이 리스트가 아닌 JSON 문자열(str)일 때
+        내부적으로 json.loads()가 정상 작동하는지 테스트
+        """
+        # 1. snapshot을 문자열로 직렬화하여 새로운 Deployment 생성
+        string_snapshot = json.dumps([
+            {
+                "id": 99,
+                "question": "JSON 문자열 스냅샷 테스트",
+                "type": "SINGLE_CHOICE",
+                "options": ["A", "B"],
+                "answer": ["A"],
+                "point": 10
+            }
+        ])
+
+        str_deployment = ExamDeployment.objects.create(
+            cohort=self.cohort,
+            exam=self.exam,
+            duration_time=30,
+            access_code="string_test",
+            open_at="2025-01-01T00:00:00Z",
+            close_at="2026-12-31T23:59:59Z",
+            questions_snapshot_json=string_snapshot,  # 여기서 문자열 주입
+        )
+
+        # 2. 해당 Deployment로 제출 데이터 구성
+        submission_data = {
+            "deployment_id": str_deployment.pk,
+            "started_at": "2026-03-27T14:00:00Z",
+            "answers": [
+                {"question_id": 99, "type": "SINGLE_CHOICE", "submitted_answer": "A"}
+            ]
+        }
+
+        # 3. API 호출 (서비스 레이어의 _calculate_score 내부에서 isinstance(snapshot, str) 로직이 실행됨)
+        response = self.client.post(self.list_url, submission_data, format="json")
+
+        # 4. 검증: 문자열이었던 snapshot이 정상 파싱되어 점수가 계산되었는지 확인
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["score"], 10)
+        self.assertEqual(response.data["correct_answer_count"], 1)
+
+        # 5. 상세 조회(Serializer의 _build_questions 로직) 검증
+        detail_url = reverse("exam-submission-detail", kwargs={"submission_id": response.data["submission_id"]})
+        detail_response = self.client.get(detail_url)
+
+        # Serializer 내의 _build_questions에서도 isinstance(snapshot, str) 로직이 성공해야 함
+        self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_response.data["questions"][0]["id"], 99)
+        self.assertEqual(detail_response.data["questions"][0]["question"], "JSON 문자열 스냅샷 테스트")

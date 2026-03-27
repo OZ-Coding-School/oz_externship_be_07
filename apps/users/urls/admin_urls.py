@@ -8,6 +8,9 @@ from apps.users.views.admin.user_analytics import (
 from apps.users.views.admin.user_enrollment import AdminUserEnrollmentViewSet
 from apps.users.views.admin.user_enrollment_accept import AdminEnrollmentAcceptAPIView
 from apps.users.views.admin.user_enrollment_reject import AdminEnrollmentRejectAPIView
+from apps.users.views.admin.user_enrollment_trend_analytics import (
+    AdminStudentEnrollmentTrendAPIView,
+)
 from apps.users.views.admin.user_management import AdminUserDeleteAPIView
 from apps.users.views.admin.user_role_change import AdminUserRoleUpdateAPIView
 from apps.users.views.admin.user_search import StudentManagementViewSet
@@ -39,6 +42,11 @@ urlpatterns = [
         "analytics/withdrawal-reasons/stats/monthly/",
         WithdrawalMonthlyReasonStatsAPIView.as_view(),
         name="admin-withdrawal-reasons-monthly-stats",
+    ),
+    path(
+        "student-enrollments/trends/",
+        AdminStudentEnrollmentTrendAPIView.as_view(),
+        name="admin-student-enrollment-trends",
     ),
     path("", include(router.urls)),
 ]

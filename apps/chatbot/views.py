@@ -10,8 +10,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.users.models.models import User
-
 from apps.chatbot.exceptions import (
     ChatbotThrottledError,
     CompletionLimitExceededError,
@@ -25,6 +23,7 @@ from apps.chatbot.serializers import (
 )
 from apps.chatbot.services.chatbot_service import ChatbotService
 from apps.questions.models import Questions
+from apps.users.models.models import User
 
 logger = logging.getLogger(__name__)
 

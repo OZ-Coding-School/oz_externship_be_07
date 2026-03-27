@@ -6,7 +6,9 @@ from apps.questions.views.admin.admin_qna_categories_delete_view import (
 from apps.questions.views.admin.admin_qna_categories_list_view import (
     AdminCategoryAPIView,
 )
-from apps.questions.views.admin.admin_qna_questions_view import AdminQuestionListAPIView
+from apps.questions.views.admin.admin_qna_questions_list_view import (
+    AdminQuestionDetailAPIView,
+)
 
 app_name = "admin_questions"
 
@@ -25,8 +27,8 @@ urlpatterns = [
     ),
     # 3. 질의 응답 조회
     path(
-        "admin/qna/questions/",
-        AdminQuestionListAPIView.as_view(),
+        "admin/qna/questions/<int:question_id>/",
+        AdminQuestionDetailAPIView.as_view(),
         name="admin-question-list",
     ),
 ]

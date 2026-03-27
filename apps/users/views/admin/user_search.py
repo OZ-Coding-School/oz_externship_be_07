@@ -18,7 +18,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 
-@extend_schema(tags=["admin_accounts"])
+@extend_schema(tags=["Admin_accounts"])
 class StudentManagementViewSet(viewsets.ReadOnlyModelViewSet[User]):
     permission_classes = [permissions.IsAdminUser]
     pagination_class = StandardResultsSetPagination

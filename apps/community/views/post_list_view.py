@@ -44,7 +44,7 @@ class PostListAPIView(APIView):
     @extend_schema(
         summary="게시글 조회",
         description="게시글 list",
-        tags=["posts"],
+        tags=["Posts"],
         parameters=[
             OpenApiParameter(name="page", description="페이지 번호", required=False, type=int),
             OpenApiParameter(name="page_size", description="페이지 크기", required=False, type=int),
@@ -124,7 +124,7 @@ class PostListAPIView(APIView):
         )
 
     @extend_schema(
-        tags=["posts"],
+        tags=["Posts"],
         summary="게시글 등록",
         description="커뮤니 게시글 작성 API",
         request=PostCreateSerializer,

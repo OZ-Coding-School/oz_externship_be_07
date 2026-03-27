@@ -44,7 +44,7 @@ class ExamListCreateAPIView(ExamBaseAPIView):
     validation_error_msgs = {"GET": "유효하지 않은 조회 요청입니다.", "POST": "유효하지 않은 시험 생성 요청입니다."}
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 목록 조회",
         description="검색 키워드, 과목 ID, 정렬 조건을 받아 페이지네이션된 시험 목록을 반환합니다.",
         parameters=[
@@ -79,7 +79,7 @@ class ExamListCreateAPIView(ExamBaseAPIView):
         )
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 생성",
         description="새로운 쪽지시험을 생성합니다.",
         request=ExamCreateUpdateSerializer,
@@ -106,7 +106,7 @@ class ExamDetailAPIView(ExamBaseAPIView):
     validation_error_msgs = {"PUT": "유효하지 않은 요청 데이터입니다.", "DELETE": "유효하지 않은 요청입니다."}
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 상세 조회",
         description="시험의 상세 정보와 포함된 질문 리스트를 조회합니다.",
         responses={200: ExamDetailSerializer},
@@ -117,7 +117,7 @@ class ExamDetailAPIView(ExamBaseAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 수정",
         description="기존 쪽지시험 정보를 수정합니다.",
         request=ExamCreateUpdateSerializer,
@@ -138,7 +138,7 @@ class ExamDetailAPIView(ExamBaseAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 삭제",
         description="특정 쪽지시험을 삭제합니다.",
         responses={

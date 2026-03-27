@@ -27,7 +27,7 @@ class AdminQuestionListAPIView(APIView):
             OpenApiParameter(name="sort", type=str, default="latest"),
         ],
         responses={200: AdminQuestionListResponseSerializer},
-        tags=["Admin - Questions"],
+        tags=["Admin_qna"],
     )
     def get(self, request: Request) -> Response:
         try:

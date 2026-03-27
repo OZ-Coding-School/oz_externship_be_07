@@ -17,7 +17,7 @@ class PostCategoryListSpecAPIView(APIView):
 
     @extend_schema(
         operation_id="v1_posts_category_list",
-        tags=["admin_posts"],
+        tags=["Posts"],
         summary="게시글 카테고리 목록 조회 API",
         description=(
             "커뮤니티 게시글 작성 시 선택 가능한 카테고리 목록을 조회합니다. "

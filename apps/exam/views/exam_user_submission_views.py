@@ -24,7 +24,7 @@ class ExamSubmissionAPIView(ExamBaseAPIView):
     validation_error_msgs = {"POST": "유효하지 않은 시험 응시 세션입니다."}
 
     @extend_schema(
-        tags=["exams"],
+        tags=["Exams"],
         summary="쪽지시험 제출 API",
         description="시험 응시를 완료하고 답안을 제출합니다. 제출 시 자동 채점이 이루어집니다.",
         request=ExamSubmissionCreateSerializer,
@@ -55,7 +55,7 @@ class ExamSubmissionDetailAPIView(ExamBaseAPIView):
     validation_error_msgs = {"GET": "유효하지 않은 시험 응시 세션입니다."}
 
     @extend_schema(
-        tags=["exams"],
+        tags=["Exams"],
         summary="쪽지시험 결과 확인 API",
         description="특정 제출 건에 대한 상세 결과와 채점 내역을 조회합니다.",
         responses={

@@ -28,7 +28,7 @@ class UserSearchAPIView(GenericAPIView[Any]):
                 required=True,
             ),
         ],
-        tags=["posts"],
+        tags=["Posts"],
     )
     def get(self, request: Request) -> Response:
         nickname = request.query_params.get("nickname", "")

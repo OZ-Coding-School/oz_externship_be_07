@@ -27,7 +27,7 @@ class ExamQuestionCreateAPIView(ExamBaseAPIView):
     permission_classes = [IsStaffUser, IsAuthenticated]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 문제 등록",
         request=ExamQuestionCreateSerializer,
         responses={
@@ -92,7 +92,7 @@ class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
     parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 문제 수정",
         request=ExamQuestionUpdateSerializer,
         responses={
@@ -152,7 +152,7 @@ class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 문제 삭제",
         responses={
             200: ExamQuestionDeleteResponseSerializer,

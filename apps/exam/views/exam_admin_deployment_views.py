@@ -47,7 +47,7 @@ class AdminExamDeploymentListCreateAPIView(SubjectBaseAPIView):
         return [IsAuthenticated(), CanListExamDeployment()]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 목록 조회 API",
         responses={
             200: ExamDeploymentListResponseSerializer,
@@ -61,7 +61,7 @@ class AdminExamDeploymentListCreateAPIView(SubjectBaseAPIView):
         return view(request._request, *args, **kwargs)
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 생성 API",
         request=ExamDeploymentCreateSerializer,
         responses={
@@ -91,7 +91,7 @@ class AdminExamDeploymentDetailUpdateDeleteAPIView(SubjectBaseAPIView):
         return [IsAuthenticated()]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 상세 조회 API",
         responses={
             200: ExamDeploymentDetailSerializer,
@@ -106,7 +106,7 @@ class AdminExamDeploymentDetailUpdateDeleteAPIView(SubjectBaseAPIView):
         return view(request._request, *args, **kwargs)
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 정보 수정 API",
         request=ExamDeploymentUpdateSerializer,
         responses={
@@ -122,7 +122,7 @@ class AdminExamDeploymentDetailUpdateDeleteAPIView(SubjectBaseAPIView):
         return view(request._request, *args, **kwargs)
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 삭제 API",
         responses={
             200: ExamDeploymentDeleteResponseSerializer,
@@ -143,7 +143,7 @@ class AdminExamDeploymentStatusAPIView(SubjectBaseAPIView):
         return [IsAuthenticated(), CanUpdateExamDeploymentStatus()]
 
     @extend_schema(
-        tags=["admin_exams"],
+        tags=["Admin_exams"],
         summary="쪽지시험 배포 on/off API",
         request=ExamDeploymentStatusUpdateSerializer,
         responses={

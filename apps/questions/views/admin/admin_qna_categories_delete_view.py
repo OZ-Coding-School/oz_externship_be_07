@@ -22,7 +22,7 @@ class AdminCategoryDeleteAPIView(APIView):
         summary="관리자 카테고리 삭제",
         description="카테고리를 삭제하고 관련 질문을 일반질문 카테고리로 이관합니다.",
         responses={200: AdminCategoryDeleteSerializer},
-        tags=["Admin - Questions"],
+        tags=["Admin_qna"],
     )
     def delete(self, request: Request, category_id: int) -> Response:
         target_category = get_object_or_404(QuestionCategories, id=category_id)

@@ -58,6 +58,9 @@ class LoginTest(TestCase):
             user=self.user, reason=WithdrawalReason.OTHER, reason_detail="테스트 탈퇴", due_date=due_date
         )
 
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+
         data = {"email": self.email, "password": self.password}
         response = self.client.post(self.url, data, format="json")
 

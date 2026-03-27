@@ -1,6 +1,5 @@
-from typing import Any, cast
+from typing import Any
 
-from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import serializers, status
@@ -14,11 +13,6 @@ from apps.community.core.permissions import IsSelfOrReadOnly
 from apps.community.models.post_model import Post
 from apps.community.serializers.post_cud_serializers import PostUpdateSerializer
 from apps.community.serializers.post_detail_serializer import PostDetailSerializer
-from apps.community.serializers.post_like_serializer import (
-    PostLikeRequestSerializer,
-    PostLikeResponseSerializer,
-)
-from apps.community.services.post_like_service import set_post_like
 from apps.community.services.post_metric_service import (
     build_post_viewer_key,
     get_merged_post_view_count,
@@ -103,44 +97,6 @@ class PostDetailAPIView(APIView):
 
         serializer = PostDetailSerializer(response_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @extend_schema(
-        summary="게시글 좋아요 반영",
-        description="게시글 좋아요 상태를 반영합니다.",
-        tags=["Posts"],
-        request=PostLikeRequestSerializer,
-        responses={
-            200: PostLikeResponseSerializer,
-            401: OpenApiTypes.OBJECT,
-            404: PostDetailNotFoundSerializer,
-        },
-        examples=[
-            OpenApiExample(
-                name="좋아요 요청",
-                value={"is_liked": True},
-            ),
-            OpenApiExample(
-                name="좋아요 취소 요청",
-                value={"is_liked": False},
-            ),
-        ],
-    )
-    def post(self, request: Request, post_id: int) -> Response:
-
-        request_serializer = PostLikeRequestSerializer(data=request.data)
-        request_serializer.is_valid(raise_exception=True)
-
-        try:
-            dto = set_post_like(
-                post_id=post_id,
-                user_id=cast(int, request.user.id),
-                is_liked=request_serializer.validated_data["is_liked"],
-            )
-        except Post.DoesNotExist as exc:
-            raise Http404 from exc
-
-        response_serializer = PostLikeResponseSerializer(dto)
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="게시글 수정",

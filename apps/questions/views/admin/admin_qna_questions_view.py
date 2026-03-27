@@ -1,4 +1,3 @@
-from django.db.models import Q, QuerySet
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser
@@ -6,7 +5,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.questions.models import Questions
 from apps.questions.serializers.admin.admin_qna_questions_serializers import (
     AdminQuestionListResponseSerializer,
 )
@@ -52,25 +50,6 @@ class AdminQuestionListAPIView(APIView):
             answer_status=answer_status,
             sort=sort,
         )
-
-        queryset: QuerySet[Questions] = Questions.objects.select_related("author", "category").all()
-        if search_keyword:
-            queryset = queryset.filter(
-                Q(title__icontains=search_keyword)
-                | Q(content__icontains=search_keyword)
-                | Q(author__nickname__icontains=search_keyword)
-            )
-        if category_id:
-            queryset = queryset.filter(category_id=category_id)
-        if answer_status == "answered":
-            queryset = queryset.filter(answers__isnull=False).distinct()
-        elif answer_status == "unanswered":
-            queryset = queryset.filter(answers__isnull=True)
-
-        queryset = queryset.order_by("created_at" if sort == "oldest" else "-created_at")
-
-        result["total_count"] = queryset.count()
-        result["questions"] = queryset[(page - 1) * size : page * size]
 
         serializer = AdminQuestionListResponseSerializer(result)
         return Response(serializer.data, status=status.HTTP_200_OK)

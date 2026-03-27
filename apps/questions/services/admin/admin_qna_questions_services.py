@@ -15,9 +15,9 @@ class AdminQuestionService:
         answer_status: str | None = None,
         sort: str | None = "latest",
     ) -> dict[str, Any]:
-        queryset: QuerySet[Questions] = Questions.objects.select_related("author", "category").prefetch_related(
-            "answers"
-        )
+        queryset: QuerySet[Questions] = Questions.objects.select_related(
+            "author", "category", "category__parent"
+        ).prefetch_related("answers")
 
         if search_keyword:
             queryset = queryset.filter(
@@ -47,8 +47,6 @@ class AdminQuestionService:
         return {
             "page": page,
             "size": size,
-            "search_keyword": search_keyword,
-            "category_id": category_id,
-            "answer_status": answer_status,
-            "sort": sort,
+            "total_count": total_count,
+            "questions": questions,
         }

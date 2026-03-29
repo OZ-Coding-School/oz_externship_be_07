@@ -11,6 +11,11 @@ class AdminQuestionAuthorSerializer(serializers.Serializer):  # type: ignore[typ
 
     class Meta:
         ref_name = "AdminQuestionAuthor"
+# 1. 질문 작성자
+class AdminQuestionAuthorSerializer(serializers.Serializer):  # type: ignore[type-arg]
+    profile_img_url = serializers.CharField(read_only=True)
+    nickname = serializers.CharField(read_only=True)
+    course_generation = serializers.CharField(read_only=True)
 
 
 # 2. 답변 작성자
@@ -28,6 +33,7 @@ class AdminAnswerAuthorSerializer(serializers.Serializer):  # type: ignore[type-
 class AdminAnswerListSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     answer_id = serializers.IntegerField(source="id")
     author = AdminAnswerAuthorSerializer(read_only=True)
+    author = AdminQuestionAuthorSerializer(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
 

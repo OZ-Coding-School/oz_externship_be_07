@@ -1,29 +1,27 @@
-from typing import Any
-
 from rest_framework import serializers
 
 from apps.questions.models import Answers, Questions
 
 
-# 1. 질문
-class AdminQuestionAuthorSerializer(serializers.Serializer[Any]):
-    profile_img_url = serializers.CharField(source="author.profile_img_url", read_only=True)
-    nickname = serializers.CharField(source="author.nickname", read_only=True)
-    course_generation = serializers.CharField(source="author.course_generation", read_only=True)
+# 1. 질문 작성자
+class AdminQuestionAuthorSerializer(serializers.Serializer):  # type: ignore[type-arg]
+    profile_img_url = serializers.CharField(read_only=True)
+    nickname = serializers.CharField(read_only=True)
+    course_generation = serializers.CharField(read_only=True)
 
 
-# 2. 답변
-class AdminAnswerAuthorSerializer(serializers.Serializer[Any]):
-    profile_img_url = serializers.CharField(source="author.profile_img_url", read_only=True)
-    nickname = serializers.CharField(source="author.nickname", read_only=True)
-    role_title = serializers.CharField(source="author.role", read_only=True)
-    course_generation = serializers.CharField(source="author.course_generation", read_only=True)
+# 2. 답변 작성자
+class AdminAnswerAuthorSerializer(serializers.Serializer):  # type: ignore[type-arg]
+    profile_img_url = serializers.CharField(read_only=True)
+    nickname = serializers.CharField(read_only=True)
+    role_title = serializers.CharField(source="role", read_only=True)
+    course_generation = serializers.CharField(read_only=True)
 
 
 # 3. 답변 목록
-class AdminAnswerListSerializer(serializers.ModelSerializer[Any]):
+class AdminAnswerListSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     answer_id = serializers.IntegerField(source="id")
-    author = AdminAnswerAuthorSerializer(source="*", read_only=True)
+    author = AdminQuestionAuthorSerializer(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
 
@@ -33,10 +31,10 @@ class AdminAnswerListSerializer(serializers.ModelSerializer[Any]):
 
 
 # 4. 최종 질문 상세
-class AdminQuestionDetailSerializer(serializers.ModelSerializer[Any]):
+class AdminQuestionDetailSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     question_id = serializers.IntegerField(source="id")
     images = serializers.SerializerMethodField()
-    author = AdminQuestionAuthorSerializer(source="author")
+    author = AdminQuestionAuthorSerializer(read_only=True)
     has_answer = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")

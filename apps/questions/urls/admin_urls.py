@@ -6,12 +6,20 @@ from apps.questions.views.admin.admin_qna_categories_delete_view import (
 from apps.questions.views.admin.admin_qna_categories_list_view import (
     AdminCategoryAPIView,
 )
+from apps.questions.views.admin.admin_qna_questions_detail_delete_view import (
+    AdminQuestionDeleteView,
+)
 from apps.questions.views.admin.admin_qna_questions_list_view import (
     AdminQuestionDetailAPIView,
 )
 from apps.questions.views.admin.admin_qna_questions_view import (
     AdminQuestionListAPIView,
 )
+
+
+class AdminQuestionDetailDeleteCombinedView(AdminQuestionDetailAPIView, AdminQuestionDeleteView):
+    pass
+
 
 app_name = "admin_questions"
 
@@ -34,10 +42,10 @@ urlpatterns = [
         AdminQuestionListAPIView.as_view(),
         name="admin-question-list",
     ),
-    # 4. 질의 응답 상세 조회
+    # 4 질의 응답 상세 조회 및 삭제
     path(
         "admin/qna/questions/<int:question_id>/",
-        AdminQuestionDetailAPIView.as_view(),
-        name="admin-question-detail",
+        AdminQuestionDetailDeleteCombinedView.as_view(),
+        name="admin-question-detail-delete",
     ),
 ]

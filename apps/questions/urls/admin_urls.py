@@ -1,5 +1,8 @@
 from django.urls import path
 
+from apps.questions.views.admin.admin_qna_answers_delete_view import (
+    AdminAnswerDeleteAPIView,
+)
 from apps.questions.views.admin.admin_qna_categories_delete_view import (
     AdminCategoryDeleteAPIView,
 )
@@ -47,5 +50,10 @@ urlpatterns = [
         "admin/qna/questions/<int:question_id>/",
         AdminQuestionDetailDeleteCombinedView.as_view(),
         name="admin-question-detail-delete",
+    ),
+    # 5 답변 삭제
+    path(
+        "admin/qna/answers/<int:answer_id>/",
+        AdminAnswerDeleteAPIView.as_view(),
     ),
 ]

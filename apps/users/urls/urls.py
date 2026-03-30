@@ -15,16 +15,18 @@ from apps.users.views.profile_views import (
     ProfileImageView,
     ProfileView,
 )
-from apps.users.views.send_email_views import EmailSendView
-from apps.users.views.send_sms_views import SmsSendView
 from apps.users.views.social_login_views import (
     KakaoLoginCallbackView,
     KakaoLoginStartView,
     NaverLoginCallbackView,
     NaverLoginStartView,
 )
-from apps.users.views.verify_email_views import EmailVerifyView
-from apps.users.views.verify_sms_views import SmsVerifyView
+from apps.users.views.verification_views import (
+    EmailSendView,
+    EmailVerifyView,
+    SmsSendView,
+    SmsVerifyView,
+)
 
 app_name = "users"
 

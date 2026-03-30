@@ -3,14 +3,14 @@ from typing import Any, cast
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiExample, extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.users.choices import UserStatus
+from apps.users.choices import UserStatus, WithdrawalReason
 from apps.users.serializers.profile_serializers import (
     NicknameCheckSerializer,
     ProfileImageSerializer,
@@ -69,8 +69,17 @@ class ProfileView(APIView):
         summary="회원 탈퇴",
         tags=["Accounts"],
         description="회원 탈퇴 사유를 기록하고 유저 상태를 비활성화합니다.",
-        request=UserWithdrawalSerializer,
-        methods=["DELETE"],
+        parameters=[
+            OpenApiParameter(
+                name="reason",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="탈퇴 사유 (필수)",
+                enum=[choice[0] for choice in WithdrawalReason.choices],
+            ),
+            OpenApiParameter(name="reason_detail", type=str, location=OpenApiParameter.QUERY, description="상세 사유"),
+        ],
         responses={
             204: OpenApiExample("성공", value=None),
             400: OpenApiExample(
@@ -81,7 +90,8 @@ class ProfileView(APIView):
         },
     )
     def delete(self, request: Request) -> Response:
-        serializer = UserWithdrawalSerializer(data=request.data)
+        data = request.data if request.data else request.query_params
+        serializer = UserWithdrawalSerializer(data=data)
 
         if serializer.is_valid():
             user = cast(Any, request.user)

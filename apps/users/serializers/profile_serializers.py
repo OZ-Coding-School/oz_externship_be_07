@@ -68,6 +68,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer[Any]):
 class UserWithdrawalSerializer(serializers.ModelSerializer[Withdrawal]):
     reason = serializers.ChoiceField(
         choices=WithdrawalReason.choices,
+        required=True,
         error_messages={
             "invalid_choice": "올바른 탈퇴 사유를 선택해주세요. (필수 항목)",
             "required": "탈퇴 사유는 필수 입력 항목입니다.",

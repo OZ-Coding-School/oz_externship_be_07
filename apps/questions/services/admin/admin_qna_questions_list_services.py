@@ -1,4 +1,4 @@
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound
 
 from apps.questions.models import Questions
 
@@ -17,4 +17,4 @@ class AdminQuestionDetailService:
             )
 
         except Questions.DoesNotExist:
-            raise ValidationError("존재하지 않는 질문입니다.")
+            raise NotFound({"error_detail": "존재하지 않는 질문입니다."})

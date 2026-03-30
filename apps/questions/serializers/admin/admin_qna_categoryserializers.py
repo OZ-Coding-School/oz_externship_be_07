@@ -13,7 +13,6 @@ class ConflictException(APIException):
     default_code = "conflict"
 
 
-# 1. 카테고리 생성 및 상세용
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -31,16 +30,26 @@ class ConflictException(APIException):
 )
 class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
     category_id = serializers.IntegerField(source="id", read_only=True)
+
     name = serializers.CharField(max_length=100, validators=[], help_text="카테고리 이름")
+
     category_type = serializers.ChoiceField(
-        choices=["large", "medium", "small"], help_text="카테고리 종류", write_only=True
+        choices=["large", "medium", "small"],
+        help_text="카테고리 종류 (대분류, 중분류, 소분류)",
+        write_only=True,
     )
-    parent_id = serializers.IntegerField(required=False, allow_null=True, help_text="부모 카테고리 ID")
+
+    parent_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="부모 카테고리 ID",
+    )
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
         model = QuestionCategories
         fields = ["category_id", "name", "category_type", "parent_id", "created_at"]
+        validators: List[Any] = []
 
     def validate_name(self, value: str) -> str:
         if QuestionCategories.objects.filter(name=value).exists():
@@ -56,10 +65,13 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
                 raise NotFound(detail=f"ID {parent_id}인 부모 카테고리를 찾을 수 없습니다.")
 
         if category_type in ["medium", "small"] and not parent_id:
-            raise serializers.ValidationError({"parent_id": f"{category_type} 카테고리는 부모 설정이 필요합니다."})
+            raise serializers.ValidationError(
+                {"parent_id": f"{category_type} 카테고리는 부모 카테고리 설정이 필요합니다."}
+            )
 
         if category_type == "large":
             attrs["parent_id"] = None
+
         return attrs
 
     def create(self, validated_data: dict[str, Any]) -> QuestionCategories:
@@ -69,22 +81,24 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
 
         instance = super().create(validated_data)
         if not isinstance(instance, QuestionCategories):
-            raise TypeError("Expected QuestionCategories instance")
+            raise TypeError("생성된 객체가 QuestionCategories 인스턴스가 아닙니다.")
         return instance
 
     def to_representation(self, instance: QuestionCategories) -> dict[str, Any]:
         ret = super().to_representation(instance)
         ret["parent_id"] = instance.parent.id if instance.parent else None
+
         if instance.parent is None:
             ret["category_type"] = "large"
         elif instance.parent.parent is None:
             ret["category_type"] = "medium"
         else:
             ret["category_type"] = "small"
+
         return ret
 
 
-# 2. 카테고리 목록 조회용
+# 목록 조회
 class AdminQnaCategoryListSerializer(serializers.ModelSerializer[QuestionCategories]):
     category_id = serializers.IntegerField(source="id", read_only=True)
     category_type = serializers.SerializerMethodField()

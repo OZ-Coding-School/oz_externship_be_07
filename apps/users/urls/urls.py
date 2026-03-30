@@ -1,14 +1,13 @@
 from django.urls import path
 
 from apps.users.views.account_recovery_views import AccountRecoveryView
+from apps.users.views.auth_views import LoginView, LogoutView, ReTokenView, SignUpView
 from apps.users.views.available_courses import AvailableCourseListAPIView
 from apps.users.views.change_password_views import PasswordChangeView
 from apps.users.views.change_phone_views import ChangePhoneNumberView
 from apps.users.views.enroll_student import EnrollStudentAPIView
 from apps.users.views.find_email_views import FindEmailView
 from apps.users.views.find_password_views import PasswordFindView
-from apps.users.views.login_views import LoginView
-from apps.users.views.logout_views import LogoutView
 from apps.users.views.mycourse_check_views import MyEnrolledCourseView
 from apps.users.views.profile_presigned_url_view import ProfilePresignedUrlView
 from apps.users.views.profile_views import (
@@ -16,10 +15,8 @@ from apps.users.views.profile_views import (
     ProfileImageView,
     ProfileView,
 )
-from apps.users.views.re_token_views import ReTokenView
 from apps.users.views.send_email_views import EmailSendView
 from apps.users.views.send_sms_views import SmsSendView
-from apps.users.views.signup_views import SignUpView
 from apps.users.views.social_login_views import (
     KakaoLoginCallbackView,
     KakaoLoginStartView,

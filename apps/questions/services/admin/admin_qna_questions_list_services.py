@@ -1,9 +1,8 @@
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound
 
 from apps.questions.models import Questions
 
 
-# 관리자 질의응답 상세 조회
 class AdminQuestionDetailService:
     @staticmethod
     def get_question_detail(question_id: int) -> Questions:
@@ -17,4 +16,4 @@ class AdminQuestionDetailService:
             )
 
         except Questions.DoesNotExist:
-            raise ValidationError("존재하지 않는 질문입니다.")
+            raise NotFound("해당 질문을 찾을 수 없습니다.")

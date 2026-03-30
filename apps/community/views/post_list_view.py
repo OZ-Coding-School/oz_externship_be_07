@@ -19,8 +19,8 @@ from apps.community.services.post_service import (
     create_post,
     get_post_list_queryset,
     get_post_list_values,
-    post_file_save,
 )
+from apps.community.tasks import post_file_save
 
 
 class PostListPagination(PageNumberPagination):

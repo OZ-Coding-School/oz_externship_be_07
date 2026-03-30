@@ -20,10 +20,9 @@ from apps.community.services.post_metric_service import (
 )
 from apps.community.services.post_service import (
     build_post_detail_response,
-    file_synchronization,
     get_post_detail,
-    post_delete_sum,
 )
+from apps.community.tasks import post_delete_sum,file_synchronization
 
 
 class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, Any]]):

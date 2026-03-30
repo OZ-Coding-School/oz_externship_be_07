@@ -199,7 +199,7 @@ def post_file_delete(instance: Post) -> None:
 
 def file_delete(url: set[str]) -> None:
     """실제 파일 삭제 함수"""
-
+    return None
     for file_url in url:
         key_url = file_url.split(RIST_SPLIT)
         try:
@@ -255,6 +255,7 @@ def post_update_file_presigned_url(instance: Post) -> None:
 
 def s3_url(key_url: str) -> str:
     """AWS S3 Presigned url GET"""
+    return key_url
     if not key_url:
         return key_url
     try:

@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from apps.community.core.extend_schema import value_list
 from apps.community.serializers import PostCreateSerializer
 from apps.community.serializers.post_list_serializer import PostListSerializer
+from apps.community.services.post_metric_service import get_merged_post_view_count
 from apps.community.services.post_service import (
     build_post_list_response,
     create_post,
@@ -112,6 +113,13 @@ class PostListAPIView(APIView):
         page = paginator.paginate_queryset(values_queryset, request)
 
         page_items = list(values_queryset) if page is None else cast(list[dict[str, Any]], page)
+
+        for post in page_items:
+            post["view_count"] = get_merged_post_view_count(
+                post["id"],
+                post["view_count"],
+            )
+
         response_data = build_post_list_response(page_items)
 
         serializer = PostListSerializer(cast(Any, response_data), many=True)

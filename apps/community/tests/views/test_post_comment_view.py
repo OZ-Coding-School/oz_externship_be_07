@@ -55,7 +55,7 @@ class PostCommentAPIViewTest(TestCase):
         result = data["results"][0]
         self.assertEqual(data["count"], 1)
         self.assertEqual(result["content"], self.comment.content)
-        self.assertEqual(result["author"], self.user.id)
+        self.assertEqual(result["author"]["id"], self.user.id)
 
     def test_create_comment_returns_201(self) -> None:
         self.client.force_authenticate(user=self.user)

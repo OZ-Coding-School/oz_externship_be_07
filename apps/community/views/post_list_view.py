@@ -20,7 +20,7 @@ from apps.community.services.post_service import (
     get_post_list_queryset,
     get_post_list_values,
 )
-from apps.community.tasks import post_file_save
+from apps.community.tasks import post_file_save_task
 
 
 class PostListPagination(PageNumberPagination):
@@ -153,7 +153,7 @@ class PostListAPIView(APIView):
             serializer.validated_data["content"],
             serializer.validated_data["category"],
         )
-        post_file_save(instance)
+        post_file_save_task(instance.pk, instance.content)
 
         return Response(
             {

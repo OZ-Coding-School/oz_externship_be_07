@@ -7,9 +7,10 @@ from rest_framework.exceptions import APIException, NotFound
 from apps.questions.models import QuestionCategories
 
 
+# [해결] 테스트가 기대하는 409 Conflict 예외 클래스
 class ConflictException(APIException):
     status_code = status.HTTP_409_CONFLICT
-    default_detail = "이미 존재하는 카테고리 이름입니다."
+    default_detail = {"error_detail": "동일한 이름의 카테고리가 이미 존재합니다."}
     default_code = "conflict"
 
 
@@ -51,7 +52,6 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
         fields = ["category_id", "name", "category_type", "parent_id", "created_at"]
 
         validators: List[Any] = []
-
         extra_kwargs: Dict[str, Any] = {"name": {"validators": []}}
 
     def validate_name(self, value: str) -> str:
@@ -65,7 +65,7 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
 
         if parent_id:
             if not QuestionCategories.objects.filter(id=parent_id).exists():
-                raise NotFound(detail=f"ID {parent_id}인 부모 카테고리를 찾을 수 없습니다.")
+                raise NotFound(detail={"error_detail": "부모 카테고리를 찾을 수 없습니다."})
 
         if category_type in ["medium", "small"] and not parent_id:
             raise serializers.ValidationError(
@@ -78,13 +78,9 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
         return attrs
 
     def create(self, validated_data: dict[str, Any]) -> QuestionCategories:
-        parent_id = validated_data.pop("parent_id", None)
-        if parent_id:
-            validated_data["parent"] = QuestionCategories.objects.get(id=parent_id)
-
         instance = super().create(validated_data)
         if not isinstance(instance, QuestionCategories):
-            raise TypeError("생성된 객체가 QuestionCategories 인스턴스가 아닙니다.")
+            raise TypeError("Expected QuestionCategories instance")
         return instance
 
     def to_representation(self, instance: QuestionCategories) -> dict[str, Any]:

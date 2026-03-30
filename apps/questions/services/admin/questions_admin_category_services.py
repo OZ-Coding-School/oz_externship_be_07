@@ -1,15 +1,12 @@
 from typing import Any
 
-from django.db import transaction
-from rest_framework.exceptions import APIException, NotFound, ValidationError
+from django.db import IntegrityError, transaction
+from rest_framework.exceptions import NotFound, ValidationError
 
 from apps.questions.models import QuestionCategories
-
-
-class Conflict(APIException):
-    status_code = 409
-    default_detail = "이미 존재하는 리소스입니다."
-    default_code = "conflict"
+from apps.questions.serializers.admin.admin_qna_categoryserializers import (
+    ConflictException,
+)
 
 
 class AdminCategoryService:
@@ -28,15 +25,17 @@ class AdminCategoryService:
             try:
                 parent = QuestionCategories.objects.get(id=parent_id)
             except QuestionCategories.DoesNotExist:
-                raise NotFound({"error_detail": "부모 카테고리를 찾을 수 없습니다."})
+                raise NotFound(detail={"error_detail": "부모 카테고리를 찾을 수 없습니다."})
 
-        if QuestionCategories.objects.filter(name=name, parent=parent).exists():
-            raise Conflict({"error_detail": "동일한 이름의 카테고리가 이미 존재합니다."})
+        if QuestionCategories.objects.filter(name=name).exists():
+            raise ConflictException()
 
-        # 카테고리 생성
-        category = QuestionCategories.objects.create(
-            name=name,
-            parent=parent,
-        )
+        try:
+            category = QuestionCategories.objects.create(
+                name=name,
+                parent=parent,
+            )
+        except IntegrityError:
+            raise ConflictException()
 
         return category

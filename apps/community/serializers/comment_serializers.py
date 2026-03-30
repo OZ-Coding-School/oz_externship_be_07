@@ -6,13 +6,14 @@ from apps.community.models.comment_model import PostComment
 from apps.users.models.models import User
 
 
-class CommentAuthorSerializer(serializers.ModelSerializer):
+class CommentAuthorSerializer(serializers.ModelSerializer["User"]):
     nickname = serializers.ReadOnlyField()
     profile_img_url = serializers.ReadOnlyField()
 
     class Meta:
         model = User
         fields = ["id", "nickname", "profile_img_url"]
+
 
 class PostCommentSerializer(serializers.ModelSerializer["PostComment"]):
     author = CommentAuthorSerializer(read_only=True)

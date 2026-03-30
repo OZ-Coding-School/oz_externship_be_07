@@ -7,7 +7,6 @@ from rest_framework.exceptions import APIException, NotFound
 from apps.questions.models import QuestionCategories
 
 
-# [해결] 테스트가 기대하는 409 Conflict 예외 클래스
 class ConflictException(APIException):
     status_code = status.HTTP_409_CONFLICT
     default_detail = {"error_detail": "동일한 이름의 카테고리가 이미 존재합니다."}

@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
 from rest_framework.exceptions import (
     NotAuthenticated,
@@ -10,6 +10,9 @@ from rest_framework.exceptions import (
 )
 
 from apps.questions.models import QuestionCategories
+from apps.questions.serializers.admin.admin_qna_categoryserializers import (
+    ConflictException,
+)
 
 
 class AdminQnaCategoryListService:
@@ -49,7 +52,7 @@ class AdminQnaCategoryListService:
         if not user.is_staff:
             raise PermissionDenied({"error_detail": "카테고리 등록 권한이 없습니다."})
 
-        name = data.get("name")
+        name = data.get("name", "").strip()
         if not name:
             raise ValidationError({"error_detail": "카테고리 종류와 이름은 필수 입력값입니다."})
 
@@ -59,9 +62,12 @@ class AdminQnaCategoryListService:
             try:
                 parent = QuestionCategories.objects.get(id=parent_id)
             except QuestionCategories.DoesNotExist:
-                raise NotFound({"error_detail": "상위 카테고리를 찾을 수 없습니다."})
+                raise NotFound({"error_detail": "부모 카테고리를 찾을 수 없습니다."})
 
-        if QuestionCategories.objects.filter(name=name, parent=parent).exists():
-            raise ValidationError({"error_detail": "이미 존재하는 카테고리 이름입니다."})
+        if QuestionCategories.objects.filter(name=name).exists():
+            raise ConflictException()
 
-        return QuestionCategories.objects.create(name=name, parent=parent)
+        try:
+            return QuestionCategories.objects.create(name=name, parent=parent)
+        except IntegrityError:
+            raise ConflictException()

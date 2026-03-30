@@ -1,83 +1,69 @@
 from typing import Any
 
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
-from rest_framework import status
-from rest_framework.permissions import IsAdminUser
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework import serializers, status
+from rest_framework.exceptions import APIException, NotFound
 
-from apps.questions.serializers.admin.admin_qna_categoryserializers import (
-    AdminCategorySerializer,
-)
-from apps.questions.services.admin.questions_admin_category_services import (
-    AdminCategoryService,
-)
+from apps.questions.models import QuestionCategories
 
 
-class AdminCategoryCreateAPIView(APIView):
-    permission_classes = [IsAdminUser]
+class ConflictException(APIException):
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = "이미 존재하는 카테고리 이름입니다."
+    default_code = "conflict"
 
-    @extend_schema(
-        summary="관리자 카테고리 등록",
-        description="새로운 질문 카테고리를 등록합니다. 중복된 이름이나 존재하지 않는 부모 카테고리 설정 시 에러가 발생합니다.",
-        request=AdminCategorySerializer,
-        responses={
-            201: AdminCategorySerializer,
-            400: OpenApiResponse(
-                description="잘못된 요청 (필수 값 누락 등)",
-                examples=[
-                    OpenApiExample(
-                        "필수값 누락 예시",
-                        value={"error_detail": "카테고리 종류와 이름은 필수 입력값입니다."},
-                    )
-                ],
-            ),
-            401: OpenApiResponse(
-                description="인증 실패",
-                examples=[
-                    OpenApiExample(
-                        "로그인 필요 예시",
-                        value={"error_detail": "로그인이 필요합니다."},
-                    )
-                ],
-            ),
-            403: OpenApiResponse(
-                description="권한 없음",
-                examples=[
-                    OpenApiExample(
-                        "권한 부족 예시",
-                        value={"error_detail": "카테고리 등록 권한이 없습니다."},
-                    )
-                ],
-            ),
-            404: OpenApiResponse(
-                description="부모 카테고리 없음",
-                examples=[
-                    OpenApiExample(
-                        "부모 카테고리 미존재 예시",
-                        value={"error_detail": "부모 카테고리를 찾을 수 없습니다."},
-                    )
-                ],
-            ),
-            409: OpenApiResponse(
-                description="중복된 이름",
-                examples=[
-                    OpenApiExample(
-                        "이름 중복 예시",
-                        value={"error_detail": "동일한 이름의 카테고리가 이미 존재합니다."},
-                    )
-                ],
-            ),
-        },
-        tags=["Admin_qna"],
+
+class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
+    category_id = serializers.IntegerField(source="id", read_only=True)
+
+    name = serializers.CharField(max_length=100, validators=[], help_text="카테고리 이름")
+
+    category_type = serializers.ChoiceField(
+        choices=["large", "medium", "small"], write_only=True, help_text="카테고리 종류"
     )
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        serializer = AdminCategorySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    parent_id = serializers.IntegerField(required=False, allow_null=True, help_text="부모 카테고리 ID")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
-        category = AdminCategoryService.create_category(validated_data=serializer.validated_data)
+    class Meta:
+        model = QuestionCategories
+        fields = ["category_id", "name", "category_type", "parent_id", "created_at"]
 
-        response_serializer = AdminCategorySerializer(category)
+    def validate_name(self, value: str) -> str:
+        if QuestionCategories.objects.filter(name=value).exists():
+            raise ConflictException()
+        return value
 
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        category_type = attrs.get("category_type")
+        parent_id = attrs.get("parent_id")
+
+        if parent_id:
+            if not QuestionCategories.objects.filter(id=parent_id).exists():
+                raise NotFound(detail=f"ID {parent_id}인 부모 카테고리를 찾을 수 없습니다.")
+
+        if category_type in ["medium", "small"] and not parent_id:
+            raise serializers.ValidationError({"parent_id": f"{category_type} 카테고리는 부모 설정이 필요합니다."})
+
+        if category_type == "large":
+            attrs["parent_id"] = None
+        return attrs
+
+    def create(self, validated_data: dict[str, Any]) -> QuestionCategories:
+        parent_id = validated_data.pop("parent_id", None)
+        if parent_id:
+            validated_data["parent"] = QuestionCategories.objects.get(id=parent_id)
+
+        instance = super().create(validated_data)
+        if not isinstance(instance, QuestionCategories):
+            raise TypeError("Expected QuestionCategories instance")
+        return instance
+
+    def to_representation(self, instance: QuestionCategories) -> dict[str, Any]:
+        ret = super().to_representation(instance)
+        ret["parent_id"] = instance.parent.id if instance.parent else None
+        if instance.parent is None:
+            ret["category_type"] = "large"
+        elif instance.parent.parent is None:
+            ret["category_type"] = "medium"
+        else:
+            ret["category_type"] = "small"
+        return ret

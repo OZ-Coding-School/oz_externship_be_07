@@ -1,23 +1,19 @@
 from typing import Any
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
-from rest_framework import exceptions, parsers, status
-from rest_framework.exceptions import NotFound
+from rest_framework import parsers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from apps.exam.core.error_base import ExamBaseAPIView
 from apps.exam.core.permissions import IsStaffUser
-from apps.exam.models.exam_models import Exam
-from apps.exam.models.exam_question_models import ExamQuestion
 from apps.exam.serializers.exam_question_serializers import (
     ErrorDetailSerializer,
     ExamQuestionCreateResponseSerializer,
-    ExamQuestionCreateSerializer,
     ExamQuestionDeleteResponseSerializer,
+    ExamQuestionSerializer,
     ExamQuestionUpdateResponseSerializer,
-    ExamQuestionUpdateSerializer,
 )
 from apps.exam.services.exam_question_services import ExamQuestionService
 
@@ -29,7 +25,7 @@ class ExamQuestionCreateAPIView(ExamBaseAPIView):
     @extend_schema(
         tags=["Admin_exams"],
         summary="쪽지시험 문제 등록",
-        request=ExamQuestionCreateSerializer,
+        request=ExamQuestionSerializer,
         responses={
             201: ExamQuestionCreateResponseSerializer,
             400: ErrorDetailSerializer,
@@ -73,16 +69,11 @@ class ExamQuestionCreateAPIView(ExamBaseAPIView):
     )
     def post(self, request: Request, exam_id: int, *args: Any, **kwargs: Any) -> Response:
 
-        serializer = ExamQuestionCreateSerializer(data=request.data)
+        serializer = ExamQuestionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            exam = Exam.objects.get(id=exam_id)
-        except Exam.DoesNotExist:
-            raise NotFound("해당 쪽지시험 정보를 찾을 수 없습니다.")
-
-        question = ExamQuestionService.create_question(exam, serializer.validated_data)
+        question = ExamQuestionService.create_question(exam_id, serializer.validated_data)
         response_serializer = ExamQuestionCreateResponseSerializer(question)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -94,7 +85,7 @@ class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
     @extend_schema(
         tags=["Admin_exams"],
         summary="쪽지시험 문제 수정",
-        request=ExamQuestionUpdateSerializer,
+        request=ExamQuestionSerializer,
         responses={
             200: ExamQuestionUpdateResponseSerializer,
             400: ErrorDetailSerializer,
@@ -138,16 +129,11 @@ class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
     )
     def put(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
 
-        serializer = ExamQuestionUpdateSerializer(data=request.data)
+        serializer = ExamQuestionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            question = ExamQuestion.objects.get(id=question_id)
-        except ExamQuestion.DoesNotExist:
-            raise NotFound("수정하려는 문제 정보를 찾을 수 없습니다.")
-
-        updated_question = ExamQuestionService.update_question(question, serializer.validated_data)
+        updated_question = ExamQuestionService.update_question(question_id, serializer.validated_data)
         response_serializer = ExamQuestionUpdateResponseSerializer(updated_question)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
@@ -197,11 +183,6 @@ class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
     )
     def delete(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
 
-        try:
-            question = ExamQuestion.objects.get(id=question_id)
-        except ExamQuestion.DoesNotExist:
-            raise exceptions.NotFound("삭제할 문제 정보를 찾을 수 없습니다.")
-
-        result = ExamQuestionService.delete_question(question)
+        result = ExamQuestionService.delete_question(question_id)
         response_serializer = ExamQuestionDeleteResponseSerializer(result)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

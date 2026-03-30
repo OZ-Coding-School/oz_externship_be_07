@@ -2,6 +2,8 @@ import json
 from typing import Any
 
 from django.db import models
+from rest_framework import exceptions
+from rest_framework.exceptions import NotFound
 
 from apps.exam.core.error_custom_base import ConflictException
 from apps.exam.models.exam_models import Exam
@@ -15,11 +17,16 @@ MAX_POINT_PER_QUESTION = 10
 class ExamQuestionService:
 
     @staticmethod
-    def create_question(exam: Exam, data: dict[str, Any]) -> ExamQuestion:
+    def create_question(exam_id: int, data: dict[str, Any]) -> ExamQuestion:
+
+        try:
+            exam = Exam.objects.get(id=exam_id)
+        except Exam.DoesNotExist:
+            raise NotFound("해당 쪽지시험 정보를 찾을 수 없습니다.")
 
         current_count = ExamQuestion.objects.filter(exam=exam).count()
         if current_count >= MAX_QUESTION_COUNT:
-            raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다,")
+            raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
 
         if data["point"] > MAX_POINT_PER_QUESTION:
             raise ConflictException("해당 쪽지시험에 등록 가능한 문제 수 또는 총 배점을 초과했습니다.")
@@ -50,11 +57,15 @@ class ExamQuestionService:
         )
 
     @staticmethod
-    def update_question(question: ExamQuestion, data: dict[str, Any]) -> ExamQuestion:
+    def update_question(question_id: int, data: dict[str, Any]) -> ExamQuestion:
 
-        if "point" in data:
-            if data["point"] > MAX_POINT_PER_QUESTION:
-                raise ConflictException("시험 문제 수 제한 또는 총 배점을 초과하여 문제를 수정할 수 없습니다.")
+        try:
+            question = ExamQuestion.objects.get(id=question_id)
+        except ExamQuestion.DoesNotExist:
+            raise NotFound("수정하려는 문제 정보를 찾을 수 없습니다.")
+
+        if data["point"] > MAX_POINT_PER_QUESTION:
+            raise ConflictException("시험 문제 수 제한 또는 총 배점을 초과하여 문제를 수정할 수 없습니다.")
 
         current_total = (
             ExamQuestion.objects.filter(exam=question.exam)
@@ -88,9 +99,13 @@ class ExamQuestionService:
         return question
 
     @staticmethod
-    def delete_question(question: ExamQuestion) -> dict[str, Any]:
+    def delete_question(question_id: int) -> dict[str, Any]:
 
-        exam_id: int = question.exam_id
-        question_id: int = question.id
+        try:
+            question = ExamQuestion.objects.get(id=question_id)
+        except ExamQuestion.DoesNotExist:
+            raise exceptions.NotFound("삭제할 문제 정보를 찾을 수 없습니다.")
+
+        exam_id: int = question.exam.id
         question.delete()
         return {"exam_id": exam_id, "question_id": question_id}

@@ -55,6 +55,14 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
         self.assertIn("category_skew", groups)
         self.assertEqual(report["overall_status"], "CRITICAL")
 
+    def test_content_absence_critical_when_no_posts(self) -> None:
+        """최근 7일 공개 게시글 0건이면 콘텐츠 부재 CRITICAL로 판정되는지 검증"""
+        payload = self._payload(response=65.0, top1=0.0, category_counts={})
+        report = build_insight_report(payload)
+
+        self.assertEqual(report["overall_status"], "CRITICAL")
+        self.assertTrue(any(f["rule_id"] == "content_absence_critical" for f in report["findings"]))
+
     def test_warning_blocks_good(self) -> None:
         """WARNING이 하나라도 있으면 GOOD으로 판정되지 않는지 검증"""
         payload = self._payload(

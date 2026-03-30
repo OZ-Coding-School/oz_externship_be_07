@@ -10,6 +10,7 @@ from apps.community.core.constants import (
     INSIGHT_AVG_COMMENTS_LOW,
     INSIGHT_AVG_LIKES_LOW,
     INSIGHT_CATEGORY_SKEW_MIN_POSTS,
+    INSIGHT_CONTENT_SCARCE_WARNING_THRESHOLD,
     INSIGHT_RESPONSE_RATE_CRITICAL,
     INSIGHT_RESPONSE_RATE_GOOD,
     INSIGHT_RESPONSE_RATE_WARNING,
@@ -65,6 +66,7 @@ def _safe_ratio(current: float, target: float) -> float:
         return 0.0
     return current / target
 
+
 def _category_post_total(m: dict[str, Any]) -> int:
     counts = m.get("active_category_post_counts", {})
     if not isinstance(counts, dict):
@@ -72,8 +74,42 @@ def _category_post_total(m: dict[str, Any]) -> int:
     return sum(int(v) for v in counts.values())
 
 
+def _posts_7d_visible_count(m: dict[str, Any]) -> int:
+    value = m.get("posts_7d_visible_count")
+    if value is not None:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
+    return _category_post_total(m)
+
+
 def _build_rules() -> list[InsightRule]:
     return [
+        InsightRule(
+            rule_id="content_empty_critical",
+            group="content_volume",
+            priority=5,
+            level="CRITICAL",
+            title="게시글 없음",
+            condition=lambda m: _posts_7d_visible_count(m) == 0,
+            message=lambda m: (
+                "최근 7일 공개 게시글이 없습니다! "
+                "즉시 운영 공지/질문형 시작 글을 등록해 대화 시작점 및 참여흐름을 만들어 주세요."
+            ),
+        ),
+        InsightRule(
+            rule_id="content_scarce_warning",
+            group="content_volume",
+            priority=6,
+            level="WARNING",
+            title="게시글 부족",
+            condition=lambda m: 0 < _posts_7d_visible_count(m) < INSIGHT_CONTENT_SCARCE_WARNING_THRESHOLD,
+            message=lambda m: (
+                f"최근 7일 공개 게시글이 {_posts_7d_visible_count(m)}건으로 적은 편입니다. "
+                "참여형 글 또는 컨텐츠를 등록해 게시글 흐름을 늘려 주세요."
+            ),
+        ),
         InsightRule(
             rule_id="response_critical",
             group="response_rate",

@@ -12,8 +12,8 @@ from apps.exam.serializers.exam_question_serializers import (
     ErrorDetailSerializer,
     ExamQuestionCreateResponseSerializer,
     ExamQuestionDeleteResponseSerializer,
+    ExamQuestionSerializer,
     ExamQuestionUpdateResponseSerializer,
-    ExamQuestionSerializer
 )
 from apps.exam.services.exam_question_services import ExamQuestionService
 
@@ -133,7 +133,6 @@ class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
         if not serializer.is_valid():
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-
         updated_question = ExamQuestionService.update_question(question_id, serializer.validated_data)
         response_serializer = ExamQuestionUpdateResponseSerializer(updated_question)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -183,7 +182,6 @@ class ExamQuestionUpdateDeleteAPIView(ExamBaseAPIView):
         ],
     )
     def delete(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
-
 
         result = ExamQuestionService.delete_question(question_id)
         response_serializer = ExamQuestionDeleteResponseSerializer(result)

@@ -2,11 +2,13 @@ import json
 from typing import Any
 
 from django.db import models
+from rest_framework import exceptions
 from rest_framework.exceptions import NotFound
+
 from apps.exam.core.error_custom_base import ConflictException
 from apps.exam.models.exam_models import Exam
 from apps.exam.models.exam_question_models import ExamQuestion
-from rest_framework import exceptions
+
 MAX_QUESTION_COUNT = 10
 MAX_TOTAL_POINT = 100
 MAX_POINT_PER_QUESTION = 10
@@ -55,7 +57,6 @@ class ExamQuestionService:
         )
 
     @staticmethod
-
     def update_question(question_id: int, data: dict[str, Any]) -> ExamQuestion:
 
         try:
@@ -105,7 +106,6 @@ class ExamQuestionService:
         except ExamQuestion.DoesNotExist:
             raise exceptions.NotFound("삭제할 문제 정보를 찾을 수 없습니다.")
 
-        exam_id: int = question.exam_id
-        question_id: int = question.id
+        exam_id: int = question.exam.id
         question.delete()
         return {"exam_id": exam_id, "question_id": question_id}

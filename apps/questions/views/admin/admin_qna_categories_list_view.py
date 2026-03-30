@@ -1,3 +1,5 @@
+from typing import Any
+
 from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiParameter,
@@ -10,8 +12,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.questions.serializers.admin.admin_qna_categoryserializers import (
-    AdminCategorySerializer,
+from apps.questions.serializers.admin.admin_qna_categorylist_serializers import (
+    AdminQnaCategoryListSerializer,
 )
 from apps.questions.services.admin.questions_admin_categorylist_services import (
     AdminQnaCategoryListService,
@@ -22,64 +24,71 @@ class AdminCategoryListAPIView(APIView):
     permission_classes = [IsAdminUser]
 
     @extend_schema(
-        summary="관리자 카테고리 목록 조회",
-        description="관리자용 질문 카테고리 목록을 조회합니다. 대/중/소 분류 필터링 및 키워드 검색을 지원합니다.",
-        parameters=[
-            OpenApiParameter(name="page", description="페이지 번호", type=int, default=1),
-            OpenApiParameter(name="size", description="페이지당 항목 수", type=int, default=20),
-            OpenApiParameter(name="search_keyword", description="카테고리명 검색어", type=str),
-            OpenApiParameter(name="category_type", description="카테고리 분류 (large, medium, small)", type=str),
-        ],
+        summary="어드민 카테고리 등록 API",
+        description="새로운 질문 카테고리를 등록합니다.",
         responses={
-            200: AdminCategorySerializer(many=True),  # 실제 응답 구조에 맞게 페이징 시리얼라이저가 있다면 교체 필요
+            201: AdminQnaCategoryListSerializer,
             400: OpenApiResponse(
-                description="잘못된 요청",
-                examples=[
-                    OpenApiExample(
-                        "유효하지 않은 요청 예시",
-                        value={"error_detail": "유효하지 않은 목록 조회 요청입니다."},
-                    )
-                ],
+                description="Bad Request",
+                examples=[OpenApiExample("400", value={"error_detail": "카테고리 종류와 이름은 필수 입력값입니다."})],
             ),
             401: OpenApiResponse(
-                description="인증 실패",
-                examples=[
-                    OpenApiExample(
-                        "로그인 필요 예시",
-                        value={"error_detail": "로그인이 필요합니다."},
-                    )
-                ],
+                description="Unauthorized",
+                examples=[OpenApiExample("401", value={"error_detail": "로그인이 필요합니다."})],
             ),
             403: OpenApiResponse(
-                description="권한 없음",
-                examples=[
-                    OpenApiExample(
-                        "권한 부족 예시",
-                        value={"error_detail": "카테고리 목록 조회 권한이 없습니다."},
-                    )
-                ],
+                description="Forbidden",
+                examples=[OpenApiExample("403", value={"error_detail": "카테고리 등록 권한이 없습니다."})],
+            ),
+            404: OpenApiResponse(
+                description="Not Found",
+                examples=[OpenApiExample("404", value={"error_detail": "상위 카테고리를 찾을 수 없습니다."})],
+            ),
+            409: OpenApiResponse(
+                description="Conflict",
+                examples=[OpenApiExample("409", value={"error_detail": "이미 존재하는 카테고리 이름입니다."})],
             ),
         },
         tags=["Admin_qna"],
     )
-    def get(self, request: Request) -> Response:
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        service = AdminQnaCategoryListService()
+        result = service.create_category(user=request.user, data=request.data)
+
+        serializer = AdminQnaCategoryListSerializer(result)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="어드민 카테고리 목록 조회 API",
+        parameters=[
+            OpenApiParameter(name="search_keyword", description="검색어", type=str),
+            OpenApiParameter(name="category_type", description="분류(large, medium, small)", type=str),
+        ],
+        responses={
+            200: AdminQnaCategoryListSerializer(many=True),
+            400: OpenApiResponse(
+                description="Bad Request",
+                examples=[OpenApiExample("400", value={"error_detail": "유효하지 않은 목록 조회 요청입니다."})],
+            ),
+            401: OpenApiResponse(
+                description="Unauthorized",
+                examples=[OpenApiExample("401", value={"error_detail": "로그인이 필요합니다."})],
+            ),
+            403: OpenApiResponse(
+                description="Forbidden",
+                examples=[OpenApiExample("403", value={"error_detail": "카테고리 목록 조회 권한이 없습니다."})],
+            ),
+        },
+        tags=["Admin_qna"],
+    )
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         search_keyword = request.query_params.get("search_keyword")
         category_type = request.query_params.get("category_type")
 
-        queryset = AdminQnaCategoryListService.get_category_list(
-            user=request.user,
-            search_keyword=search_keyword,
-            category_type=category_type,
+        service = AdminQnaCategoryListService()
+        queryset = service.get_category_list(
+            user=request.user, search_keyword=search_keyword, category_type=category_type
         )
 
-        serializer = AdminCategorySerializer(queryset, many=True)
-
-        return Response(
-            {
-                "page": int(request.query_params.get("page", 1)),
-                "size": int(request.query_params.get("size", 20)),
-                "total_count": queryset.count(),
-                "categories": serializer.data,
-            },
-            status=status.HTTP_200_OK,
-        )
+        serializer = AdminQnaCategoryListSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

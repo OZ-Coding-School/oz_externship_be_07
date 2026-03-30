@@ -9,6 +9,7 @@ from apps.community.core.constants import (
     INSIGHT_AVG_COMMENTS_GOOD,
     INSIGHT_AVG_COMMENTS_LOW,
     INSIGHT_AVG_LIKES_LOW,
+    INSIGHT_CATEGORY_SKEW_MIN_POSTS,
     INSIGHT_RESPONSE_RATE_CRITICAL,
     INSIGHT_RESPONSE_RATE_GOOD,
     INSIGHT_RESPONSE_RATE_WARNING,
@@ -63,6 +64,12 @@ def _safe_ratio(current: float, target: float) -> float:
     if target <= 0:
         return 0.0
     return current / target
+
+def _category_post_total(m: dict[str, Any]) -> int:
+    counts = m.get("active_category_post_counts", {})
+    if not isinstance(counts, dict):
+        return 0
+    return sum(int(v) for v in counts.values())
 
 
 def _build_rules() -> list[InsightRule]:
@@ -137,7 +144,8 @@ def _build_rules() -> list[InsightRule]:
             priority=60,
             level="CRITICAL",
             title="카테고리 편중",
-            condition=lambda m: _to_float(m["top1_category_share"]) > INSIGHT_TOP1_CATEGORY_SHARE_CRITICAL,
+            condition=lambda m: _category_post_total(m) >= INSIGHT_CATEGORY_SKEW_MIN_POSTS
+            and _to_float(m["top1_category_share"]) > INSIGHT_TOP1_CATEGORY_SHARE_CRITICAL,
             message=lambda m: (
                 f"최다 카테고리 비중이 {_percent_text(_to_float(m['top1_category_share']))}입니다. "
                 "카테고리 편중이 심합니다. 균형 잡힌 주제 운영이 필요합니다."
@@ -149,7 +157,8 @@ def _build_rules() -> list[InsightRule]:
             priority=70,
             level="WARNING",
             title="카테고리 편중",
-            condition=lambda m: _to_float(m["top1_category_share"]) > INSIGHT_TOP1_CATEGORY_SHARE_WARNING,
+            condition=lambda m: _category_post_total(m) >= INSIGHT_CATEGORY_SKEW_MIN_POSTS
+            and _to_float(m["top1_category_share"]) > INSIGHT_TOP1_CATEGORY_SHARE_WARNING,
             message=lambda m: (
                 f"최다 카테고리 비중이 {_percent_text(_to_float(m['top1_category_share']))}입니다. "
                 "다른 카테고리 참여를 유도해 주세요."

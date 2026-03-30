@@ -14,6 +14,7 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
         likes: float = 0.8,
         activation: float = 12.0,
         top1: float = 50.0,
+        category_counts: dict[str, int] | None = None,
     ) -> dict[str, object]:
         return {
             "current": {
@@ -24,7 +25,7 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
                     "avg_comments_per_post": comments,
                     "avg_likes_per_post": likes,
                     "response_rate_within_24h": response,
-                    "active_category_post_counts": {"A": 3, "B": 2},
+                    "active_category_post_counts": category_counts or {"A": 6, "B": 4},
                     "top1_category_share": top1,
                 }
             },
@@ -102,3 +103,9 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
         payload = self._payload(new_users=2, settlement=0.0, response=65.0, comments=1.6, top1=50.0)
         report = build_insight_report(payload)
         self.assertFalse(any(f["rule_id"] == "settlement_warning" for f in report["findings"]))
+
+    def test_category_skew_requires_min_posts(self) -> None:
+        """게시글 수가 최소 모수 미만이면 카테고리 편중 룰을 적용하지 않는지 검증"""
+        payload = self._payload(response=10.0, top1=90.0, category_counts={"A": 5, "B": 4})  # total=9
+        report = build_insight_report(payload)
+        self.assertFalse(any(f["group"] == "category_skew" for f in report["findings"]))

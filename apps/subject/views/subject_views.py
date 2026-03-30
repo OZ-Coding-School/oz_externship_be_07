@@ -103,21 +103,22 @@ class SubjectListCreateAPIView(APIView):
             )
         except NotFound:
             return Response(
-                {"error_detail": "해당 과정을 찾을 수 없습니다."},
+                {"error_detail": SubjectService.COURSE_NOT_FOUND_MESSAGE},
                 status=status.HTTP_404_NOT_FOUND,
             )
         except ValidationError as exc:
-            detail = str(exc.detail)
+            detail = exc.detail
+            detail_str = str(detail)
 
-            if "동일한 이름의 과목이 이미 존재합니다." in detail:
+            if SubjectService.DUPLICATE_SUBJECT_MESSAGE in detail_str:
                 return Response(
-                    {"error_detail": "동일한 이름의 과목이 이미 존재합니다."},
+                    {"error_detail": SubjectService.DUPLICATE_SUBJECT_MESSAGE},
                     status=status.HTTP_409_CONFLICT,
                 )
 
-            if "유효하지 않은 과목 생성 요청입니다." in detail:
+            if SubjectService.INVALID_REQUEST_MESSAGE in detail_str:
                 return Response(
-                    {"error_detail": "유효하지 않은 과목 생성 요청입니다."},
+                    {"error_detail": SubjectService.INVALID_REQUEST_MESSAGE},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -231,7 +232,7 @@ class SubjectScatterAPIView(APIView):
             submissions = SubjectService.get_subject_scatter_queryset(subject_id=subject_id)
         except NotFound:
             return Response(
-                {"error_detail": "과목을 찾을 수 없습니다."},
+                {"error_detail": SubjectService.SUBJECT_NOT_FOUND_MESSAGE},
                 status=status.HTTP_404_NOT_FOUND,
             )
 

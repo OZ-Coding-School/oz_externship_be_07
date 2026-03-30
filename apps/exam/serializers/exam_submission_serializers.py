@@ -144,6 +144,7 @@ class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]
     exam = ExamItemSerializer(source="deployment.exam", read_only=True)
     questions = serializers.SerializerMethodField()
     total_score = serializers.SerializerMethodField()
+    score = serializers.IntegerField(read_only=True)
     elapsed_time = serializers.SerializerMethodField()
     submitted_at = serializers.DateTimeField(source="created_at", read_only=True)
 
@@ -157,6 +158,7 @@ class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]
             "questions",
             "cheating_count",
             "total_score",
+            "score",
             "correct_answer_count",
             "elapsed_time",
             "started_at",

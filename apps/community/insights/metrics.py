@@ -31,32 +31,41 @@ def _delta(current_value: float | int, previous_value: float | int) -> float:
 
 
 def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
-    post_user_ids = set(
+    post_user_ids = (
         Post.objects.filter(
             is_visible=True,
             category__status=True,
             created_at__gte=start,
             created_at__lt=end,
-        ).values_list("author_id", flat=True)
+        )
+        .annotate(activity_user_id=F("author_id"))
+        .values_list("activity_user_id", flat=True)
     )
-    comment_user_ids = set(
+
+    comment_user_ids = (
         PostComment.objects.filter(
             post__is_visible=True,
             post__category__status=True,
             created_at__gte=start,
             created_at__lt=end,
-        ).values_list("author_id", flat=True)
+        )
+        .annotate(activity_user_id=F("author_id"))
+        .values_list("activity_user_id", flat=True)
     )
-    like_user_ids = set(
+
+    like_user_ids = (
         PostLike.objects.filter(
             is_liked=True,
             post__is_visible=True,
             post__category__status=True,
             updated_at__gte=start,
             updated_at__lt=end,
-        ).values_list("user_id", flat=True)
+        )
+        .annotate(activity_user_id=F("user_id"))
+        .values_list("activity_user_id", flat=True)
     )
-    return post_user_ids | comment_user_ids | like_user_ids
+
+    return set(post_user_ids.union(comment_user_ids, like_user_ids))
 
 
 def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dict[str, Any]:

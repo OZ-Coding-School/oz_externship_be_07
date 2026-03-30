@@ -25,7 +25,7 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
                     "avg_comments_per_post": comments,
                     "avg_likes_per_post": likes,
                     "response_rate_within_24h": response,
-                    "active_category_post_counts": category_counts or {"A": 6, "B": 4},
+                    "active_category_post_counts": category_counts if category_counts is not None else {"A": 6, "B": 4},
                     "top1_category_share": top1,
                 }
             },
@@ -61,7 +61,7 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
         report = build_insight_report(payload)
 
         self.assertEqual(report["overall_status"], "CRITICAL")
-        self.assertTrue(any(f["rule_id"] == "content_absence_critical" for f in report["findings"]))
+        self.assertTrue(any(f["rule_id"] == "content_empty_critical" for f in report["findings"]))
 
     def test_warning_blocks_good(self) -> None:
         """WARNING이 하나라도 있으면 GOOD으로 판정되지 않는지 검증"""

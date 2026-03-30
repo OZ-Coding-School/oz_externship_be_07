@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
-from django.db.models import Count, F, Q, QuerySet
+from django.db.models import Count, F, Q
 from django.utils import timezone
 
 from apps.community.core.constants import INSIGHT_RATE_SCALE, INSIGHT_WINDOW_DAYS
@@ -30,7 +31,7 @@ def _delta(current_value: float | int, previous_value: float | int) -> float:
     return round(float(current_value) - float(previous_value), 2)
 
 
-def _activity_user_ids_qs(start: datetime, end: datetime) -> QuerySet[int]:
+def _activity_user_ids_qs(start: datetime, end: datetime) -> Iterable[int]:
     post_qs = (
         Post.objects.filter(
             is_visible=True,
@@ -65,7 +66,7 @@ def _activity_user_ids_qs(start: datetime, end: datetime) -> QuerySet[int]:
         .values_list("activity_user_id", flat=True)
     )
 
-    return post_qs.union(comment_qs, like_qs)
+    return cast(Iterable[int], post_qs.union(comment_qs, like_qs))
 
 
 def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dict[str, Any]:

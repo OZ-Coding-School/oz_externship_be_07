@@ -42,8 +42,12 @@ class ExamUserSubmissionService:
 
     @staticmethod
     def _calculate_score(snapshot: list[dict[str, Any]], submitted_answers: list[dict[str, Any]]) -> tuple[int, int]:
+
         if isinstance(snapshot, str):
-            snapshot = json.loads(snapshot)
+            try:
+                snapshot = json.loads(snapshot)
+            except json.JSONDecodeError:
+                snapshot = []
 
         answer_map = {}
 

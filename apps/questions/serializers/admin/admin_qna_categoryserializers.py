@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict, List
 
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers, status
@@ -49,7 +49,10 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
     class Meta:
         model = QuestionCategories
         fields = ["category_id", "name", "category_type", "parent_id", "created_at"]
+
         validators: List[Any] = []
+
+        extra_kwargs: Dict[str, Any] = {"name": {"validators": []}}
 
     def validate_name(self, value: str) -> str:
         if QuestionCategories.objects.filter(name=value).exists():
@@ -96,34 +99,3 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
             ret["category_type"] = "small"
 
         return ret
-
-
-# 목록 조회
-class AdminQnaCategoryListSerializer(serializers.ModelSerializer[QuestionCategories]):
-    category_id = serializers.IntegerField(source="id", read_only=True)
-    category_type = serializers.SerializerMethodField()
-    parent_category = serializers.CharField(source="parent.name", read_only=True, default=None)
-    child_categories = serializers.SerializerMethodField()
-
-    class Meta:
-        model = QuestionCategories
-        fields = [
-            "category_id",
-            "name",
-            "category_type",
-            "parent_category",
-            "child_categories",
-            "created_at",
-            "updated_at",
-        ]
-        ref_name = "AdminQnaCategoryListResponse"
-
-    def get_category_type(self, obj: QuestionCategories) -> str:
-        if not obj.parent:
-            return "large"
-        if not obj.parent.parent:
-            return "medium"
-        return "small"
-
-    def get_child_categories(self, obj: QuestionCategories) -> List[str]:
-        return list(obj.children.all().values_list("name", flat=True))

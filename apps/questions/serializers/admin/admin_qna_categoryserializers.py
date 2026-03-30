@@ -31,12 +31,8 @@ class ConflictException(APIException):
 class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
     category_id = serializers.IntegerField(source="id", read_only=True)
     name = serializers.CharField(max_length=100, validators=[], help_text="카테고리 이름")
-    category_type = serializers.ChoiceField(
-        choices=["large", "medium", "small"],
-        help_text="카테고리 종류 (대분류, 중분류, 소분류)",
-        write_only=True,
-    )
-    parent_id = serializers.IntegerField(required=False, allow_null=True, help_text="부모 카테고리 ID")
+    category_type = serializers.ChoiceField(choices=["large", "medium", "small"], write_only=True)
+    parent_id = serializers.IntegerField(required=False, allow_null=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
@@ -51,26 +47,18 @@ class AdminCategorySerializer(serializers.ModelSerializer[QuestionCategories]):
         return value
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
-        category_type = attrs.get("category_type")
-        parent_id = attrs.get("parent_id")
+        c_type, p_id = attrs.get("category_type"), attrs.get("parent_id")
 
-        if parent_id and not QuestionCategories.objects.filter(id=parent_id).exists():
+        if p_id and not QuestionCategories.objects.filter(id=p_id).exists():
             raise NotFound(detail={"error_detail": "부모 카테고리를 찾을 수 없습니다."})
 
-        if category_type in ["medium", "small"] and not parent_id:
-            raise serializers.ValidationError(
-                {"parent_id": f"{category_type} 카테고리는 부모 카테고리 설정이 필요합니다."}
-            )
+        if c_type in ["medium", "small"] and not p_id:
+            raise serializers.ValidationError({"parent_id": f"{c_type} 카테고리는 부모 설정이 필요합니다."})
         return attrs
 
     def to_representation(self, instance: QuestionCategories) -> dict[str, Any]:
         ret = super().to_representation(instance)
-        parent = instance.parent
-        ret["parent_id"] = parent.id if parent else None
-
-        if not parent:
-            ret["category_type"] = "large"
-        else:
-            ret["category_type"] = "medium" if not parent.parent else "small"
-
+        p = instance.parent
+        ret["parent_id"] = p.id if p else None
+        ret["category_type"] = "large" if not p else ("medium" if not p.parent else "small")
         return ret

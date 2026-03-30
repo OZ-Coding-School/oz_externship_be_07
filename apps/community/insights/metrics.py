@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, QuerySet
 from django.utils import timezone
 
 from apps.community.core.constants import INSIGHT_RATE_SCALE, INSIGHT_WINDOW_DAYS
@@ -30,8 +30,8 @@ def _delta(current_value: float | int, previous_value: float | int) -> float:
     return round(float(current_value) - float(previous_value), 2)
 
 
-def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
-    post_user_ids = (
+def _activity_user_ids_qs(start: datetime, end: datetime) -> QuerySet[int]:
+    post_qs = (
         Post.objects.filter(
             is_visible=True,
             category__status=True,
@@ -42,7 +42,7 @@ def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
         .values_list("activity_user_id", flat=True)
     )
 
-    comment_user_ids = (
+    comment_qs = (
         PostComment.objects.filter(
             post__is_visible=True,
             post__category__status=True,
@@ -53,7 +53,7 @@ def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
         .values_list("activity_user_id", flat=True)
     )
 
-    like_user_ids = (
+    like_qs = (
         PostLike.objects.filter(
             is_liked=True,
             post__is_visible=True,
@@ -65,7 +65,7 @@ def _activity_user_ids(start: datetime, end: datetime) -> set[int]:
         .values_list("activity_user_id", flat=True)
     )
 
-    return set(post_user_ids.union(comment_user_ids, like_user_ids))
+    return post_qs.union(comment_qs, like_qs)
 
 
 def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dict[str, Any]:
@@ -131,8 +131,18 @@ def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dic
     top_category_count = max(active_category_post_counts.values(), default=0)
 
     # 유저 활성화/정착률
-    activity_user_ids = _activity_user_ids(window_start, window_end)
-    community_active_users_count_7d = len(activity_user_ids)
+    activity_user_ids_qs = _activity_user_ids_qs(window_start, window_end)
+
+    activity_users_agg = User.objects.filter(id__in=activity_user_ids_qs).aggregate(
+        community_active_users_count_7d=Count("id", distinct=True),
+        active_new_users_count_7d=Count(
+            "id",
+            filter=Q(created_at__gte=window_start, created_at__lt=window_end),
+            distinct=True,
+        ),
+    )
+    community_active_users_count_7d = int(activity_users_agg["community_active_users_count_7d"] or 0)
+    active_new_users_count_7d = int(activity_users_agg["active_new_users_count_7d"] or 0)
 
     lms_active_users_count = User.objects.filter(
         is_active=True,
@@ -140,15 +150,10 @@ def _compute_window_metrics(window_start: datetime, window_end: datetime) -> dic
         created_at__lt=window_end,
     ).count()
 
-    # 정착률 분모: 상태 필터 없이 해당 기간 가입자 전체
-    new_user_ids = set(
-        User.objects.filter(
-            created_at__gte=window_start,
-            created_at__lt=window_end,
-        ).values_list("id", flat=True)
-    )
-    new_users_count = len(new_user_ids)
-    active_new_users_count_7d = len(activity_user_ids & new_user_ids)
+    new_users_count = User.objects.filter(
+        created_at__gte=window_start,
+        created_at__lt=window_end,
+    ).count()
 
     # 최종결과 조립
     metrics = {

@@ -23,12 +23,16 @@ class SubjectBaseResponseSerializer(serializers.ModelSerializer[Subject]):
     course_id = serializers.IntegerField(source="course.id", read_only=True)
     status = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Subject
+        fields: tuple[str, ...] = ()
+
     def get_status(self, obj: Subject) -> str:
         return str(obj.status).lower()
 
 
 class SubjectCreateResponseSerializer(SubjectBaseResponseSerializer):
-    class Meta:
+    class Meta(SubjectBaseResponseSerializer.Meta):
         model = Subject
         fields = (
             "id",
@@ -42,7 +46,7 @@ class SubjectCreateResponseSerializer(SubjectBaseResponseSerializer):
 
 
 class SubjectDetailResponseSerializer(SubjectBaseResponseSerializer):
-    class Meta:
+    class Meta(SubjectBaseResponseSerializer.Meta):
         model = Subject
         fields = (
             "id",
@@ -56,7 +60,7 @@ class SubjectDetailResponseSerializer(SubjectBaseResponseSerializer):
 
 
 class SubjectListItemSerializer(SubjectBaseResponseSerializer):
-    class Meta:
+    class Meta(SubjectBaseResponseSerializer.Meta):
         model = Subject
         fields = (
             "id",
@@ -90,12 +94,15 @@ class SubjectScatterPointSerializer(serializers.ModelSerializer[ExamSubmission])
 
     class Meta:
         model = ExamSubmission
-        fields = [
+        fields = (
             "time",
             "score",
-        ]
+        )
 
     def get_time(self, obj: ExamSubmission) -> float:
+        if obj.started_at is None or obj.created_at is None:
+            return 0.0
+
         duration = obj.created_at - obj.started_at
         hours = duration.total_seconds() / 3600
         return round(hours, 1)

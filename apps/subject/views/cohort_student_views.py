@@ -45,9 +45,9 @@ class StudentScoreAPIView(APIView):
             data = CohortStudentService.get_student_scores(student_id=student_id)
         except Http404:
             return Response(
-                {"error_detail": "학생을 찾을 수 없습니다."},
+                {"error_detail": CohortStudentService.STUDENT_NOT_FOUND_MESSAGE},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = StudentSubjectScoreItemSerializer(data, many=True)
+        serializer = StudentSubjectScoreItemSerializer(instance=data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

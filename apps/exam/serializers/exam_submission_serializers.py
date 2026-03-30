@@ -10,6 +10,18 @@ from apps.exam.models.exam_submission_models import ExamSubmission
 ONE_MINUTE = 60
 
 
+def _get_total_score(snapshot: list[dict[str, Any]]) -> int:
+    if isinstance(snapshot, str):
+        try:
+            snapshot = json.loads(snapshot)
+        except json.JSONDecodeError:
+            snapshot = []
+
+    total_score = sum(int(question.get("point", 0)) for question in snapshot)
+
+    return total_score
+
+
 # questions의 공통헬퍼
 def _build_questions(
     snapshot: list[dict[str, Any]],
@@ -131,7 +143,7 @@ class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]
     deployment_id = serializers.IntegerField(source="deployment.id", read_only=True)
     exam = ExamItemSerializer(source="deployment.exam", read_only=True)
     questions = serializers.SerializerMethodField()
-    total_score = serializers.IntegerField(source="score", read_only=True)
+    total_score = serializers.SerializerMethodField()
     elapsed_time = serializers.SerializerMethodField()
     submitted_at = serializers.DateTimeField(source="created_at", read_only=True)
 
@@ -161,6 +173,11 @@ class ExamSubmissionResultSerializer(serializers.ModelSerializer[ExamSubmission]
             obj.deployment.questions_snapshot_json,
             obj.answers_json,
             include_blank_count=True,
+        )
+
+    def get_total_score(self, obj: ExamSubmission) -> int:
+        return _get_total_score(
+            obj.deployment.questions_snapshot_json,
         )
 
 

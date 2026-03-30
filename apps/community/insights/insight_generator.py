@@ -14,9 +14,9 @@ from apps.community.core.constants import (
     INSIGHT_RESPONSE_RATE_CRITICAL,
     INSIGHT_RESPONSE_RATE_GOOD,
     INSIGHT_RESPONSE_RATE_WARNING,
+    INSIGHT_SETTLEMENT_MIN_USERS,
     INSIGHT_SETTLEMENT_RATE_GOOD,
     INSIGHT_SETTLEMENT_RATE_WARNING,
-    INSIGHT_SETTLEMENT_MIN_USERS,
     INSIGHT_TARGET_ACTIVATION_RATE,
     INSIGHT_TARGET_AVG_COMMENTS,
     INSIGHT_TARGET_RESPONSE_RATE,
@@ -205,6 +205,7 @@ def _build_rules() -> list[InsightRule]:
         ),
     ]
 
+
 INSIGHT_RULES: tuple[InsightRule, ...] = tuple(sorted(_build_rules(), key=lambda r: r.priority))
 
 
@@ -236,7 +237,7 @@ WEAKEST_MESSAGE_BUILDERS: dict[str, Callable[[dict[str, Any]], str]] = {
         "흥미로운 주제를 담은 공지를 올리거나 이벤트를 활용해 미접속 유저의 복귀를 유도해 보는게 어떨까요? "
     ),
     "response_rate_within_24h": lambda m: (
-        f"응답률이 {_percent_text(_to_float(m['response_rate_within_24h']))}입니다. " 
+        f"응답률이 {_percent_text(_to_float(m['response_rate_within_24h']))}입니다. "
         "초기 응답 속도를 조금 더 높일 수 있습니다. "
         "무응답 글에 직접 답변을 달아 반응 흐름을 만들어 주세요. "
     ),

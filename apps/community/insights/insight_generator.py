@@ -14,6 +14,7 @@ from apps.community.core.constants import (
     INSIGHT_RESPONSE_RATE_WARNING,
     INSIGHT_SETTLEMENT_RATE_GOOD,
     INSIGHT_SETTLEMENT_RATE_WARNING,
+    INSIGHT_SETTLEMENT_MIN_USERS,
     INSIGHT_TARGET_ACTIVATION_RATE,
     INSIGHT_TARGET_AVG_COMMENTS,
     INSIGHT_TARGET_RESPONSE_RATE,
@@ -96,7 +97,7 @@ def _build_rules() -> list[InsightRule]:
             priority=30,
             level="WARNING",
             title="신규 이탈",
-            condition=lambda m: int(m["new_users_count"]) > 0
+            condition=lambda m: int(m["new_users_count"]) >= INSIGHT_SETTLEMENT_MIN_USERS
             and _to_float(m["new_user_settlement_rate"]) < INSIGHT_SETTLEMENT_RATE_WARNING,
             message=lambda m: (
                 f"신규 정착률이 {_percent_text(_to_float(m['new_user_settlement_rate']))}입니다. "

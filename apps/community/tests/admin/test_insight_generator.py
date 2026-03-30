@@ -96,3 +96,9 @@ class CommunityInsightGeneratorTest(SimpleTestCase):
         info = next(f for f in report["findings"] if f["rule_id"] == "overall_info")
         self.assertIn("신규 가입자가 없습니다.", info["message"])
         self.assertIn("응답률이 45.0%", info["message"])  # 동률이면 tie-break 순서상 response가 우선
+
+    def test_settlement_warning_requires_min_new_users(self) -> None:
+        """신규 유저가 최소 기준 미만이면 정착률 경고를 띄우지 않는지 검증"""
+        payload = self._payload(new_users=2, settlement=0.0, response=65.0, comments=1.6, top1=50.0)
+        report = build_insight_report(payload)
+        self.assertFalse(any(f["rule_id"] == "settlement_warning" for f in report["findings"]))

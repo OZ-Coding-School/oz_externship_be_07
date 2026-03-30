@@ -205,6 +205,8 @@ def _build_rules() -> list[InsightRule]:
         ),
     ]
 
+INSIGHT_RULES: tuple[InsightRule, ...] = tuple(sorted(_build_rules(), key=lambda r: r.priority))
+
 
 def _is_good(metrics: dict[str, Any], critical_count: int, warning_count: int) -> bool:
     # GOOD 게이트: CRITICAL/WARNING 없어야 하며 핵심 4조건 중 3개 이상 충족
@@ -275,7 +277,7 @@ def _weakest_info(metrics: dict[str, Any]) -> str:
 def select_findings(metrics: dict[str, Any]) -> list[Finding]:
     selected_by_group: dict[str, Finding] = {}
 
-    for rule in sorted(_build_rules(), key=lambda r: r.priority):
+    for rule in INSIGHT_RULES:
         if not rule.condition(metrics):
             continue
         if rule.group in selected_by_group:

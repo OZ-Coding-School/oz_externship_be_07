@@ -165,7 +165,10 @@ class ExamDeploymentService:
         ).annotate(is_done=Exists(submission_subquery))
 
         if not is_staff:
-            deployments = deployments.filter(cohort_id__in=cohort_ids)
+            deployments = deployments.filter(
+                cohort_id__in=cohort_ids,
+                status="ACTIVATED",
+            )
 
         deployments = deployments.order_by("-created_at")
 

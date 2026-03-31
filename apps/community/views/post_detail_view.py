@@ -22,8 +22,9 @@ from apps.community.services.post_service import (
     build_post_detail_response,
     get_post_detail,
     post_delete,
+    post_file_delete,
 )
-from apps.community.tasks import file_synchronization_task, post_file_delete_task
+from apps.community.tasks import file_synchronization_task
 
 
 class PostDetailNotFoundSerializer(serializers.Serializer[dict[str, Any]]):
@@ -122,7 +123,7 @@ class PostDetailAPIView(APIView):
         serializer.save()
 
         post.refresh_from_db()
-        file_synchronization_task(post_id, post.content)
+        file_synchronization_task.delay(post_id, post.content)
 
         updated_post = get_post_detail(post_id)
         if updated_post is None:
@@ -148,7 +149,7 @@ class PostDetailAPIView(APIView):
         post = self._get_visible_post(post_id)
         self.check_object_permissions(request, post)
 
-        post_file_delete_task(post_id)
+        post_file_delete(post_id)
         post_delete(post)
 
         return Response(

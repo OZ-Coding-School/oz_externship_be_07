@@ -22,8 +22,9 @@ from apps.users.views.social_login_views import (
     NaverLoginStartView,
 )
 from apps.users.views.verification_views import (
-    EmailSendView,
     EmailVerifyView,
+    RecoveryEmailSendView,
+    SignupEmailSendView,
     SmsSendView,
     SmsVerifyView,
 )
@@ -32,7 +33,8 @@ app_name = "users"
 
 urlpatterns = [
     path("signup", SignUpView.as_view(), name="signup"),
-    path("verification/send-email", EmailSendView.as_view(), name="email-send"),
+    path("verify/email/signup/", SignupEmailSendView.as_view(), name="email-signup"),
+    path("verify/email/recovery/", RecoveryEmailSendView.as_view(), name="email-recovery"),
     path("verification/verify-email", EmailVerifyView.as_view(), name="email-verify"),
     path("verification/send-sms", SmsSendView.as_view(), name="sms-send"),
     path("verification/verify-sms", SmsVerifyView.as_view(), name="sms-verify"),

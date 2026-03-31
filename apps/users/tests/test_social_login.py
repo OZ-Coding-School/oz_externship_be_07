@@ -32,7 +32,8 @@ class SocialLoginTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertIn("is_success=true", response.url)
-        self.assertIn("access_token", response.cookies)
+        self.assertIn("refresh_token", response.cookies)
+        self.assertNotIn("access_token", response.cookies)
 
     @patch("apps.users.services.social_login_services.KakaoOAuthService.get_access_token")
     def test_kakao_login_failure_invalid_code(self, mock_token: Any) -> None:
@@ -58,7 +59,8 @@ class SocialLoginTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertIn("provider=naver", response.url)
         self.assertIn("is_success=true", response.url)
-        self.assertIn("access_token", response.cookies)
+        self.assertIn("refresh_token", response.cookies)
+        self.assertNotIn("access_token", response.cookies)
 
     @patch("apps.users.services.social_login_services.NaverOAuthService.get_access_token")
     def test_naver_login_failure_invalid_code(self, mock_token: Any) -> None:

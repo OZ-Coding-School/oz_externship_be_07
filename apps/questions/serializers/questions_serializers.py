@@ -1,3 +1,4 @@
+import re
 from typing import Any
 
 from rest_framework import serializers
@@ -69,8 +70,14 @@ class QuestionListSerializer(serializers.ModelSerializer[Questions]):
         return ""
 
     def get_thumbnail_img_url(self, obj: Questions) -> str | None:
-        first_image = obj.images.first()
-        return first_image.img_url if first_image else None
+        if not obj.content:
+            return None
+
+        match = re.search(r'<img [^>]*src="([^"]+)"', obj.content)
+
+        if not match:
+            match = re.search(r'<img src="([^"]+)" />', obj.content)
+        return match.group(1) if match else None
 
 
 # 목록 조회용: 모든 정보가 나오게

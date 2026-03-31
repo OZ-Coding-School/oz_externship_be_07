@@ -153,7 +153,7 @@ class PostListAPIView(APIView):
             serializer.validated_data["content"],
             serializer.validated_data["category"],
         )
-        post_file_save_task(instance.pk, instance.content)
+        post_file_save_task.delay(instance.pk, instance.content)
 
         return Response(
             {

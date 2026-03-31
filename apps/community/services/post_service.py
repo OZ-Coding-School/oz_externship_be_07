@@ -182,14 +182,13 @@ def file_synchronization(post_id: int, post_content: str) -> None:
 def post_file_delete(post_id: int) -> None:
     """PostImage DB 데이터 삭제 함수"""
 
-    if post_id:
-        images = PostImage.objects.filter(post_id=post_id)
-        file_delete(set(images.values_list("img_url", flat=True)))
-        images.delete()
+    images = PostImage.objects.filter(post_id=post_id)
+    file_delete(set(images.values_list("img_url", flat=True)))
+    images.delete()
 
-        file = PostAttachment.objects.filter(post_id=post_id)
-        file_delete(set(file.values_list("file_url", flat=True)))
-        file.delete()
+    file = PostAttachment.objects.filter(post_id=post_id)
+    file_delete(set(file.values_list("file_url", flat=True)))
+    file.delete()
 
 
 def file_delete(url: set[str]) -> None:

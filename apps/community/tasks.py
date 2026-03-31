@@ -14,11 +14,6 @@ def sync_user_search_task() -> None:
 
 
 @shared_task  # type: ignore
-def post_file_delete_task(post_id: int) -> None:
-    post_file_delete(post_id)
-
-
-@shared_task  # type: ignore
 def file_synchronization_task(post_id: int, post_content: str) -> None:
     file_synchronization(post_id, post_content)
 

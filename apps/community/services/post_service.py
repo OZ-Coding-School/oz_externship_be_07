@@ -149,50 +149,45 @@ def post_delete(instance: Post) -> None:
     instance.delete()
 
 
-def post_file_save(instance: Post) -> None:
+def post_file_save(post_id: int, post_content: str) -> None:
     """본문에서 마크다운 이미지/파일 url 추출 저장 함수"""
 
-    image_url = RE_MARKDOWN_LINK.findall(instance.content)
+    image_url = RE_MARKDOWN_LINK.findall(post_content)
     for is_image, name, url in image_url:
         if is_image == "!":
-            PostImage.objects.create(post=instance, img_url=url)
+            PostImage.objects.create(post_id=post_id, img_url=url)
         else:
-            PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
+            PostAttachment.objects.create(post_id=post_id, file_name=name, file_url=url)
 
 
-def file_synchronization(instance: Post) -> None:
+def file_synchronization(post_id: int, post_content: str) -> None:
     """본문 이미지 제거 및 추가시 삭제 추가 함수"""
-    post_update_file_presigned_url(instance)
+    post_update_file_presigned_url(post_id, post_content)
 
-    current_image_urls = RE_IMAGE_URL.findall(instance.content)
+    current_image_urls = RE_IMAGE_URL.findall(post_content)
 
-    existing_db_urls = PostImage.objects.filter(post=instance).values_list("img_url", flat=True)
+    existing_db_urls = PostImage.objects.filter(post_id=post_id).values_list("img_url", flat=True)
     for url in current_image_urls:
         if url not in existing_db_urls:
-            PostImage.objects.create(post=instance, img_url=url)
+            PostImage.objects.create(post_id=post_id, img_url=url)
 
-    current_attachments = RE_ATTACHMENT_URL.findall(instance.content)
+    current_attachments = RE_ATTACHMENT_URL.findall(post_content)
 
-    existing_att_urls = PostAttachment.objects.filter(post=instance).values_list("file_url", flat=True)
+    existing_att_urls = PostAttachment.objects.filter(post_id=post_id).values_list("file_url", flat=True)
     for name, url in current_attachments:
         if url not in existing_att_urls:
-            PostAttachment.objects.create(post=instance, file_name=name, file_url=url)
+            PostAttachment.objects.create(post_id=post_id, file_name=name, file_url=url)
 
 
-def post_delete_sum(instance: Post) -> None:
-    post_file_delete(instance)
-    post_delete(instance)
-
-
-def post_file_delete(instance: Post) -> None:
+def post_file_delete(post_id: int) -> None:
     """PostImage DB 데이터 삭제 함수"""
 
-    if instance:
-        images = PostImage.objects.filter(post=instance)
+    if post_id:
+        images = PostImage.objects.filter(post_id=post_id)
         file_delete(set(images.values_list("img_url", flat=True)))
         images.delete()
 
-        file = PostAttachment.objects.filter(post=instance)
+        file = PostAttachment.objects.filter(post_id=post_id)
         file_delete(set(file.values_list("file_url", flat=True)))
         file.delete()
 
@@ -237,17 +232,17 @@ def post_detail_file_presigned_url(content: str) -> str:
     return content
 
 
-def post_update_file_presigned_url(instance: Post) -> None:
-    old_file_urls = RE_FILE_URL_STRIP_QS.findall(instance.content)
+def post_update_file_presigned_url(post_id: int, post_content: str) -> None:
+    old_file_urls = RE_FILE_URL_STRIP_QS.findall(post_content)
     image_urls = [match[2] for match in old_file_urls if match[0] == "!"]
     file_urls = [match[2] for match in old_file_urls if match[0] == ""]
 
-    delete_image = PostImage.objects.filter(post=instance).exclude(img_url__in=image_urls)
+    delete_image = PostImage.objects.filter(post_id=post_id).exclude(img_url__in=image_urls)
     if delete_image:
         file_delete(set(delete_image.values_list("img_url", flat=True)))
         delete_image.delete()
 
-    delete_file = PostAttachment.objects.filter(post=instance).exclude(file_url__in=file_urls)
+    delete_file = PostAttachment.objects.filter(post_id=post_id).exclude(file_url__in=file_urls)
     if delete_file:
         file_delete(set(delete_file.values_list("file_url", flat=True)))
         delete_file.delete()

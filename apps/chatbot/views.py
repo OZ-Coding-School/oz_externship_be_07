@@ -19,6 +19,7 @@ from apps.chatbot.pagination import ChatbotCursorPagination
 from apps.chatbot.serializers import (
     ChatbotCompletionRequestSerializer,
     ChatbotCompletionSerializer,
+    ChatbotSessionCreateRequestSerializer,
     ChatbotSessionSerializer,
 )
 from apps.chatbot.services.chatbot_service import ChatbotService
@@ -52,14 +53,20 @@ class ChatbotSessionListCreateView(APIView):
     @extend_schema(
         tags=["Chatbot"],
         summary="QnA 챗봇 세션 생성",
-        request=ChatbotCompletionRequestSerializer,
+        request=ChatbotSessionCreateRequestSerializer,
         responses={
             201: ChatbotSessionSerializer,
             200: ChatbotSessionSerializer,
         },
     )
     def post(self, request: Request) -> Response:
-        question_id = int(request.data.get("question_id", 0))
+
+        serializer = ChatbotSessionCreateRequestSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        question_id = serializer.validated_data["question_id"]
 
         try:
             session, created = ChatbotService.create_session(cast(User, request.user), question_id)
@@ -69,9 +76,9 @@ class ChatbotSessionListCreateView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ChatbotSessionSerializer(session)
+        response_serializer = ChatbotSessionSerializer(session)
         status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-        return Response(serializer.data, status=status_code)
+        return Response(response_serializer.data, status=status_code)
 
 
 class ChatbotSessionDetailView(APIView):

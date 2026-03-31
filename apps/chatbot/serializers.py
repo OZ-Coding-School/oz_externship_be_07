@@ -36,3 +36,13 @@ class ChatbotCompletionRequestSerializer(serializers.Serializer[dict[str, str]])
             "blank": "이 필드는 blank일 수 없습니다.",
         },
     )
+
+
+class ChatbotSessionCreateRequestSerializer(serializers.Serializer[dict[str, Any]]):
+    """세션 생성 요청 검증용, qestion_id"""
+
+    question_id = serializers.IntegerField(
+        required=True,
+        help_text="세션을 생성할 질문글의 ID",
+        error_messages={"required": "이 필드는 필수 항목입니다.", "invalid": "유효한 정수값을 입력해주세요."},
+    )

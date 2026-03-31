@@ -108,7 +108,7 @@ class QuestionListDetailView(APIView):
     def get(self, request: Request, question_id: int, *args: Any, **kwargs: Any) -> Response:
         # 서비스 호출
         try:
-            question = QuestionListService.get_question_detail(question_id)
+            question = QuestionListService.get_question_detail(question_id, user=request.user)
             # 시리얼라이저 반환
             serializer = self.serializer_class(question)
             return Response(serializer.data, status=status.HTTP_200_OK)

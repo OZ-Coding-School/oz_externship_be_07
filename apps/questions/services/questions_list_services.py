@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db.models import Count, F, Q, QuerySet
 from django.shortcuts import get_object_or_404
 
@@ -35,11 +37,14 @@ class QuestionListService:
 
     # 질문 상세 조회
     @staticmethod
-    def get_question_detail(question_id: int) -> Questions:
+    def get_question_detail(question_id: int, user: Any = None) -> Questions:
         queryset = Questions.objects.select_related("category", "author").prefetch_related("images", "answers")
         question = get_object_or_404(queryset, id=question_id)
 
-        Questions.objects.filter(id=question_id).update(view_count=F("view_count") + 1)
-        question.refresh_from_db()
+        is_author = user and user.is_authenticated and question.author == user.id
+
+        if not is_author:
+            Questions.objects.filter(id=question_id).update(view_count=F("view_count") + 1)
+            question.refresh_from_db()
 
         return question

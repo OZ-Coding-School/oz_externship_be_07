@@ -54,9 +54,18 @@ def _build_questions(
 
         submitted_val = answer_map.get(q_id)
         correct_val = q_info.get("answer")
+        question_type = q_info.get("type", "")
+
+        if isinstance(correct_val, str):
+            try:
+                correct_val = json.loads(correct_val)
+            except (json.JSONDecodeError, ValueError):
+                pass
 
         is_correct = False
-        if submitted_val == correct_val:
+        if question_type == "MULTIPLE_CHOICE" and isinstance(correct_val, list) and isinstance(submitted_val, list):
+            is_correct = set(map(str, submitted_val)) == set(map(str, correct_val))
+        elif submitted_val == correct_val:
             is_correct = True
         elif isinstance(correct_val, list) and len(correct_val) > 0:
             if submitted_val == correct_val[0]:
@@ -74,7 +83,7 @@ def _build_questions(
             "question": q_info.get("question"),
             "prompt": q_info.get("prompt", ""),
             "options": raw_options if raw_options is not None else [],
-            "type": q_info.get("type", ""),
+            "type": question_type,
             "answer": correct_val,
             "point": q_info.get("point", 0),
             "explanation": q_info.get("explanation", ""),

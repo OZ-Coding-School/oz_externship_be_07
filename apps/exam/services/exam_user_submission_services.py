@@ -77,7 +77,11 @@ class ExamUserSubmissionService:
 
             is_correct = False
 
-            if submitted_val == correct_val:
+            question_type = q_info.get("type")
+            if question_type == "MULTIPLE_CHOICE" and isinstance(correct_val, list) and isinstance(submitted_val, list):
+                is_correct = set(map(str, submitted_val)) == set(map(str, correct_val))
+
+            elif submitted_val == correct_val:
                 is_correct = True
 
             elif isinstance(correct_val, list) and len(correct_val) > 0:

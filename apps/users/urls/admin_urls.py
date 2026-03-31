@@ -9,14 +9,14 @@ from apps.users.views.admin.user_analytics import (
     AdminSignupTrendAPIView,
     AdminWithdrawalTrendAPIView,
 )
-from apps.users.views.admin.user_enrollment import AdminUserEnrollmentViewSet
-from apps.users.views.admin.user_enrollment_accept import AdminEnrollmentAcceptAPIView
-from apps.users.views.admin.user_enrollment_reject import AdminEnrollmentRejectAPIView
-from apps.users.views.admin.user_enrollment_trend_analytics import (
+from apps.users.views.admin.user_management import (
+    AdminEnrollmentAcceptAPIView,
+    AdminEnrollmentRejectAPIView,
     AdminStudentEnrollmentTrendAPIView,
+    AdminUserDeleteAPIView,
+    AdminUserEnrollmentViewSet,
+    AdminUserRoleUpdateAPIView,
 )
-from apps.users.views.admin.user_management import AdminUserDeleteAPIView
-from apps.users.views.admin.user_role_change import AdminUserRoleUpdateAPIView
 from apps.users.views.admin.user_search import StudentManagementViewSet
 from apps.users.views.admin.user_withdrawal_analytics import (
     WithdrawalMonthlyReasonStatsAPIView,

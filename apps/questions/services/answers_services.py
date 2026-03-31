@@ -71,7 +71,7 @@ class AnswerService:
         question = get_object_or_404(Questions, id=question_id)
 
         if hasattr(question, "ai_answers"):
-            raise ValidationError("이미 AI가 답변을 생성했습니다.")
+            return question.ai_answers
 
         client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         model_name = "gemini-2.5-flash"

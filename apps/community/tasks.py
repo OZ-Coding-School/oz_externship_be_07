@@ -1,7 +1,6 @@
 from celery import shared_task  # type: ignore
 from django.core.management import call_command
 
-from apps.community.models.post_model import Post
 from apps.community.services.post_service import (
     file_synchronization,
     post_file_delete,

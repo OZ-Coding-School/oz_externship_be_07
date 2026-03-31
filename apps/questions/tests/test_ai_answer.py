@@ -51,11 +51,12 @@ class AIAnswerTest(TestCase):
         response = self.client.get("/api/v1/qna/questions/99999/ai-answer")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # 중복 생성 → 409 + error_detail 확인
+    # 중복 생성 → 기존 데이터 반환 확인
     def test_ai_answer_conflict(self) -> None:
         url = f"/api/v1/qna/questions/{self.question.id}/ai-answer"
         with patch("apps.questions.services.answers_services.genai.Client", return_value=make_mock_gemini()):
             self.client.get(url)
             response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertIn("error_detail", response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("output", response.data)
+        self.assertIn("id", response.data)

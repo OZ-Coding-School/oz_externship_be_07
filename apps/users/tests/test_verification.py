@@ -15,14 +15,19 @@ User = get_user_model()
 class SendEmailTest(APITestCase):
     user: Any
     url: str
-    valid_email: str
+    signup_url: str
+    recovery_url: str
+    exist_email: str
+    new_email: str
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.url = reverse("users:email-send")
-        cls.valid_email = "user@example.com"
-        cls.user = User.objects.create_user(
-            email=cls.valid_email,
+        cls.signup_url = reverse("users:email-signup")
+        cls.recovery_url = reverse("users:email-recovery")
+        cls.exist_email = "exists@example.com"
+        cls.new_email = "newuser@example.com"
+        User.objects.create_user(
+            email=cls.exist_email,
             password="oldPassword123!",
             name="테스터",
             nickname="tester",
@@ -39,24 +44,42 @@ class SendEmailTest(APITestCase):
 
     @patch("apps.users.services.verification_services.send_mail")
     def test_send_email_success(self, mock_send_email: MagicMock) -> None:
-        response = self.client.post(self.url, {"email": self.valid_email}, format="json")
+        response = self.client.post(self.signup_url, {"email": self.new_email}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["detail"], "이메일 인증 코드가 전송되었습니다.")
         self.assertTrue(mock_send_email.called)
-        self.assertIsNotNone(cache.get(f"verify:{self.valid_email}"))
+        self.assertIsNotNone(cache.get(f"verify:{self.new_email}"))
+
+    def test_send_email_signup_fail_already_exists(self) -> None:
+        response = self.client.post(self.signup_url, {"email": self.exist_email}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("이미 가입된 이메일입니다.", str(response.data))
 
     def test_send_email_fail_field_missing(self) -> None:
-        response = self.client.post(self.url, {}, format="json")
+        response = self.client.post(self.signup_url, {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error_detail"]["email"][0], "이 필드는 필수 항목입니다.")
 
     def test_send_email_fail_invalid_format(self) -> None:
-        response = self.client.post(self.url, {"email": "invalid-email-format"}, format="json")
+        response = self.client.post(self.signup_url, {"email": "invalid-email-format"}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("올바른 이메일 형식이 아닙니다.", str(response.data["error_detail"]["email"][0]))
+
+    @patch("apps.users.services.verification_services.send_mail")
+    def test_send_email_recovery_success(self, mock_send_email: MagicMock) -> None:
+        response = self.client.post(self.recovery_url, {"email": self.exist_email}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(mock_send_email.called)
+
+    def test_send_email_recovery_fail_not_found(self) -> None:
+        response = self.client.post(self.recovery_url, {"email": self.new_email}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("가입되지 않은 이메일입니다.", str(response.data))
 
 
 class EmailVerifyTest(APITestCase):

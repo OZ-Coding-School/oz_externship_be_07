@@ -26,17 +26,27 @@ class SendEmailService:
         charset = string.ascii_uppercase + string.ascii_lowercase + string.digits
         return "".join(secrets.choice(charset) for _ in range(6))
 
-    def send_email_code(self, email: str) -> None:
+    def send_email_code(self, email: str, usage: str) -> None:
         limit_key = f"limit:{email}"
         verify_key = f"verify:{email}"
 
         if cache.get(limit_key):
             raise Throttled(detail="1분 후에 다시 시도해주세요.")
 
+        active_user = User.objects.filter(email=email, is_active=True).exists()
+        inactive_user = User.objects.filter(email=email, is_active=False).exists()
+        user_exists = active_user or inactive_user
+
+        if usage == "signup" and active_user:
+            raise ValidationError("이미 가입된 이메일입니다.")
+
+        if usage == "recovery" and not user_exists:
+            raise ValidationError("가입되지 않은 이메일입니다.")
+
         code = self.create_code()
 
         try:
-            subject = "[OZ] 이메일 인증 코드"
+            subject = "[OZ] 이메일 인증 안내"
             message = f"요청하신 인증코드는 {code} 입니다."
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 

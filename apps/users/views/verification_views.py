@@ -20,15 +20,15 @@ from apps.users.services.verification_services import (
 )
 
 
-class EmailSendView(APIView):
+class SignupEmailSendView(APIView):
     permission_classes = [AllowAny]
     serializer_class = EmailSendSerializer
     service = SendEmailService()
     authentication_classes = []
 
     @extend_schema(
-        summary="이메일 인증 발송 API",
-        description="사용자로부터 이메일을 받아 인증 코드를 발송합니다.",
+        summary="회원가입 이메일 인증 발송 API",
+        description="사용자로부터 가입되지 않은 이메일을 받아 인증 코드를 발송합니다.",
         tags=["Accounts"],
         examples=[
             OpenApiExample(
@@ -50,9 +50,43 @@ class EmailSendView(APIView):
             return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
-        self.service.send_email_code(email)
+        self.service.send_email_code(email, usage="signup")
 
         return Response({"detail": "이메일 인증 코드가 전송되었습니다."}, status=status.HTTP_200_OK)
+
+
+class RecoveryEmailSendView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = EmailSendSerializer
+    service = SendEmailService()
+    authentication_classes = []
+
+    @extend_schema(
+        summary="계정복구,비밀번호 재설정 이메일 인증 발송 API",
+        description="가입된 계쩡이 있는지 확인 후 인증 코드를 발송합니다.",
+        tags=["Accounts"],
+        examples=[
+            OpenApiExample(
+                name="인증번호 발급 성공 예시",
+                value={"detail": "이메일 인증 코드가 전송되었습니다."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(description="인증코드가 발송되었습니다."),
+            400: OpenApiResponse(description="필수필드 누락/이메일 형식이 아닙니다."),
+        },
+    )
+    def post(self, request: Request) -> Response:
+        serializer = self.serializer_class(data=request.data)
+        if not serializer.is_valid():
+            return Response({"error_detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]
+        self.service.send_email_code(email, usage="recovery")
+
+        return Response({"detail": "이메일 인증 코드가 전송 되었습니다."}, status=status.HTTP_200_OK)
 
 
 class EmailVerifyView(APIView):

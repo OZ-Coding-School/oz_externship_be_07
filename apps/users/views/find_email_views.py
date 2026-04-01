@@ -36,9 +36,10 @@ class FindEmailView(APIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            masked_email = FindEmailService.verify_sms_token(
+            masked_email = FindEmailService.find_email(
                 name=serializer.validated_data["name"],
-                sms_token=serializer.validated_data["sms_token"],
+                phone_number=serializer.validated_data["phone_number"],
+                code=serializer.validated_data["code"],
             )
 
             return Response({"email": masked_email}, status=status.HTTP_200_OK)

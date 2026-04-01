@@ -288,6 +288,10 @@ SESSION_COOKIE_SECURE = False
 
 FRONTEND_SOCIAL_REDIRECT_URL = os.getenv("FRONTEND_SOCIAL_REDIRECT_URL", "http://localhost:3000")
 
+# Cookie settings (소셜 로그인 + 일반 로그인 공통)
+COOKIE_DOMAIN: str | None = os.getenv("COOKIE_DOMAIN") or None
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+
 # GEMINI_API_KEY
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 

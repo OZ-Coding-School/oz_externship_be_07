@@ -28,15 +28,13 @@ def frontend_redirect(*, provider: str, is_success: bool = True) -> HttpResponse
 
 
 def set_auth_cookies(resp: HttpResponseRedirect, *, refresh: str) -> None:
-    cookie_domain = getattr(settings, "COOKIE_DOMAIN", None)
-
     resp.set_cookie(
         "refresh_token",
         refresh,
         max_age=7 * 24 * 60 * 60,
-        domain=cookie_domain,
+        domain=settings.COOKIE_DOMAIN,
         httponly=True,
-        secure=not settings.DEBUG,
+        secure=settings.COOKIE_SECURE,
         samesite="Lax",
         path="/",
     )

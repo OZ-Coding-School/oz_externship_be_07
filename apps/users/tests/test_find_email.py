@@ -1,10 +1,10 @@
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APITestCase
 
 User = get_user_model()
 
@@ -20,34 +20,43 @@ class FindEmailViewTest(APITestCase):
         )
         cls.url = reverse("users:find-email")
 
-    def setUp(self) -> None:
-        cache.clear()
+    @patch("apps.users.services.find_email_services.Client")
+    def test_find_email_success(self, mock_client_cls: MagicMock) -> None:
+        mock_check = MagicMock()
+        mock_check.status = "approved"
+        mock_client_cls.return_value.verify.v2.services.return_value.verification_checks.create.return_value = (
+            mock_check
+        )
 
-    def test_find_email_success(
-        self,
-    ) -> None:
-        test_token = "verify_sms_token"
-        cache.set(f"sms_token:{test_token}", "01012345678", timeout=600)
-
-        data = {"name": "킹짱이준", "sms_token": test_token}
+        data = {"name": "킹짱이준", "phone_number": "01012345678", "code": "123456"}
         response = self.client.post(self.url, data=data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], "t**r@e****e.com")
-        self.assertIsNone(cache.get(f"sms_token:{test_token}"))
 
-    def test_find_email_invalid_token(self) -> None:
-        data = {"name": "킹짱이준", "sms_token": "dachung_fail_token"}
+    @patch("apps.users.services.find_email_services.Client")
+    def test_find_email_invalid_code(self, mock_client_cls: MagicMock) -> None:
+        mock_check = MagicMock()
+        mock_check.status = "pending"
+        mock_client_cls.return_value.verify.v2.services.return_value.verification_checks.create.return_value = (
+            mock_check
+        )
+
+        data = {"name": "킹짱이준", "phone_number": "01012345678", "code": "000000"}
         response = self.client.post(self.url, data=data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("sms_token", response.data["error_detail"])
+        self.assertIn("code", response.data["error_detail"])
 
-    def test_find_email_user_not_found(self) -> None:
-        test_token = "verify_sms_token"
-        cache.set(f"sms_token:{test_token}", "01000001111", timeout=600)
+    @patch("apps.users.services.find_email_services.Client")
+    def test_find_email_user_not_found(self, mock_client_cls: MagicMock) -> None:
+        mock_check = MagicMock()
+        mock_check.status = "approved"
+        mock_client_cls.return_value.verify.v2.services.return_value.verification_checks.create.return_value = (
+            mock_check
+        )
 
-        data = {"name": "지존소민", "sms_token": test_token}
+        data = {"name": "지존소민", "phone_number": "01000001111", "code": "123456"}
         response = self.client.post(self.url, data=data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

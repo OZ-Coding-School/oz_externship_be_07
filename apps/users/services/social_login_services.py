@@ -17,6 +17,18 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+def _generate_unique_nickname(base: str) -> str:
+    """닉네임 중복 시 뒤에 랜덤 숫자 붙여서 유니크하게 생성 (최대 10자)"""
+    if not User.objects.filter(nickname=base).exists():
+        return base
+    for _ in range(20):
+        suffix = uuid.uuid4().hex[:4]
+        candidate = f"{base[:6]}_{suffix}"
+        if not User.objects.filter(nickname=candidate).exists():
+            return candidate
+    return f"{uuid.uuid4().hex[:10]}"
+
+
 class KakaoOAuthService:
     AUTH_URL = "https://kauth.kakao.com/oauth/authorize"
     TOKEN_URL = "https://kauth.kakao.com/oauth/token"
@@ -86,12 +98,14 @@ class KakaoOAuthService:
         birthday_date = self.parse_kakao_birthday(kakao_account)
         profile_image = profile.get("profile_image_url") or profile.get("thumbnail_image_url")
 
+        unique_nickname = _generate_unique_nickname(nickname[:10] if nickname else f"kakao_{kakao_id[:4]}")
+
         with transaction.atomic():
             user = User.objects.create_user(
                 email=email,
-                nickname=nickname[:10] if nickname else f"kakao_{kakao_id[:4]}",
+                nickname=unique_nickname,
                 name=nickname[:30] if nickname else "카카오유저",
-                phone_number="",
+                phone_number=f"kakao_{kakao_id}",
                 gender=UserGender.FEMALE if gender == "female" else UserGender.MALE,
                 birthday=birthday_date or date(1990, 1, 1),
                 profile_img_url=profile_image or "",
@@ -185,12 +199,14 @@ class NaverOAuthService:
         profile_image = user_info.get("profile_image")
         mobile = user_info.get("mobile", "").replace("-", "")
 
+        unique_nickname = _generate_unique_nickname(nickname[:10] if nickname else f"naver_{naver_id[:4]}")
+
         with transaction.atomic():
             user = User.objects.create_user(
                 email=email,
-                nickname=nickname[:10] if nickname else f"naver_{naver_id[:4]}",
+                nickname=unique_nickname,
                 name=name[:30] if name else "네이버유저",
-                phone_number=mobile,
+                phone_number=mobile if mobile else f"naver_{naver_id}",
                 gender=UserGender.FEMALE if gender == "F" else UserGender.MALE,
                 birthday=birthday_date or date(1990, 1, 1),
                 profile_img_url=profile_image or "",

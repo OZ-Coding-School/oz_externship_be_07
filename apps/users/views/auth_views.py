@@ -122,9 +122,11 @@ class LoginView(APIView):
                 key="refresh_token",
                 value=refresh_token,
                 httponly=True,
-                secure=not settings.DEBUG,
+                secure=settings.COOKIE_SECURE,
                 samesite="Lax",
                 max_age=7 * 24 * 60 * 60,
+                domain=settings.COOKIE_DOMAIN,
+                path="/",
             )
             return response
 
@@ -173,7 +175,7 @@ class LogoutView(APIView):
             status=status.HTTP_200_OK,
         )
 
-        response.delete_cookie(key="refresh_token", path="/", samesite="Lax")
+        response.delete_cookie(key="refresh_token", path="/", samesite="Lax", domain=settings.COOKIE_DOMAIN)
 
         return response
 

@@ -61,6 +61,7 @@ class QuestionListSerializer(serializers.ModelSerializer[Questions]):
             "answer_count",
             "view_count",
             "created_at",
+            "updated_at",
             "thumbnail_img_url",
         ]
 
@@ -89,7 +90,18 @@ class QuestionListDetailSerializer(serializers.ModelSerializer[Questions]):
 
     class Meta:
         model = Questions
-        fields = ["id", "title", "content", "category", "images", "view_count", "created_at", "author", "answers"]
+        fields = [
+            "id",
+            "title",
+            "content",
+            "category",
+            "images",
+            "view_count",
+            "created_at",
+            "updated_at",
+            "author",
+            "answers",
+        ]
 
 
 # 등록용

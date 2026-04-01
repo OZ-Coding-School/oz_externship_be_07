@@ -33,7 +33,7 @@ class QuestionListService:
 
         if sort_by == "views":
             return queryset.order_by("-view_count", "-created_at")
-        return queryset.order_by("-created_at")
+        return queryset.order_by("-updated_at")
 
     # 질문 상세 조회
     @staticmethod

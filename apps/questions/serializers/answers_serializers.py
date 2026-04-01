@@ -48,5 +48,5 @@ class AnswerResponseSerializer(serializers.ModelSerializer[Answers]):
 
     class Meta:
         model = Answers
-        fields = ["id", "author", "content", "is_adopted", "images", "comments", "created_at"]
+        fields = ["id", "author", "content", "is_adopted", "images", "comments", "created_at", "updated_at"]
         read_only_fields = fields

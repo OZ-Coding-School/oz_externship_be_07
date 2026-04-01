@@ -48,10 +48,11 @@ class KakaoOAuthService:
         data = {
             "grant_type": "authorization_code",
             "client_id": settings.KAKAO_CLIENT_ID,
-            "client_secret": settings.KAKAO_CLIENT_SECRET,
             "redirect_uri": settings.KAKAO_REDIRECT_URI,
             "code": code,
         }
+        if settings.KAKAO_CLIENT_SECRET:
+            data["client_secret"] = settings.KAKAO_CLIENT_SECRET
 
         response = requests.post(self.TOKEN_URL, data=data, timeout=10)
         response.raise_for_status()
